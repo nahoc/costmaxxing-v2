@@ -29,7 +29,7 @@ export interface SpendRow {
 
 export type Dataset =
   | { kind: "logs"; records: RequestRecord[]; days: number; now: number }
-  | { kind: "spend"; rows: SpendRow[]; from: string; to: string; org?: string };
+  | { kind: "spend"; rows: SpendRow[]; from: string; to: string; org?: string; recent?: boolean };
 
 export interface Rates {
   input: number;

@@ -59,6 +59,7 @@ export interface ReportOptions {
 export interface Report {
   kind: Dataset["kind"];
   scope: string;
+  recent: boolean;
   org?: string;
   days: number;
   sessions?: number;
@@ -239,6 +240,7 @@ export function buildReport(options: ReportOptions): Report {
   const sessions = new Set(all.flatMap((item) => item.session ?? []));
   return {
     kind: dataset.kind,
+    recent: dataset.kind === "logs" || dataset.recent === true,
     scope: dataset.kind === "spend" ? `${dataset.from} to ${dataset.to}` : `last ${days} days`,
     org: dataset.kind === "spend" ? dataset.org : undefined,
     days,

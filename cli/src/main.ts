@@ -135,8 +135,11 @@ async function importCommand(args: string[]): Promise<void> {
   }
   const config = await loadConfig(values.config);
   const [text, book] = await Promise.all([readFile(file, "utf8"), prices(config, values.offline, values.vs)]);
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const recent = period.to >= yesterday.toLocaleDateString("en-CA");
   const report = buildReport({
-    dataset: { kind: "spend", rows: parseSpendReport(text), ...period },
+    dataset: { kind: "spend", rows: parseSpendReport(text), ...period, recent },
     book,
     vs: values.vs,
     scenarios: config.scenarios,

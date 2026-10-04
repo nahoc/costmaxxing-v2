@@ -12,6 +12,12 @@ export function usd(n: number): string {
   return `$${count(n < 1000 ? Math.round(n) : n)}`;
 }
 
+const cents = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+
+export function exactUsd(n: number): string {
+  return cents.format(n);
+}
+
 export function percent(fraction: number): string {
   return `${Math.round(fraction * 100)}%`;
 }
@@ -50,7 +56,7 @@ export function seatText(line: SeatLine): string {
 
 export function heroText(report: Report) {
   const { hero } = report;
-  const period = report.kind === "logs" ? `The last ${report.days} days` : `These ${report.days} days`;
+  const period = report.recent ? `The last ${report.days} days` : `These ${report.days} days`;
   return {
     headline: `Switch to ${hero.name} and potentially save:`,
     detail: hero.detail,

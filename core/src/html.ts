@@ -1,8 +1,10 @@
-import { altHeader, comparisonText, count, heroText, savingsText, titleText, unpricedText, usd } from "./format.ts";
+import { altHeader, comparisonText, count, exactUsd, heroText, savingsText, titleText, unpricedText, usd } from "./format.ts";
 import type { Comparison, Report, Row } from "./report.ts";
 
 const escape = (text: string) =>
   text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+const money = (n: number) => `<span title="${exactUsd(n)}">${usd(n)}</span>`;
 
 export const REPORT_CSS = `
 .cmx { font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif; color: #1c1c1c; max-width: 1080px; margin: 0 auto; padding: 16px; }
@@ -13,9 +15,9 @@ export const REPORT_CSS = `
 .cmx .headline { font-weight: 600; }
 .cmx .muted { color: #6b6b6b; }
 .cmx .figures { display: flex; gap: 28px; margin: 10px 0 !important; font-size: 20px; font-weight: 650; color: #2f8a4a; font-variant-numeric: tabular-nums; }
-.cmx table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
-.cmx th { text-align: left; font-weight: 500; color: #6b6b6b; padding: 4px 8px 4px 0; white-space: nowrap; }
-.cmx td { padding: 3px 8px 3px 0; white-space: nowrap; }
+.cmx table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.cmx th { text-align: left; font-weight: 500; color: #6b6b6b; padding: 4px 22px 4px 0; white-space: nowrap; }
+.cmx td { padding: 3px 22px 3px 0; white-space: nowrap; }
 .cmx .num { text-align: right; }
 .cmx .save { color: #2f8a4a; }
 .cmx .bar { display: inline-block; width: 90px; height: 7px; border-radius: 4px; background: #ececec; overflow: hidden; vertical-align: middle; }
@@ -38,7 +40,7 @@ function table(report: Report, title: string, rows: Row[] | undefined): string {
   const total = rows.reduce((n, row) => n + row.price, 0);
   const body = rows
     .map(
-      (row) => `<tr><td>${escape(row.label)}</td><td class="num">${count(row.requests)}</td><td class="num">${count(row.tokens)}</td><td class="num">${usd(row.price)}</td><td><span class="bar"><span style="width:${total > 0 ? ((row.price / total) * 100).toFixed(1) : 0}%"></span></span></td><td>${usd(row.alt)} <span class="save">${savingsText(row.price, row.alt)}</span></td></tr>`,
+      (row) => `<tr><td>${escape(row.label)}</td><td class="num">${count(row.requests)}</td><td class="num">${count(row.tokens)}</td><td class="num">${money(row.price)}</td><td><span class="bar"><span style="width:${total > 0 ? ((row.price / total) * 100).toFixed(1) : 0}%"></span></span></td><td>${money(row.alt)} <span class="save">${savingsText(row.price, row.alt)}</span></td></tr>`,
     )
     .join("");
   return `<h2>${escape(title)}</h2><table><tr><th></th><th class="num">Requests</th><th class="num">Tokens</th><th class="num">Price</th><th>Share</th><th>${escape(altHeader(report))}</th></tr>${body}</table>`;
@@ -63,7 +65,7 @@ export function renderHtml(report: Report, options: HtmlOptions): string {
     `<p class="headline">${escape(hero.headline)}</p>`,
     hero.detail ? `<p class="muted">${escape(hero.detail)}</p>` : "",
     `<p class="figures">${hero.figures.map((f) => `<span>${escape(f)}</span>`).join("")}</p>`,
-    `<p>${escape(hero.window)}</p>`,
+    `<p title="${exactUsd(report.hero.alt)} instead of ${exactUsd(report.hero.price)}">${escape(hero.window)}</p>`,
     hero.seats ? `<p>${escape(hero.seats)}</p>` : "",
     `<p class="headline">${escape(hero.closer)}</p>`,
     `</section>`,

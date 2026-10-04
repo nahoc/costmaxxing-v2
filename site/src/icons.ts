@@ -102,17 +102,9 @@ const floppy = new Bitmap(24)
   .fill(8, 15, 15, 15)
   .fill(8, 17, 13, 17);
 
-const trash = new Bitmap(24)
-  .box(9, 2, 14, 4)
-  .box(3, 4, 20, 6)
-  .box(5, 6, 18, 21)
-  .fill(8, 9, 8, 18)
-  .fill(11, 9, 11, 18)
-  .fill(14, 9, 14, 18);
-
 const logo = new Bitmap(16).fill(2, 3, 4, 13).fill(7, 6, 9, 13).fill(12, 9, 14, 13);
 
-const BITMAPS = { computer, readMe, bill, paint, floppy, trash, logo };
+const BITMAPS = { computer, readMe, bill, paint, floppy, logo };
 export type IconName = keyof typeof BITMAPS;
 
 export const SPRITE = `<svg width="0" height="0" style="position:absolute" aria-hidden="true">${Object.entries(BITMAPS)

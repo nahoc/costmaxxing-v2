@@ -170,9 +170,19 @@ code {
   color: var(--paper);
   outline: none;
 }
+.menubar-right {
+  display: flex;
+  gap: 24px;
+}
+.menubar-right a {
+  text-decoration: none;
+}
+.menubar-right a:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
 .menubar-cta {
   display: none;
-  text-decoration: none;
 }
 
 .window {
@@ -612,9 +622,6 @@ dl.body dd {
     display: grid;
     gap: 22px;
   }
-  .icons li:last-child {
-    margin-top: 150px;
-  }
   .hero {
     top: 50%;
     left: 4%;
@@ -725,12 +732,12 @@ dl.body dd {
   .menu-title {
     padding: 0 10px;
   }
-  .wide-only {
-    display: none;
+  .menubar-right {
+    gap: 16px;
+    padding-right: 8px;
   }
   .menubar-cta {
     display: block;
-    padding: 0 8px;
   }
   .desktop {
     display: flex;

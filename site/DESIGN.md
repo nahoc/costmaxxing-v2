@@ -99,7 +99,7 @@ Two values, no exceptions. Tone comes from pattern, not from a third color.
 
 ## Layout
 
-At 1100px and wider, each desktop is a positioned field with windows at fixed offsets as a share of the width. The first desktop opens two things only: the savings dialog, vertically centered on the left (4% from the edge, up to 760px wide), and the Team Bill on the right (from 59%, up to 440px wide). They do not overlap. The Wall Street window starts closed and opens from its icon. The icon column runs down the right edge. The second desktop is 1000px tall and holds How It Works, Providers, and Info. Below 1100px the windows stack in one column with 12px side margins, the icons drop away, and the View and Special menus hide.
+At 1100px and wider, each desktop is a positioned field with windows at fixed offsets as a share of the width. The first desktop opens two things only: the savings dialog, vertically centered on the left (4% from the edge, up to 760px wide), and the Team Bill on the right (from 59%, up to 440px wide). They do not overlap. The Wall Street window starts closed and opens from its icon. The icon column runs down the right edge. The second desktop is 1000px tall and holds How It Works, Providers, and Info. Below 1100px the windows stack in one column with 12px side margins and the icons drop away.
 
 The pixel unit is 2px: line weights, dither cells, and drag snapping are all multiples of it. Nothing moves on scroll.
 
@@ -133,10 +133,10 @@ Square everywhere except buttons, which carry gently rounded corners (12px), and
 - **Behavior:** opens with zoom outlines from its icon, drags with a dashed outline that snaps to 2px, and closes back to its icon.
 
 ### Navigation
-- **Menu bar:** 44px, paper, sticky. Titles invert while open. Menus are paper boxes with the window shadow, and items invert on hover and focus. On phones, the bar keeps its menus and adds an install link at the right.
+- **Menu bar:** 44px, paper, sticky. The left side holds the logo menu (About) and File only. The right side holds a GitHub link to the repository, plus an install link on phones. Titles and links invert while open or hovered. Menus are paper boxes with the window shadow, and items invert on hover and focus.
 
 ### Savings dialog (signature component)
-The system dialog carries the page's one question and its one action: the costmaxxing computer icon, the display-size question "How much can your team save by moving from Anthropic to open-weight models?", body copy, and right-aligned buttons with the install button as the default and How It Works beside it. Special, Empty Subsidy… brings it back to the front.
+The system dialog carries the page's one question and its one action: the costmaxxing computer icon, the display-size question "How much can your team save by moving from Anthropic to open-weight models?", body copy, and the install button, right-aligned with the default ring. It has no secondary button.
 
 ### Get Info
 Any figure in the Team Bill opens an Info window beside it that states the exact amount, its source, and its math. Escape or the close box sends it back into the figure.

@@ -116,14 +116,12 @@ function finishBoot(): void {
   for (const el of $$<HTMLElement>(".window:not(.info), .alert, .icons li")) el.style.visibility = "visible";
 }
 
-const home = new Map<HTMLElement, { left: string; top: string }>();
 function drag(win: HTMLElement, bar: HTMLElement): void {
   bar.addEventListener("pointerdown", (event) => {
     if (!wide.matches || (event.target as Element).closest("button")) return;
     front(win);
     const desk = win.offsetParent as HTMLElement | null;
     if (!desk) return;
-    if (!home.has(win)) home.set(win, { left: win.style.left, top: win.style.top });
     const box = win.getBoundingClientRect();
     const deskBox = desk.getBoundingClientRect();
     const start = { x: event.clientX, y: event.clientY, left: box.left - deskBox.left, top: box.top - deskBox.top };
@@ -161,12 +159,6 @@ function drag(win: HTMLElement, bar: HTMLElement): void {
     bar.addEventListener("pointerup", up, { once: true });
     bar.addEventListener("pointercancel", up, { once: true });
   });
-}
-
-function cleanUp(): void {
-  for (const [win, pos] of home) Object.assign(win.style, { left: pos.left, top: pos.top, bottom: "", right: "", translate: "" });
-  home.clear();
-  finishBoot();
 }
 
 function placeInfo(info: HTMLElement, anchor: Element): void {
@@ -228,7 +220,6 @@ function wire(): void {
       if (opener.classList.contains("icon")) opener.classList.add("selected");
       const id = opener.dataset.open ?? "";
       if (id === "install") $<HTMLAnchorElement>(".hero .button.default")?.click();
-      else if (id === "hero") void showHero();
       else {
         const win = $<HTMLElement>(`#${id}`);
         if (win) void open(win, iconFor(id) ?? opener);
@@ -241,7 +232,6 @@ function wire(): void {
       void openInfo(link.dataset.info ?? "", link);
     });
   }
-  for (const button of $$<HTMLButtonElement>('[data-action="cleanup"]')) button.addEventListener("click", cleanUp);
   for (const link of $$<HTMLAnchorElement>("[data-zip]")) {
     link.addEventListener("click", () => {
       const note = $<HTMLElement>("#info-zip");

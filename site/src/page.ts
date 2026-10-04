@@ -50,7 +50,7 @@ export function renderPage({ example, install, css, js, zipSize }: { example: Ex
 <div class="alert-text"><h1 id="hero-title">How much can your team save by moving from Anthropic to open&#8209;weight models?</h1>
 <p>Add costmaxxing to Chrome as a claude.ai Owner, and your team's real bill opens on its own: every person, product, and model at Anthropic's API prices, next to the same usage on open&#8209;weight models.</p>
 <p>It runs in your browser. Nothing is uploaded.</p></div>
-<div class="buttons"><a class="button" href="#how">How It Works</a>${cta}</div>
+<div class="buttons">${cta}</div>
 </section>`;
 
   const bill = win({
@@ -92,7 +92,6 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
     ["bill", "bill", "Team Bill"],
     ["paint", "paint", "Wall Street"],
     ["install", "floppy", "Install"],
-    ["hero", "trash", "Subsidies"],
   ];
   const icons = desktopIcons
     .map(([id, name, label]) => `<li><button class="icon" type="button" data-open="${id}">${icon(name)}<span>${label}</span></button></li>`)
@@ -191,12 +190,8 @@ ${SPRITE}
 <div class="menu" hidden><a href="#about">About costmaxxing…</a></div></div>
 <div class="menu-group"><button class="menu-title" type="button" aria-expanded="false">File</button>
 <div class="menu" hidden><a href="${esc(install.href)}"${zipAttrs}>${esc(install.label)}…</a><button type="button" data-open="bill">Open Team Bill</button></div></div>
-<div class="menu-group wide-only"><button class="menu-title" type="button" aria-expanded="false">View</button>
-<div class="menu" hidden><button type="button" data-action="cleanup">Clean Up Windows</button><a href="#how">How It Works</a><a href="#chooser">Providers</a></div></div>
-<div class="menu-group wide-only"><button class="menu-title" type="button" aria-expanded="false">Special</button>
-<div class="menu" hidden><button type="button" data-open="hero">Empty Subsidy…</button><a href="#shutdown">Shut Down</a></div></div>
 </nav>
-<a class="menubar-cta" href="${esc(install.href)}"${zipAttrs}>${install.zip ? "Download" : "Add to Chrome"}</a>
+<div class="menubar-right"><a class="menubar-cta" href="${esc(install.href)}"${zipAttrs}>${install.zip ? "Download" : "Add to Chrome"}</a><a href="https://github.com/nahoc/costmaxxing-v2">GitHub</a></div>
 </header>
 <main>
 <div class="desktop desktop-1">
@@ -212,7 +207,7 @@ ${about}
 </div>
 <section class="shutdown" id="shutdown" aria-labelledby="shutdown-title">
 <div class="shutdown-box"><h2 id="shutdown-title">What will you do when the subsidies end?</h2>${cta}</div>
-<p class="colophon">Made with &lt;3 by Cohan Carpentier. Open source under the MIT license. <span>Wall Street, 1915, by Paul Strand, public domain.</span> Every number on this page is computed by costmaxxing from a synthetic example team.</p>
+<p class="colophon">Made with ♥︎ by Cohan Carpentier. Open source under the MIT license. <span>Wall Street, 1915, by Paul Strand, public domain.</span></p>
 </section>
 </main>
 ${infos}${zipNote}

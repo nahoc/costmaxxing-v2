@@ -5,7 +5,7 @@ import type { AddressInfo } from "node:net";
 import { test } from "node:test";
 import { gzipSync } from "node:zlib";
 import type { RequestRecord } from "@costmaxxing/core";
-import { startProxy } from "../src/proxy.ts";
+import { joinUrl, startProxy } from "../src/proxy.ts";
 
 const ANTHROPIC_SSE = [
   'event: message_start\ndata: {"type":"message_start","message":{"id":"msg_1","model":"claude-opus-5-5","usage":{"input_tokens":10,"cache_creation_input_tokens":300,"cache_read_input_tokens":5,"cache_creation":{"ephemeral_5m_input_tokens":100,"ephemeral_1h_input_tokens":200},"output_tokens":1}}}\n\n',
@@ -45,7 +45,7 @@ function call(url: string, body = '{"model":"x"}', headers: Record<string, strin
 
 async function withProxy(upstream: string, run: (url: string, records: RequestRecord[]) => Promise<void>) {
   const records: RequestRecord[] = [];
-  const proxy = await startProxy({ harness: "Claude Code", session: "launch-1", upstream: () => upstream, onRecord: (r) => records.push(r) });
+  const proxy = await startProxy({ harness: "Claude Code", session: "launch-1", route: (req) => joinUrl(upstream, req.url ?? "/"), onRecord: (r) => records.push(r) });
   try {
     await run(proxy.url, records);
     await proxy.drain(5000);
@@ -143,7 +143,7 @@ test("drain waits for requests still in flight", async () => {
     finish = () => res.end(ANTHROPIC_SSE.slice(200));
   });
   const records: RequestRecord[] = [];
-  const proxy = await startProxy({ harness: "Claude Code", session: "s", upstream: () => upstream.url, onRecord: (r) => records.push(r) });
+  const proxy = await startProxy({ harness: "Claude Code", session: "s", route: (req) => joinUrl(upstream.url, req.url ?? "/"), onRecord: (r) => records.push(r) });
   const pending = call(`${proxy.url}/v1/messages`);
   while (!finish) await new Promise((r) => setTimeout(r, 10));
   const drained = proxy.drain(5000);

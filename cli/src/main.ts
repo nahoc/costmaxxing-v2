@@ -11,12 +11,13 @@ import {
   type Report,
   type SeatCount,
 } from "@costmaxxing/core";
+import pkg from "../package.json" with { type: "json" };
 import { loadConfig } from "./config.ts";
+import { connectSettings, serve } from "./gateway.ts";
 import { launch } from "./launch.ts";
+import { personalReport } from "./personal.ts";
 import { prices } from "./prices.ts";
-import { readUsage } from "./usage.ts";
-
-const DAY = 86_400_000;
+import { web } from "./web.ts";
 
 const HELP = `costmaxxing: what your AI usage costs at API prices, and what it would cost on open-weight models
 
@@ -25,8 +26,8 @@ const HELP = `costmaxxing: what your AI usage costs at API prices, and what it w
                      [--billing monthly|annual] [--from YYYY-MM-DD --to YYYY-MM-DD]
   costmaxxing claude [args…]     run Claude Code through a local counting proxy
   costmaxxing codex [args…]      run Codex through a local counting proxy
-  costmaxxing web                open the report on 127.0.0.1
-  costmaxxing serve --token T    run a shared team gateway
+  costmaxxing web [--port N]     open the report on 127.0.0.1
+  costmaxxing serve --token T [--port 8787] [--host 0.0.0.0]   run a shared team gateway
   costmaxxing connect <url> --token T [--user NAME]   print agent settings for a gateway
 `;
 
@@ -53,29 +54,14 @@ function print(report: Report, json: boolean | undefined): void {
   process.stdout.write(renderTerminal(report, { color, width: process.stdout.columns || 100, command: command() }));
 }
 
-function positiveInteger(value: string, flag: string): number {
-  const n = Number(value);
-  if (!Number.isInteger(n) || n < 1) throw new Error(`${flag} takes a whole number, not ${value}`);
-  return n;
-}
-
 async function reportCommand(args: string[]): Promise<void> {
   const { values } = parseArgs({ args, options: { ...COMMON, days: { type: "string" }, version: { type: "boolean" } } });
   if (values.help) return void process.stdout.write(HELP);
-  const config = await loadConfig(values.config);
-  const days = values.days ? positiveInteger(values.days, "--days") : (config.windowDays ?? 30);
-  const now = Date.now();
-  const [records, book] = await Promise.all([readUsage(now - days * DAY), prices(config, values.offline, values.vs)]);
-  const report = buildReport({
-    dataset: { kind: "logs", records, days, now },
-    book,
-    vs: values.vs,
-    scenarios: config.scenarios,
-    plan: config.plan,
-  });
+  if (values.version) return void process.stdout.write(`${pkg.version}\n`);
+  const report = await personalReport(values);
   if (report.requests === 0 && !values.json) {
     process.stdout.write(
-      `No Claude Code or Codex usage in the last ${days} days.\n` +
+      `No Claude Code or Codex usage in the ${report.scope}.\n` +
         "costmaxxing reads ~/.claude/projects and ~/.codex/sessions ($CLAUDE_CONFIG_DIR and $CODEX_HOME move them).\n" +
         `Run ${command()} claude or ${command()} codex to count a session as it happens.\n`,
     );
@@ -158,6 +144,28 @@ async function main(argv: string[]): Promise<void> {
     case "claude":
     case "codex":
       return launch(first, rest);
+    case "web": {
+      const { values } = parseArgs({ args: rest, options: { ...COMMON, days: { type: "string" }, port: { type: "string" } } });
+      if (values.help) return void process.stdout.write(HELP);
+      return web({ ...values, open: interactive() });
+    }
+    case "serve": {
+      const { values } = parseArgs({
+        args: rest,
+        options: { token: { type: "string" }, port: { type: "string" }, host: { type: "string" }, config: { type: "string" } },
+      });
+      return serve(values);
+    }
+    case "connect": {
+      const { values, positionals } = parseArgs({
+        args: rest,
+        allowPositionals: true,
+        options: { token: { type: "string" }, user: { type: "string" } },
+      });
+      const [url] = positionals;
+      if (!url || !values.token) throw new Error("connect takes the gateway URL and --token, like connect http://gateway.local:8787 --token T");
+      return void process.stdout.write(connectSettings(url, values.token, values.user));
+    }
     default:
       return reportCommand(argv);
   }

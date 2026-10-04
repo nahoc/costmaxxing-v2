@@ -40,7 +40,7 @@ function table(report: Report, title: string, rows: Row[] | undefined): string {
   const total = rows.reduce((n, row) => n + row.price, 0);
   const body = rows
     .map(
-      (row) => `<tr><td>${escape(row.label)}</td><td class="num">${count(row.requests)}</td><td class="num">${count(row.tokens)}</td><td class="num">${money(row.price)}</td><td><span class="bar"><span style="width:${total > 0 ? ((row.price / total) * 100).toFixed(1) : 0}%"></span></span></td><td>${money(row.alt)} <span class="save">${savingsText(row.price, row.alt)}</span></td></tr>`,
+      (row) => `<tr><td>${escape(row.label)}</td><td class="num">${count(row.requests)}</td><td class="num">${count(row.tokens)}</td><td class="num">${money(row.price)}</td><td><span class="bar"><span style="width:${total > 0 ? ((row.price / total) * 100).toFixed(1) : 0}%"></span></span></td><td>${money(row.alt)} <span class="${row.price >= row.alt ? "save" : "muted"}">${savingsText(row.price, row.alt)}</span></td></tr>`,
     )
     .join("");
   return `<h2>${escape(title)}</h2><table><tr><th></th><th class="num">Requests</th><th class="num">Tokens</th><th class="num">Price</th><th>Share</th><th>${escape(altHeader(report))}</th></tr>${body}</table>`;
@@ -89,4 +89,8 @@ export function renderHtml(report: Report, options: HtmlOptions): string {
   parts.push(comparisons("Providers", report.providers));
   if (options.full) parts.push(comparisons("Scenarios", report.scenarios));
   return `<div class="cmx">${parts.join("")}</div>`;
+}
+
+export function renderPage(report: Report): string {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>costmaxxing</title><style>${REPORT_CSS} body { margin: 0; }</style></head><body>${renderHtml(report, { full: true })}</body></html>`;
 }

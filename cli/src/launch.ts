@@ -2,13 +2,14 @@ import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { once } from "node:events";
 import { readFile } from "node:fs/promises";
+import type { IncomingMessage } from "node:http";
 import { constants, homedir } from "node:os";
 import { join } from "node:path";
 import { buildReport, plural, usd, type PriceBook, type RequestRecord } from "@costmaxxing/core";
 import { parse } from "smol-toml";
 import { loadConfig } from "./config.ts";
 import { prices } from "./prices.ts";
-import { startProxy } from "./proxy.ts";
+import { joinUrl, startProxy } from "./proxy.ts";
 import { appendRecord } from "./usage.ts";
 
 async function readJson(file: string): Promise<Record<string, unknown> | undefined> {
@@ -27,6 +28,10 @@ async function claudeBaseUrl(): Promise<string> {
     if (typeof url === "string" && url) return url;
   }
   return process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com";
+}
+
+export function openaiBase(req: IncomingMessage): string {
+  return req.headers["chatgpt-account-id"] ? "https://chatgpt.com/backend-api/codex" : "https://api.openai.com/v1";
 }
 
 async function codexSetup(): Promise<{ provider?: string; upstream?: string }> {
@@ -63,7 +68,7 @@ export async function launch(agent: "claude" | "codex", args: string[]): Promise
   };
   if (agent === "claude") {
     const upstream = await claudeBaseUrl();
-    proxy = await startProxy({ harness: "Claude Code", session, upstream: () => upstream, onRecord });
+    proxy = await startProxy({ harness: "Claude Code", session, route: (req) => joinUrl(upstream, req.url ?? "/"), onRecord });
     childArgs = ["--settings", JSON.stringify({ env: { ANTHROPIC_BASE_URL: proxy.url } }), ...args];
   } else {
     const { provider, upstream } = await codexSetup();
@@ -75,8 +80,7 @@ export async function launch(agent: "claude" | "codex", args: string[]): Promise
       proxy = await startProxy({
         harness: "Codex",
         session,
-        upstream: (req) =>
-          upstream ?? (req.headers["chatgpt-account-id"] ? "https://chatgpt.com/backend-api/codex" : "https://api.openai.com/v1"),
+        route: (req) => joinUrl(upstream ?? openaiBase(req), req.url ?? "/"),
         onRecord,
       });
       childArgs = [

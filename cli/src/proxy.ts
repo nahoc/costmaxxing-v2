@@ -1,19 +1,16 @@
-import { request as httpRequest, createServer, type IncomingHttpHeaders, type IncomingMessage } from "node:http";
+import {
+  createServer,
+  request as httpRequest,
+  type IncomingHttpHeaders,
+  type IncomingMessage,
+  type RequestListener,
+  type ServerResponse,
+} from "node:http";
 import { Agent, request as httpsRequest } from "node:https";
 import type { AddressInfo } from "node:net";
 import { StringDecoder } from "node:string_decoder";
 import * as zlib from "node:zlib";
 import { sseData, wireMeter, type Harness, type RequestRecord, type WireUsage } from "@costmaxxing/core";
-
-export interface ProxyOptions {
-  harness: Harness;
-  upstream: (req: IncomingMessage) => string;
-  session: string;
-  host?: string;
-  port?: number;
-  user?: (req: IncomingMessage) => string | undefined;
-  onRecord: (record: RequestRecord) => void;
-}
 
 const DECODERS: Record<string, (() => NodeJS.ReadWriteStream) | undefined> = {
   gzip: zlib.createGunzip,
@@ -76,81 +73,84 @@ function meterResponse(headers: IncomingHttpHeaders, onUsage: (usage: WireUsage)
   };
 }
 
-export async function startProxy(options: ProxyOptions) {
+export interface Forward {
+  target: string;
+  harness: Harness;
+  user?: string;
+}
+
+export function joinUrl(base: string, path: string): string {
+  const url = new URL(base);
+  return `${url.origin}${url.pathname.replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+export function createProxy(options: { session: string; onRecord: (record: RequestRecord) => void }) {
   const agent = new Agent({ keepAlive: true });
   let inFlight = 0;
   let wake: (() => void) | undefined;
-  const settle = () => {
-    inFlight--;
-    if (inFlight === 0) wake?.();
-  };
-  const server = createServer((req, res) => {
-    inFlight++;
-    let settled = false;
-    const done = () => {
-      if (settled) return;
-      settled = true;
-      settle();
-    };
-    const base = new URL(options.upstream(req));
-    const target = new URL(base.pathname.replace(/\/$/, "") + (req.url ?? "/"), base);
-    const user = options.user?.(req);
-    const sessionHeader = req.headers["x-claude-code-session-id"] ?? req.headers["session-id"];
-    const session = typeof sessionHeader === "string" && sessionHeader ? sessionHeader : options.session;
-    const send = target.protocol === "https:" ? httpsRequest : httpRequest;
-    const upstream = send(
-      target,
-      { method: req.method, headers: { ...req.headers, host: target.host }, agent: target.protocol === "https:" ? agent : undefined },
-      (response) => {
-        res.writeHead(response.statusCode ?? 502, response.statusMessage, response.headers);
-        res.flushHeaders();
-        const meter = meterResponse(response.headers, (usage) => {
-          if ((response.statusCode ?? 500) >= 400) return;
-          const requestId = response.headers["request-id"];
-          options.onRecord({
-            id: (typeof requestId === "string" ? requestId : undefined) ?? usage.id ?? `${session}:${Date.now()}`,
-            harness: options.harness,
-            model: usage.model,
-            time: Date.now(),
-            session,
-            subagent: false,
-            tokens: usage.tokens,
-            ...(user ? { user } : {}),
-          });
-        });
-        response.on("data", (chunk: Buffer) => {
-          res.write(chunk);
-          meter.write(chunk);
-        });
-        response.on("end", async () => {
-          res.end();
-          await meter.end();
-          done();
-        });
-        response.on("close", () => {
-          if (response.complete) return;
-          res.destroy();
-          done();
-        });
-      },
-    );
-    upstream.on("error", (error) => {
-      if (!res.headersSent) {
-        res.writeHead(502, { "content-type": "application/json" });
-        res.end(JSON.stringify({ type: "error", error: { type: "api_error", message: `costmaxxing proxy: ${error.message}` } }));
-      } else res.destroy();
-      done();
-    });
-    res.on("close", () => {
-      if (!res.writableFinished) upstream.destroy();
-    });
-    req.pipe(upstream);
-  });
-  await new Promise<void>((resolve) => server.listen(options.port ?? 0, options.host ?? "127.0.0.1", resolve));
-  const { port } = server.address() as AddressInfo;
   return {
-    url: `http://127.0.0.1:${port}`,
-    port,
+    forward(req: IncomingMessage, res: ServerResponse, { target: url, harness, user }: Forward): void {
+      inFlight++;
+      let settled = false;
+      const done = () => {
+        if (settled) return;
+        settled = true;
+        inFlight--;
+        if (inFlight === 0) wake?.();
+      };
+      const target = new URL(url);
+      const sessionHeader = req.headers["x-claude-code-session-id"] ?? req.headers["session-id"];
+      const session = typeof sessionHeader === "string" && sessionHeader ? sessionHeader : options.session;
+      const headers = Object.fromEntries(Object.entries(req.headers).filter(([name]) => !name.startsWith("x-costmaxxing-")));
+      const https = target.protocol === "https:";
+      const upstream = (https ? httpsRequest : httpRequest)(
+        target,
+        { method: req.method, headers: { ...headers, host: target.host }, agent: https ? agent : undefined },
+        (response) => {
+          res.writeHead(response.statusCode ?? 502, response.statusMessage, response.headers);
+          res.flushHeaders();
+          const meter = meterResponse(response.headers, (usage) => {
+            if ((response.statusCode ?? 500) >= 400) return;
+            const requestId = response.headers["request-id"];
+            options.onRecord({
+              id: (typeof requestId === "string" ? requestId : undefined) ?? usage.id ?? `${session}:${Date.now()}`,
+              harness,
+              model: usage.model,
+              time: Date.now(),
+              session,
+              subagent: false,
+              tokens: usage.tokens,
+              ...(user ? { user } : {}),
+            });
+          });
+          response.on("data", (chunk: Buffer) => {
+            res.write(chunk);
+            meter.write(chunk);
+          });
+          response.on("end", async () => {
+            res.end();
+            await meter.end();
+            done();
+          });
+          response.on("close", () => {
+            if (response.complete) return;
+            res.destroy();
+            done();
+          });
+        },
+      );
+      upstream.on("error", (error) => {
+        if (!res.headersSent) {
+          res.writeHead(502, { "content-type": "application/json" });
+          res.end(JSON.stringify({ type: "error", error: { type: "api_error", message: `costmaxxing proxy: ${error.message}` } }));
+        } else res.destroy();
+        done();
+      });
+      res.on("close", () => {
+        if (!res.writableFinished) upstream.destroy();
+      });
+      req.pipe(upstream);
+    },
     async drain(timeoutMs: number): Promise<void> {
       if (inFlight === 0) return;
       await Promise.race([
@@ -158,10 +158,42 @@ export async function startProxy(options: ProxyOptions) {
         new Promise<void>((resolve) => setTimeout(resolve, timeoutMs).unref()),
       ]);
     },
-    close(): Promise<void> {
+    destroy(): void {
       agent.destroy();
+    },
+  };
+}
+
+export async function listen(handler: RequestListener, port = 0, host = "127.0.0.1") {
+  const server = createServer(handler);
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(port, host, resolve);
+  });
+  const bound = (server.address() as AddressInfo).port;
+  return {
+    url: `http://${host === "0.0.0.0" ? "127.0.0.1" : host}:${bound}`,
+    close(): Promise<void> {
       server.closeAllConnections();
       return new Promise((resolve) => server.close(() => resolve()));
+    },
+  };
+}
+
+export async function startProxy(options: {
+  harness: Harness;
+  session: string;
+  route: (req: IncomingMessage) => string;
+  onRecord: (record: RequestRecord) => void;
+}) {
+  const proxy = createProxy(options);
+  const server = await listen((req, res) => proxy.forward(req, res, { target: options.route(req), harness: options.harness }));
+  return {
+    url: server.url,
+    drain: proxy.drain,
+    async close(): Promise<void> {
+      proxy.destroy();
+      await server.close();
     },
   };
 }

@@ -103,7 +103,7 @@ export function renderTerminal(report: Report, options: TerminalOptions): string
         {
           segments: [
             { text: usd(row.alt).padEnd(altWidth + 2) },
-            { text: savingsText(row.price, row.alt), style: s.green },
+            { text: savingsText(row.price, row.alt), style: row.price >= row.alt ? s.green : s.dim },
           ],
         },
       ];

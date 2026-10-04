@@ -39,7 +39,7 @@ const COMMON = {
   help: { type: "boolean", short: "h" },
 } satisfies ParseArgsConfig["options"];
 
-export const interactive = () => Boolean(process.stdout.isTTY) && !process.env.CI;
+const interactive = () => Boolean(process.stdout.isTTY) && !process.env.CI;
 
 function command(): string {
   return process.env.npm_command === "exec" ? "npx costmaxxing" : "costmaxxing";

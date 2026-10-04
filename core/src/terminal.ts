@@ -55,30 +55,22 @@ export function renderTerminal(report: Report, options: TerminalOptions): string
   const hero = heroText(report);
   const out: string[] = [s.bold(titleText(report)), ""];
 
-  const boxLines: Segment[][] = [
-    [{ text: hero.headline, style: s.bold }],
-    ...(hero.detail ? [[{ text: hero.detail, style: s.dim }]] : []),
-    [],
-    [{ text: hero.figures.join("     "), style: (t) => s.bold(s.green(t)) }],
-    [],
-    [{ text: hero.window }],
-    ...(hero.seats ? [[{ text: hero.seats }]] : []),
-    [{ text: hero.closer, style: s.bold }],
+  const boxLines: Segment[] = [
+    { text: hero.headline, style: s.bold },
+    ...(hero.detail ? [{ text: hero.detail, style: s.dim }] : []),
+    { text: "" },
+    { text: hero.figures.join("     "), style: (t: string) => s.bold(s.green(t)) },
+    { text: "" },
+    { text: hero.window },
+    ...(hero.seats ? [{ text: hero.seats }] : []),
+    { text: hero.closer, style: s.bold },
   ];
-  const inner = Math.min(
-    Math.max(...boxLines.map((line) => line.reduce((n, seg) => n + seg.text.length, 0))),
-    Math.max(40, options.width - 6),
-  );
-  const wrapped = boxLines.flatMap((line) => {
-    const seg = line[0];
-    if (!seg) return [[] as Segment[]];
-    return wrapText(seg.text, inner).map((text) => [{ text, style: seg.style }]);
-  });
+  const inner = Math.min(Math.max(...boxLines.map((line) => line.text.length)), Math.max(40, options.width - 6));
+  const wrapped = boxLines.flatMap((line) => wrapText(line.text, inner).map((text) => ({ text, style: line.style })));
   out.push(s.dim(`╭${"─".repeat(inner + 4)}╮`), s.dim(`│${" ".repeat(inner + 4)}│`));
   for (const line of wrapped) {
-    const text = line.map((seg) => (seg.style ? seg.style(seg.text) : seg.text)).join("");
-    const pad = " ".repeat(inner - line.reduce((n, seg) => n + seg.text.length, 0));
-    out.push(`${s.dim("│")}  ${text}${pad}  ${s.dim("│")}`);
+    const text = line.style && line.text ? line.style(line.text) : line.text;
+    out.push(`${s.dim("│")}  ${text}${" ".repeat(inner - line.text.length)}  ${s.dim("│")}`);
   }
   out.push(s.dim(`│${" ".repeat(inner + 4)}│`), s.dim(`╰${"─".repeat(inner + 4)}╯`));
 

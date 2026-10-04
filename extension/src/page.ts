@@ -1,10 +1,8 @@
-import { renderHtml } from "@costmaxxing/core";
+import { escapeHtml as escape, renderHtml } from "@costmaxxing/core";
 import { teamReport, type TeamResult } from "./team.ts";
 
 const root = document.getElementById("root");
 const full = document.body.dataset.page === "report";
-
-const escape = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 function message(result: Exclude<TeamResult, { kind: "report" }>): string {
   switch (result.kind) {

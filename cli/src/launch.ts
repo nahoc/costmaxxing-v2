@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 import type { IncomingMessage } from "node:http";
 import { constants, homedir } from "node:os";
 import { join } from "node:path";
-import { buildReport, plural, usd, type PriceBook, type RequestRecord } from "@costmaxxing/core";
+import { buildReport, plural, savingsText, usd, type PriceBook, type RequestRecord } from "@costmaxxing/core";
 import { parse } from "smol-toml";
 import { loadConfig } from "./config.ts";
 import { prices } from "./prices.ts";
@@ -50,7 +50,7 @@ function summary(records: RequestRecord[], book: PriceBook): string {
   const now = Date.now();
   const report = buildReport({ dataset: { kind: "logs", records, days: 3650, now }, book });
   const { hero } = report;
-  return `costmaxxing · ${plural(report.requests, "request")} · ${plural(report.tokens, "token")} · ${usd(hero.price)} at API prices, ${usd(hero.alt)} on ${hero.name} (${usd(hero.price - hero.alt)} savings)`;
+  return `costmaxxing · ${plural(report.requests, "request")} · ${plural(report.tokens, "token")} · ${usd(hero.price)} at API prices, ${usd(hero.alt)} on ${hero.name} (${savingsText(hero.price, hero.alt)})`;
 }
 
 export async function launch(agent: "claude" | "codex", args: string[]): Promise<void> {

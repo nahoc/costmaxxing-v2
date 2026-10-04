@@ -35,8 +35,11 @@ async function eachLine(files: { path: string; size: number }[], reader: (path: 
       if (size < LARGE) {
         for (const line of (await readFile(path, "utf8").catch(() => "")).split("\n")) onLine(line);
       } else {
-        const lines = createInterface({ input: createReadStream(path), crlfDelay: Number.POSITIVE_INFINITY });
-        for await (const line of lines) onLine(line);
+        try {
+          for await (const line of createInterface({ input: createReadStream(path), crlfDelay: Number.POSITIVE_INFINITY })) {
+            onLine(line);
+          }
+        } catch {}
       }
     }
   };

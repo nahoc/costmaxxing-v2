@@ -69,51 +69,53 @@ function codexTokens(usage: Json): Tokens {
 
 const CODEX_TYPES = ['"token_usage_record"', '"turn_context"', '"session_meta"', '"token_count"'];
 
-export function parseCodexLines(lines: Iterable<string>): RequestRecord[] {
+export function codexParser() {
   let session = "";
   let model = "unknown";
   let lastTotal = 0;
   const records: RequestRecord[] = [];
-  for (const line of lines) {
-    if (!CODEX_TYPES.some((type) => line.includes(type))) continue;
-    const o = parseObject(line);
-    const payload = obj(o?.payload);
-    if (!o || !payload) continue;
-    const time = Date.parse(str(o.timestamp) ?? "");
-    if (o.type === "session_meta") {
-      session = str(payload.id) ?? session;
-    } else if (o.type === "turn_context") {
-      model = str(payload.model) ?? model;
-    } else if (o.type === "token_usage_record") {
-      const usage = obj(payload.usage);
-      const id = str(payload.response_id);
-      if (!usage || !id || Number.isNaN(time)) continue;
-      lastTotal = Number.POSITIVE_INFINITY;
-      records.push({
-        id,
-        harness: "Codex",
-        model: str(payload.model) ?? model,
-        time,
-        session: str(payload.session_id) ?? session,
-        subagent: false,
-        tokens: codexTokens(usage),
-      });
-    } else if (o.type === "event_msg" && payload.type === "token_count") {
-      const info = obj(payload.info);
-      const usage = obj(info?.last_token_usage);
-      const total = num(obj(info?.total_token_usage)?.total_tokens);
-      if (!usage || total <= lastTotal || Number.isNaN(time)) continue;
-      lastTotal = total;
-      records.push({
-        id: `${session}:${total}`,
-        harness: "Codex",
-        model,
-        time,
-        session,
-        subagent: false,
-        tokens: codexTokens(usage),
-      });
-    }
-  }
-  return records;
+  return {
+    records,
+    line(line: string): void {
+      if (!CODEX_TYPES.some((type) => line.includes(type))) return;
+      const o = parseObject(line);
+      const payload = obj(o?.payload);
+      if (!o || !payload) return;
+      const time = Date.parse(str(o.timestamp) ?? "");
+      if (o.type === "session_meta") {
+        session = str(payload.id) ?? session;
+      } else if (o.type === "turn_context") {
+        model = str(payload.model) ?? model;
+      } else if (o.type === "token_usage_record") {
+        const usage = obj(payload.usage);
+        const id = str(payload.response_id);
+        if (!usage || !id || Number.isNaN(time)) return;
+        lastTotal = Number.POSITIVE_INFINITY;
+        records.push({
+          id,
+          harness: "Codex",
+          model: str(payload.model) ?? model,
+          time,
+          session: str(payload.session_id) ?? session,
+          subagent: false,
+          tokens: codexTokens(usage),
+        });
+      } else if (o.type === "event_msg" && payload.type === "token_count") {
+        const info = obj(payload.info);
+        const usage = obj(info?.last_token_usage);
+        const total = num(obj(info?.total_token_usage)?.total_tokens);
+        if (!usage || total <= lastTotal || Number.isNaN(time)) return;
+        lastTotal = total;
+        records.push({
+          id: `${session}:${total}`,
+          harness: "Codex",
+          model,
+          time,
+          session,
+          subagent: false,
+          tokens: codexTokens(usage),
+        });
+      }
+    },
+  };
 }

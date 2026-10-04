@@ -57,10 +57,13 @@ export function seatText(line: SeatLine): string {
 export function heroText(report: Report) {
   const { hero } = report;
   const period = report.recent ? `The last ${report.days} days` : `These ${report.days} days`;
+  const costsMore = hero.year < 0;
   return {
-    headline: `Switch to ${hero.name} and potentially save:`,
+    headline: costsMore ? `Switching to ${hero.name} would cost more:` : `Switch to ${hero.name} and potentially save:`,
     detail: hero.detail,
-    figures: [`${usd(hero.year)} / year`, `${usd(hero.month)} / month`, `${percent(hero.percent)} savings`],
+    figures: costsMore
+      ? [`${usd(-hero.year)} / year more`, `${usd(-hero.month)} / month more`, `${percent(-hero.percent)} more`]
+      : [`${usd(hero.year)} / year`, `${usd(hero.month)} / month`, `${percent(hero.percent)} savings`],
     window: `${period} would've cost: ${usd(hero.alt)} on ${hero.name} instead of ${usd(hero.price)}`,
     seats: report.seats && seatText(report.seats),
     closer: "What will you do when the subsidies end?",

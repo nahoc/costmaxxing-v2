@@ -149,6 +149,7 @@ test("import: explains how to get the CSV and when dates are missing", async () 
   const text = (await run(["import", undated, "--offline", "--from", "2026-09-01", "--to", "2026-09-30"], env)).stdout;
   assert.match(text, /^costmaxxing · 2026-09-01 to 2026-09-30 · 3 users · 20 requests/);
   assert.match(text, /\n {2}costmaxxing import <csv> --seats premium=N,standard=N/);
+  assert.match((await run(["import", undated, "--offline", "--from", "2026-13-45", "--to", "2026-13-46"], env)).stderr, /--from and --to take real dates/);
   assert.match((await run(["import", undated, "--seats", "gold=1", "--from", "2026-09-01", "--to", "2026-09-30"], env)).stderr, /--seats takes premium=N,standard=N/);
 });
 

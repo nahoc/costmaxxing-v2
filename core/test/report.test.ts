@@ -76,8 +76,8 @@ test("logs report: totals, window, sessions, and the hero against the Boundless 
   near(report.hero.alt, ALT);
   assert.equal(report.hero.name, "open-weight models");
   assert.equal(report.hero.detail, "GLM-5.3 for hard tasks · GLM-5.3 Flash for mid · DeepSeek V4.1 Flash for grunt work");
-  near(report.hero.month, ((PRICE - ALT) / 10) * 30);
-  near(report.hero.year, ((PRICE - ALT) / 10) * 365);
+  near(report.hero.month, PRICE - ALT);
+  near(report.hero.year, ((PRICE - ALT) / 30) * 365);
   near(report.hero.percent, (PRICE - ALT) / PRICE);
   assert.deepEqual(
     report.byHarness?.map((row) => [row.label, row.requests]),
@@ -99,14 +99,15 @@ test("unpriced models are listed with request counts and left out of both sides"
   assert.ok(!report.models.some((row) => row.label === "mystery-model"));
 });
 
-test("forecast: 7-day and 30-day averages, spread over the days with usage", () => {
+test("forecast: average daily cost over the last 7 and 30 days, × 30 and × 365", () => {
   const [week, month] = logs().forecast;
   assert.equal(week?.label, "7-day average");
   assert.equal(week?.days, 7);
   near(week?.perDay.price, (0.154 + 1.5 + 4) / 7);
-  assert.equal(month?.days, 10);
-  near(month?.month.price, (PRICE / 10) * 30);
-  near(month?.year.alt, (ALT / 10) * 365);
+  near(week?.year.price, ((0.154 + 1.5 + 4) / 7) * 365);
+  assert.equal(month?.label, "30-day average");
+  near(month?.month.price, PRICE);
+  near(month?.year.alt, (ALT / 30) * 365);
 });
 
 test("providers: the same plan at each provider, savings first, missing models last", () => {
@@ -154,7 +155,7 @@ test("config plan: subsidy line covers only the plan's harnesses", () => {
     plan: { name: "Claude Max", monthlyUsd: 200, harnesses: ["Claude Code"] },
   });
   assert.equal(report.seats?.kind, "plan");
-  near(report.seats?.worth, ((0.154 + 1.5 + 4) / 10) * 30);
+  near(report.seats?.worth, 0.154 + 1.5 + 4);
 });
 
 test("spend report: parses quoted cells and prices every row from token columns", () => {
@@ -217,4 +218,19 @@ test("seats: members export and --seats are exact, annual billing changes the ra
   const { worth, ...line } = report.seats ?? { worth: 0 };
   assert.deepEqual(line, { kind: "seats", premium: 1, standard: 3, estimated: false, monthly: 160 });
   near(worth, 1.793);
+});
+
+test("spend rows without an email don't count as users, and thousands separators parse", () => {
+  const csv = SPEND_CSV.replace("cy@example.com,c1,Cowork,claude-sonnet-5,1,1000,100", ',c1,Cowork,claude-sonnet-5,1,1000,100').replace(
+    "bob@example.com,b1,Claude Code,claude-haiku-4-5-20251001,4,40000,4000,0,0,u2,40000",
+    'bob@example.com,b1,Claude Code,claude-haiku-4-5-20251001,4,40000,"4,000",0,0,u2,"40,000"',
+  );
+  const report = buildReport({ dataset: { kind: "spend", rows: parseSpendReport(csv), from: "2026-09-02", to: "2026-10-01" }, book });
+  assert.equal(report.users, 2);
+  assert.deepEqual(
+    report.byUser?.map((row) => row.label),
+    ["ada@example.com", "bob@example.com", "(no email)"],
+  );
+  near(report.byUser?.[1]?.price, 0.06);
+  assert.equal(report.seats?.kind === "seats" && report.seats.premium + report.seats.standard, 2);
 });

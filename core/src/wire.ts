@@ -11,10 +11,10 @@ const FINAL_OPENAI = new Set(["response.completed", "response.incomplete", "resp
 
 function anthropicTokens(usage: Json, into: Partial<Tokens>): Partial<Tokens> {
   const t = { ...into };
-  if ("input_tokens" in usage) t.uncached = num(usage.input_tokens);
-  if ("output_tokens" in usage) t.output = num(usage.output_tokens);
-  if ("cache_read_input_tokens" in usage) t.cacheRead = num(usage.cache_read_input_tokens);
-  if ("cache_creation_input_tokens" in usage) {
+  if (typeof usage.input_tokens === "number") t.uncached = num(usage.input_tokens);
+  if (typeof usage.output_tokens === "number") t.output = num(usage.output_tokens);
+  if (typeof usage.cache_read_input_tokens === "number") t.cacheRead = num(usage.cache_read_input_tokens);
+  if (typeof usage.cache_creation_input_tokens === "number") {
     const writes = num(usage.cache_creation_input_tokens);
     const split = obj(usage.cache_creation);
     t.write1h = Math.min(writes, split ? num(split.ephemeral_1h_input_tokens) : (t.write1h ?? 0));
@@ -41,6 +41,7 @@ export function wireMeter() {
   let id: string | undefined;
   let partial: Partial<Tokens> = {};
   let final: Tokens | undefined;
+  let terminal = false;
   return {
     event(value: unknown): void {
       const o = obj(value);
@@ -54,6 +55,7 @@ export function wireMeter() {
       if (o.type === "message_delta") partial = anthropicTokens(obj(o.usage) ?? {}, partial);
       if (o.type === "message_stop" || (o.type === "message" && obj(o.usage))) {
         final = { uncached: 0, output: 0, cacheRead: 0, write5m: 0, write1h: 0, ...partial };
+        terminal = true;
       }
       const response = typeof o.type === "string" && FINAL_OPENAI.has(o.type) ? obj(o.response) : o.object === "response" ? o : undefined;
       const chat = o.object === "chat.completion" || o.object === "chat.completion.chunk" ? o : undefined;
@@ -63,7 +65,11 @@ export function wireMeter() {
         model = str(done.model) ?? model;
         id = str(done.id) ?? id;
         final = openaiTokens(usage);
+        terminal = o.object !== "chat.completion.chunk";
       }
+    },
+    terminal(): boolean {
+      return terminal;
     },
     result(): WireUsage | undefined {
       return final && model ? { id, model, tokens: final } : undefined;

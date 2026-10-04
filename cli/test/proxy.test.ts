@@ -65,6 +65,7 @@ test("forwards requests and gzip SSE responses unchanged and records usage by re
     const response = await call(`${url}/v1/messages?beta=true`, '{"stream":true}', {
       authorization: "Bearer secret",
       "x-claude-code-session-id": "cc-session",
+      "x-costmaxxing-token": "gateway-token",
     });
     assert.equal(response.status, 200);
     assert.deepEqual(response.body, compressed);
@@ -74,6 +75,7 @@ test("forwards requests and gzip SSE responses unchanged and records usage by re
   assert.equal(upstream.seen[0]?.url, "/base/v1/messages?beta=true");
   assert.equal(upstream.seen[0]?.body, '{"stream":true}');
   assert.equal(upstream.seen[0]?.headers.authorization, "Bearer secret");
+  assert.equal(upstream.seen[0]?.headers["x-costmaxxing-token"], "gateway-token", "a chained gateway still gets its token");
   assert.equal(records.length, 1);
   const [record] = records;
   assert.equal(record?.id, "req_abc");

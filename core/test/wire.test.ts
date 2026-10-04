@@ -84,3 +84,25 @@ test("sseData: events split across chunks, CRLF, and non-JSON data", () => {
   assert.deepEqual(second.events, [{ b: 2 }]);
   assert.equal(second.rest, "");
 });
+
+test("null usage fields in message_delta keep the counts from message_start", () => {
+  const usage = feed([
+    {
+      type: "message_start",
+      message: { id: "m", model: "claude-opus-5-5", usage: { input_tokens: 10, cache_read_input_tokens: 5000, cache_creation_input_tokens: 300, output_tokens: 1 } },
+    },
+    { type: "message_delta", usage: { input_tokens: null, cache_read_input_tokens: null, cache_creation_input_tokens: null, output_tokens: 9 } },
+    { type: "message_stop" },
+  ]);
+  assert.deepEqual(usage?.tokens, { uncached: 10, output: 9, cacheRead: 5000, write5m: 300, write1h: 0 });
+});
+
+test("chat completion chunks are not final until the stream ends", () => {
+  const meter = wireMeter();
+  meter.event({ object: "chat.completion.chunk", id: "c", model: "glm", usage: { prompt_tokens: 10, completion_tokens: 1 } });
+  assert.equal(meter.terminal(), false);
+  meter.event({ object: "chat.completion.chunk", id: "c", model: "glm", usage: { prompt_tokens: 10, completion_tokens: 50 } });
+  assert.equal(meter.result()?.tokens.output, 50);
+  meter.event({ type: "response.completed", response: { id: "r", model: "gpt-6-sol", usage: { input_tokens: 1, output_tokens: 1 } } });
+  assert.equal(meter.terminal(), true);
+});

@@ -50,11 +50,14 @@ export function gatewayHandler(options: {
         res.end(JSON.stringify({ type: "error", error: { type: "authentication_error", message: "costmaxxing gateway: missing or wrong x-costmaxxing-token" } }));
         return;
       }
+      const user = header(req, "x-costmaxxing-user") ?? "unknown";
+      delete req.headers["x-costmaxxing-token"];
+      delete req.headers["x-costmaxxing-user"];
       const base = route === "anthropic" ? upstreams.anthropic : header(req, "chatgpt-account-id") ? upstreams.chatgpt : upstreams.openai;
       options.forward(req, res, {
         target: joinUrl(base, url.slice(route.length + 1) || "/"),
         harness: route === "anthropic" ? "Claude Code" : "Codex",
-        user: header(req, "x-costmaxxing-user") ?? "unknown",
+        user,
       });
       return;
     }

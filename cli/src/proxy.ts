@@ -26,9 +26,9 @@ function meterResponse(headers: IncomingHttpHeaders, onUsage: (usage: WireUsage)
   let mode: "sse" | "json" | undefined = type.includes("event-stream") ? "sse" : type.includes("json") ? "json" : undefined;
   let buffer = "";
   let reported = false;
-  const report = () => {
+  const report = (final: boolean) => {
     const usage = meter.result();
-    if (usage && !reported) {
+    if (usage && !reported && (final || meter.terminal())) {
       reported = true;
       onUsage(usage);
     }
@@ -44,7 +44,7 @@ function meterResponse(headers: IncomingHttpHeaders, onUsage: (usage: WireUsage)
       const { events, rest } = sseData(buffer);
       buffer = rest;
       for (const event of events) meter.event(event);
-      report();
+      report(false);
     }
   };
   const decode = DECODERS[headers["content-encoding"] ?? ""]?.();
@@ -68,7 +68,7 @@ function meterResponse(headers: IncomingHttpHeaders, onUsage: (usage: WireUsage)
           meter.event(JSON.parse(buffer));
         } catch {}
       }
-      report();
+      report(true);
     },
   };
 }
@@ -101,11 +101,10 @@ export function createProxy(options: { session: string; onRecord: (record: Reque
       const target = new URL(url);
       const sessionHeader = req.headers["x-claude-code-session-id"] ?? req.headers["session-id"];
       const session = typeof sessionHeader === "string" && sessionHeader ? sessionHeader : options.session;
-      const headers = Object.fromEntries(Object.entries(req.headers).filter(([name]) => !name.startsWith("x-costmaxxing-")));
       const https = target.protocol === "https:";
       const upstream = (https ? httpsRequest : httpRequest)(
         target,
-        { method: req.method, headers: { ...headers, host: target.host }, agent: https ? agent : undefined },
+        { method: req.method, headers: { ...req.headers, host: target.host }, agent: https ? agent : undefined },
         (response) => {
           res.writeHead(response.statusCode ?? 502, response.statusMessage, response.headers);
           res.flushHeaders();

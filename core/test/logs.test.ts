@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { claudeCodeParser, parseCodexLines, type RequestRecord } from "../src/index.ts";
+import { claudeCodeParser, codexParser, type RequestRecord } from "../src/index.ts";
 import { claudeLine, codexLine, codexUsage, NOW, tokenCount } from "./fixtures.ts";
+
+function parseCodexLines(lines: string[]): RequestRecord[] {
+  const parser = codexParser();
+  for (const line of lines) parser.line(line);
+  return parser.records;
+}
 
 function parseAll(lines: [string, boolean][]): RequestRecord[] {
   const parse = claudeCodeParser();

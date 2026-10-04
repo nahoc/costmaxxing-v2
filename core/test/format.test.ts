@@ -107,3 +107,15 @@ test("team report renders by user and by product, and HTML escapes user data", (
   assert.ok(html.includes("By product") && html.includes("Providers") && !html.includes("Forecast"));
   assert.ok(renderHtml(report, { full: true }).includes("Forecast"));
 });
+
+test("a comparison that costs more says so instead of showing negative savings", () => {
+  const report = buildReport({
+    dataset: { kind: "logs", records, days: 30, now: NOW },
+    book,
+    vs: ["anthropic/claude-fable-5-1"],
+  });
+  const text = renderTerminal(report, { color: false, width: 120, command: "costmaxxing" });
+  assert.ok(text.includes("Switching to Claude Fable 5.1 would cost more:"));
+  assert.match(text, /\$\S+ \/ year more {5}\$\S+ \/ month more {5}\d+% more/);
+  assert.ok(!/-\$|-<\$|-\d+%/.test(text));
+});

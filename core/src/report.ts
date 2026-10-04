@@ -197,30 +197,23 @@ export function buildReport(options: ReportOptions): Report {
   ];
 
   let days: number;
-  let span: number;
   let forecast: ForecastRow[];
   if (dataset.kind === "spend") {
     days = inclusiveDays(dataset.from, dataset.to);
-    span = days;
     forecast = [pace(`${days}-day average`, days, totals(priced))];
   } else {
     days = dataset.days;
-    let earliest = dataset.now;
-    for (const p of priced) earliest = Math.min(earliest, p.item.time ?? earliest);
-    const elapsed = (dataset.now - earliest) / DAY;
     forecast = [...new Set([Math.min(7, days), days])].map((window) => {
       const since = dataset.now - window * DAY;
-      const recent = priced.filter((p) => (p.item.time ?? 0) >= since);
-      return pace(`${window}-day average`, Math.max(1, Math.min(window, elapsed)), totals(recent));
+      return pace(`${window}-day average`, window, totals(priced.filter((p) => (p.item.time ?? 0) >= since)));
     });
-    span = forecast.at(-1)!.days;
   }
 
   const window = totals(priced);
   const pacing = forecast.at(-1)!;
   const harnesses = dataset.kind === "logs" ? options.plan?.harnesses : undefined;
   const covered = harnesses ? priced.filter((p) => p.item.harness && harnesses.includes(p.item.harness)) : priced;
-  const worth = (sum(covered, (p) => p.price) / span) * 30;
+  const worth = (sum(covered, (p) => p.price) / days) * 30;
   let seats: SeatLine | undefined;
   if (options.plan) {
     seats = { kind: "plan", name: options.plan.name, monthly: options.plan.monthlyUsd, worth };
@@ -236,8 +229,8 @@ export function buildReport(options: ReportOptions): Report {
     };
   }
 
-  const users = new Set(all.flatMap((item) => item.user ?? []));
-  const sessions = new Set(all.flatMap((item) => item.session ?? []));
+  const users = new Set(all.flatMap((item) => item.user || []));
+  const sessions = new Set(all.flatMap((item) => item.session || []));
   return {
     kind: dataset.kind,
     recent: dataset.kind === "logs" || dataset.recent === true,
@@ -258,7 +251,7 @@ export function buildReport(options: ReportOptions): Report {
     },
     seats,
     byHarness: dataset.kind === "logs" ? table(priced, (p) => p.item.harness) : undefined,
-    byUser: users.size > 0 ? table(priced, (p) => p.item.user) : undefined,
+    byUser: users.size > 0 ? table(priced, (p) => p.item.user || "(no email)") : undefined,
     byProduct: dataset.kind === "spend" ? table(priced, (p) => p.item.product) : undefined,
     models: table(priced, (p) => p.label),
     forecast,

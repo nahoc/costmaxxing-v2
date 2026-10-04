@@ -82,7 +82,10 @@ function parseSeats(value: string): SeatCount {
   return seats;
 }
 
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
+function isDate(text: string): boolean {
+  const time = Date.parse(`${text}T00:00:00Z`);
+  return /^\d{4}-\d{2}-\d{2}$/.test(text) && !Number.isNaN(time) && new Date(time).toISOString().startsWith(text);
+}
 
 async function importCommand(args: string[]): Promise<void> {
   const { values, positionals } = parseArgs({
@@ -106,8 +109,9 @@ async function importCommand(args: string[]): Promise<void> {
   }
   const period =
     values.from || values.to ? { from: values.from ?? "", to: values.to ?? "" } : spendReportPeriod(basename(file));
-  if (!period || !DATE.test(period.from) || !DATE.test(period.to) || period.from > period.to) {
-    throw new Error("the CSV has no dates in its name. Pass --from YYYY-MM-DD --to YYYY-MM-DD");
+  if (!period) throw new Error("the CSV has no dates in its name. Pass --from YYYY-MM-DD --to YYYY-MM-DD");
+  if (!isDate(period.from) || !isDate(period.to) || period.from > period.to) {
+    throw new Error("--from and --to take real dates as YYYY-MM-DD, with --from on or before --to");
   }
   if (values.billing && values.billing !== "monthly" && values.billing !== "annual") {
     throw new Error(`--billing takes monthly or annual, not ${values.billing}`);
@@ -147,7 +151,7 @@ async function main(argv: string[]): Promise<void> {
     case "web": {
       const { values } = parseArgs({ args: rest, options: { ...COMMON, days: { type: "string" }, port: { type: "string" } } });
       if (values.help) return void process.stdout.write(HELP);
-      return web({ ...values, open: interactive() });
+      return web({ ...values, open: interactive() && !values.json });
     }
     case "serve": {
       const { values } = parseArgs({

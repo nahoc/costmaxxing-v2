@@ -44,7 +44,7 @@ export function parseSpendReport(text: string): SpendRow[] {
   const missing = SPEND_COLUMNS.filter((name) => !header.includes(name));
   if (missing.length > 0) throw new Error(`not a claude.ai spend report (missing ${missing.join(", ")})`);
   const cell = (row: string[], name: (typeof SPEND_COLUMNS)[number]) => row[header.indexOf(name)] ?? "";
-  const count = (row: string[], name: (typeof SPEND_COLUMNS)[number]) => Number(cell(row, name)) || 0;
+  const count = (row: string[], name: (typeof SPEND_COLUMNS)[number]) => Number(cell(row, name).replaceAll(",", "")) || 0;
   return rows.map((row) => ({
     user: cell(row, "user_email"),
     product: cell(row, "product"),

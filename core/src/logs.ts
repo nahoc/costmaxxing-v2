@@ -1,6 +1,24 @@
 import { num, obj, parseObject, str, type Json } from "./json.ts";
 import type { RequestRecord, Tokens } from "./types.ts";
 
+export function parseRecord(line: string): RequestRecord | undefined {
+  const o = parseObject(line);
+  const t = obj(o?.tokens);
+  const { id, harness, model, time, session } = o ?? {};
+  if (!t || typeof id !== "string" || typeof model !== "string" || typeof time !== "number") return undefined;
+  if ((harness !== "Claude Code" && harness !== "Codex") || typeof session !== "string") return undefined;
+  return {
+    id,
+    harness,
+    model,
+    time,
+    session,
+    subagent: o?.subagent === true,
+    user: str(o?.user),
+    tokens: { uncached: num(t.uncached), output: num(t.output), cacheRead: num(t.cacheRead), write5m: num(t.write5m), write1h: num(t.write1h) },
+  };
+}
+
 export function claudeCodeParser(): (line: string, subagent: boolean) => RequestRecord | undefined {
   const seen = new Set<string>();
   return (line, subagent) => {

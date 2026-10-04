@@ -87,6 +87,8 @@ costmaxxing connect <url> --token T [--user NAME]
 
 Runs that aren't interactive, such as runs with `--json`, in CI, or with output piped to a file, never prompt and never open a browser.
 
+`serve` speaks plain HTTP, and every request through it carries the sender's API credentials. Run it on a network you trust, or put it behind a proxy that adds TLS.
+
 ## Where the numbers come from
 
 costmaxxing reads these sources:
@@ -112,7 +114,7 @@ cost = (uncached input × input + output × output + cache reads × cache_read
 - **Spend report rows.** Each row covers many requests. costmaxxing prices the average request in the row, then multiplies by the request count. The spend columns are ignored, because usage that seats cover shows as $0 there.
 - **Unpriced models.** A model with no price is listed by name with its request count. It is left out of both sides of every comparison, never counted as $0.
 - **Same token counts.** Every comparison assumes the other model uses the same number of tokens for the same work. Real token counts differ between models and tokenizers.
-- **Forecast.** The 7-day and 30-day averages are daily cost over the window, or over the days since your first request if that is shorter. A month is 30 days and a year is 365.
+- **Forecast.** The 7-day average is the cost of the last 7 days divided by 7. The 30-day average is the cost of the last 30 days divided by 30. A month is 30 days and a year is 365.
 
 ## What it compares against
 

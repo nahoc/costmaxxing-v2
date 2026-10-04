@@ -1,6 +1,6 @@
 import { comparisonText, count, escapeHtml as esc, exactUsd, percent, seatText, usd } from "@costmaxxing/core";
 import type { Example } from "./example.ts";
-import { favicon, icon, SPRITE, type IconName } from "./icons.ts";
+import { icon, SPRITE, type IconName } from "./icons.ts";
 
 export interface Install {
   href: string;
@@ -174,7 +174,15 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
 <title>costmaxxing · how much your team saves on open-weight models</title>
 <meta name="description" content="How much can your team save by moving from Anthropic to open-weight models? One click prices your claude.ai team's real usage, in your browser." />
 <meta name="theme-color" content="#2e1065" />
-<link rel="icon" href="${favicon()}" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://costmaxxing.dev/" />
+<meta property="og:title" content="costmaxxing" />
+<meta property="og:description" content="How much can your team save by moving from Anthropic to open-weight models? One click prices your claude.ai team's real usage, in your browser." />
+<meta property="og:image" content="https://costmaxxing.dev/og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" type="image/png" href="favicon.png" />
 <link rel="preload" href="fonts/jersey-15.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="fonts/geist-pixel.woff2" as="font" type="font/woff2" crossorigin />
 <script>if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&!sessionStorage.getItem("booted")&&innerWidth>=1100)document.documentElement.classList.add("booting")</script>

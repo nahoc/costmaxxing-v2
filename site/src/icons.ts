@@ -1,3 +1,5 @@
+import { APP_ICON, type Grid } from "./app-icon.ts";
+
 type Ink = "b" | "w" | undefined;
 
 class Bitmap {
@@ -56,16 +58,6 @@ function page(): Bitmap {
   return b.fill(14, 2, 14, 6).fill(14, 6, 18, 6).set(15, 3).set(16, 4).set(17, 5).fill(15, 5, 16, 5, "w").set(15, 4, "w");
 }
 
-const computer = new Bitmap(24)
-  .box(4, 1, 19, 21)
-  .box(6, 3, 17, 12)
-  .fill(8, 6, 9, 11)
-  .fill(11, 8, 12, 11)
-  .fill(14, 10, 15, 11)
-  .fill(12, 16, 16, 16)
-  .fill(5, 22, 18, 22)
-  .fill(6, 23, 17, 23);
-
 const readMe = page().fill(8, 9, 15, 9).fill(8, 11, 13, 11).fill(8, 13, 15, 13).fill(8, 15, 12, 15).fill(8, 17, 14, 17);
 
 const bill = page().art(9, 7, [
@@ -102,7 +94,14 @@ const floppy = new Bitmap(24)
   .fill(8, 15, 15, 15)
   .fill(8, 17, 13, 17);
 
-const logo = new Bitmap(16).fill(2, 3, 4, 13).fill(7, 6, 9, 13).fill(12, 9, 14, 13);
+function fromGrid(grid: Grid): Bitmap {
+  const b = new Bitmap(grid.length);
+  grid.forEach((row, y) => row.forEach((ink, x) => ink && b.set(x, y, ink === "i" ? "b" : "w")));
+  return b;
+}
+
+const logo = fromGrid(APP_ICON.small());
+const computer = fromGrid(APP_ICON.medium());
 
 const BITMAPS = { computer, readMe, bill, paint, floppy, logo };
 export type IconName = keyof typeof BITMAPS;
@@ -121,10 +120,6 @@ function dataUri(b: Bitmap, size: number): string {
   const paths = b.paths().replaceAll("currentColor", INK).replaceAll("var(--icon-paper,#fff)", "#fff");
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${b.size} ${b.size}" shape-rendering="crispEdges">${paths}</svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
-}
-
-export function favicon(): string {
-  return dataUri(new Bitmap(16).fill(0, 0, 15, 15, "w").fill(2, 3, 4, 13).fill(7, 6, 9, 13).fill(12, 9, 14, 13), 32);
 }
 
 const ARROW = [

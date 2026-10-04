@@ -1,4 +1,4 @@
-import { copyFile, cp, mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { build } from "esbuild";
 import { example } from "./src/example.ts";
 import { cursor } from "./src/icons.ts";
@@ -26,6 +26,7 @@ const script = await build({
 const css = `${await readFile(here("src/site.css"), "utf8")}\nbody { --cursor: ${cursor()}; }`;
 const zipSize = `${Math.round((await stat(zip)).size / 1024)}K`;
 
+await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 await cp(here("static/"), dist, { recursive: true });
 if (!store) await copyFile(zip, `${dist}costmaxxing-extension.zip`);

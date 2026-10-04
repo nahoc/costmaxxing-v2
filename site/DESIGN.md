@@ -138,6 +138,9 @@ Square everywhere except buttons, which carry gently rounded corners (12px), and
 ### Savings dialog (signature component)
 The system dialog carries the page's one question and its one action: the costmaxxing computer icon, the display-size question "How much can your team save by moving from Anthropic to open-weight models?", body copy, and the install button, right-aligned with the default ring. It has no secondary button.
 
+### App icon
+A compact computer whose screen charts the API price as a zebra-striped bar against two shorter solid bars for the open-weight prices. `site/src/app-icon.ts` draws it on three grids: 16 for the toolbar and favicon, 24 for the extension page and the site's dialog, and 64 (at 2×, 96px of artwork inside 128) for the store. `site/scripts/app-icon.ts` writes every PNG.
+
 ### Get Info
 Any figure in the Team Bill opens an Info window beside it that states the exact amount, its source, and its math. Escape or the close box sends it back into the figure.
 

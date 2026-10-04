@@ -80,6 +80,10 @@ Everything the Chrome Web Store developer dashboard asks for, in the order it as
 
 Click **Submit for Review**. Review time varies. After approval you have 30 days to publish if you chose deferred publishing.
 
+## Ship 1.0.1 with the new icon
+
+Version 1.0.0 went to review with the old green icon. Version 1.0.1 adds the purple pixel computer icon at every size. After 1.0.0 is approved, open the item, choose **Package**, upload the new `extension/costmaxxing-extension.zip`, replace the small promo tile with the current `extension/store/promo-small-440x280.png`, and submit again. The store icon comes from the zip.
+
 ## After approval
 
 Point the landing page's button at the listing:

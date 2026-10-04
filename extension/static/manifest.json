@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "costmaxxing",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "How much can your claude.ai team save by moving from Anthropic to open-weight models? One click for Owners, all in your browser.",
   "action": {
     "default_popup": "popup.html",

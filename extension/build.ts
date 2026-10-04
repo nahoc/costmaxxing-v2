@@ -1,6 +1,6 @@
 import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
-import { crc32, deflateRawSync, deflateSync } from "node:zlib";
+import { crc32, deflateRawSync } from "node:zlib";
 import { REPORT_CSS } from "@costmaxxing/core";
 import { build } from "esbuild";
 
@@ -15,41 +15,6 @@ body[data-page="popup"] { width: 760px; }
 .button:hover { background: rgba(127, 127, 127, 0.12); }
 .status { color: #6b6b6b; padding: 16px; font: 13px ui-sans-serif, system-ui, sans-serif; }
 `;
-
-function png(size: number): Buffer {
-  const bars = [0.78, 0.56, 0.34];
-  const raw = Buffer.alloc((size * 4 + 1) * size);
-  const radius = size * 0.22;
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const at = y * (size * 4 + 1) + 1 + x * 4;
-      const dx = Math.max(radius - x - 0.5, 0, x + 0.5 - (size - radius));
-      const dy = Math.max(radius - y - 0.5, 0, y + 0.5 - (size - radius));
-      if (dx * dx + dy * dy > radius * radius) continue;
-      const column = Math.floor(((x / size) - 0.18) / 0.22);
-      const inBar = column >= 0 && column < 3 && ((x / size) - 0.18) % 0.22 < 0.16 && y / size > 1 - 0.14 - bars[column]! * 0.86 && y / size < 0.86;
-      raw.set(inBar ? [108, 194, 135, 255] : [22, 22, 22, 255], at);
-    }
-  }
-  const chunk = (type: string, data: Buffer) => {
-    const body = Buffer.concat([Buffer.from(type), data]);
-    const length = Buffer.alloc(4);
-    length.writeUInt32BE(data.length);
-    const crc = Buffer.alloc(4);
-    crc.writeUInt32BE(crc32(body));
-    return Buffer.concat([length, body, crc]);
-  };
-  const header = Buffer.alloc(13);
-  header.writeUInt32BE(size, 0);
-  header.writeUInt32BE(size, 4);
-  header.set([8, 6, 0, 0, 0], 8);
-  return Buffer.concat([
-    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
-    chunk("IHDR", header),
-    chunk("IDAT", deflateSync(raw)),
-    chunk("IEND", Buffer.alloc(0)),
-  ]);
-}
 
 function zip(entries: { name: string; data: Buffer }[]): Buffer {
   const DOS_DATE_1980 = 0x21;
@@ -94,7 +59,7 @@ function zip(entries: { name: string; data: Buffer }[]): Buffer {
 }
 
 await rm(dist, { recursive: true, force: true });
-await mkdir(`${dist}icons`, { recursive: true });
+await mkdir(dist, { recursive: true });
 await build({
   entryPoints: ["page", "background"].map((name) => new URL(`src/${name}.ts`, import.meta.url).pathname),
   outdir: dist,
@@ -105,7 +70,6 @@ await build({
 });
 await cp(new URL("static/", import.meta.url).pathname, dist, { recursive: true });
 await writeFile(`${dist}page.css`, PAGE_CSS);
-for (const size of [16, 32, 48, 128]) await writeFile(`${dist}icons/${size}.png`, png(size));
 
 const files = (await readdir(dist, { recursive: true, withFileTypes: true }))
   .filter((entry) => entry.isFile())

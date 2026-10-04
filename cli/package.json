@@ -1,0 +1,17 @@
+{
+  "name": "costmaxxing",
+  "version": "1.0.0",
+  "description": "What your AI coding usage costs at API prices, and what it would cost on open-weight models",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "costmaxxing": "dist/costmaxxing.js" },
+  "files": ["dist"],
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "node build.ts"
+  },
+  "dependencies": {
+    "@costmaxxing/core": "*",
+    "smol-toml": "^1.9.0"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "costmaxxing-workspace",
+  "private": true,
+  "type": "module",
+  "workspaces": ["core", "cli", "extension"],
+  "scripts": {
+    "test": "node --test \"core/test/*.test.ts\" \"cli/test/*.test.ts\" \"extension/test/*.test.ts\"",
+    "typecheck": "tsc -p core && tsc -p cli && tsc -p extension",
+    "build": "npm run build -w cli && npm run build -w extension"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  }
+}

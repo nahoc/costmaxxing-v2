@@ -1,0 +1,90 @@
+import { altHeader, comparisonText, count, heroText, savingsText, titleText, unpricedText, usd } from "./format.ts";
+import type { Comparison, Report, Row } from "./report.ts";
+
+const escape = (text: string) =>
+  text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+export const REPORT_CSS = `
+.cmx { font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif; color: #1c1c1c; max-width: 1080px; margin: 0 auto; padding: 16px; }
+.cmx h1 { font-size: 13px; font-weight: 600; margin: 0 0 12px; }
+.cmx h2 { font-size: 13px; font-weight: 600; margin: 20px 0 6px; }
+.cmx .hero { border: 1px solid #d9d9d9; border-radius: 10px; padding: 14px 16px; }
+.cmx .hero p { margin: 2px 0; }
+.cmx .headline { font-weight: 600; }
+.cmx .muted { color: #6b6b6b; }
+.cmx .figures { display: flex; gap: 28px; margin: 10px 0 !important; font-size: 20px; font-weight: 650; color: #2f8a4a; font-variant-numeric: tabular-nums; }
+.cmx table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.cmx th { text-align: left; font-weight: 500; color: #6b6b6b; padding: 4px 8px 4px 0; white-space: nowrap; }
+.cmx td { padding: 3px 8px 3px 0; white-space: nowrap; }
+.cmx .num { text-align: right; }
+.cmx .save { color: #2f8a4a; }
+.cmx .bar { display: inline-block; width: 90px; height: 7px; border-radius: 4px; background: #ececec; overflow: hidden; vertical-align: middle; }
+.cmx .bar span { display: block; height: 100%; background: #6cc287; }
+@media (prefers-color-scheme: dark) {
+  .cmx { color: #e8e8e8; }
+  .cmx .hero { border-color: #3a3a3a; }
+  .cmx .muted, .cmx th { color: #9a9a9a; }
+  .cmx .figures, .cmx .save { color: #7ed69a; }
+  .cmx .bar { background: #333; }
+}
+`;
+
+export interface HtmlOptions {
+  full: boolean;
+}
+
+function table(report: Report, title: string, rows: Row[] | undefined): string {
+  if (!rows || rows.length === 0) return "";
+  const total = rows.reduce((n, row) => n + row.price, 0);
+  const body = rows
+    .map(
+      (row) => `<tr><td>${escape(row.label)}</td><td class="num">${count(row.requests)}</td><td class="num">${count(row.tokens)}</td><td class="num">${usd(row.price)}</td><td><span class="bar"><span style="width:${total > 0 ? ((row.price / total) * 100).toFixed(1) : 0}%"></span></span></td><td>${usd(row.alt)} <span class="save">${savingsText(row.price, row.alt)}</span></td></tr>`,
+    )
+    .join("");
+  return `<h2>${escape(title)}</h2><table><tr><th></th><th class="num">Requests</th><th class="num">Tokens</th><th class="num">Price</th><th>Share</th><th>${escape(altHeader(report))}</th></tr>${body}</table>`;
+}
+
+function comparisons(title: string, list: Comparison[]): string {
+  if (list.length === 0) return "";
+  const body = list
+    .map(
+      (c) =>
+        `<tr><td>${escape(c.name)}</td><td class="${c.kind === "priced" && c.savings >= 0 ? "save" : "muted"}">${escape(comparisonText(c))}</td></tr>`,
+    )
+    .join("");
+  return `<h2>${escape(title)}</h2><table>${body}</table>`;
+}
+
+export function renderHtml(report: Report, options: HtmlOptions): string {
+  const hero = heroText(report);
+  const parts = [
+    `<h1>${escape(titleText(report))}</h1>`,
+    `<section class="hero">`,
+    `<p class="headline">${escape(hero.headline)}</p>`,
+    hero.detail ? `<p class="muted">${escape(hero.detail)}</p>` : "",
+    `<p class="figures">${hero.figures.map((f) => `<span>${escape(f)}</span>`).join("")}</p>`,
+    `<p>${escape(hero.window)}</p>`,
+    hero.seats ? `<p>${escape(hero.seats)}</p>` : "",
+    `<p class="headline">${escape(hero.closer)}</p>`,
+    `</section>`,
+  ];
+  if (options.full) parts.push(table(report, "By harness", report.byHarness));
+  parts.push(table(report, "By user", report.byUser), table(report, "By product", report.byProduct));
+  if (options.full) {
+    const forecast = report.forecast
+      .map(
+        (row) =>
+          `<tr><td>${escape(row.label)}</td><td class="num">${usd(row.perDay.price)}</td><td class="num">${usd(row.month.price)}</td><td class="num">${usd(row.year.price)}</td><td>${usd(row.year.alt)} / year <span class="save">${savingsText(row.year.price, row.year.alt)}</span></td></tr>`,
+      )
+      .join("");
+    parts.push(
+      `<h2>Forecast</h2><table><tr><th></th><th class="num">Per day</th><th class="num">Month</th><th class="num">Year</th><th>${escape(altHeader(report))}</th></tr>${forecast}</table>`,
+      table(report, "Top models", report.models),
+    );
+    const unpriced = unpricedText(report);
+    if (unpriced) parts.push(`<p class="muted">${escape(unpriced)}</p>`);
+  }
+  parts.push(comparisons("Providers", report.providers));
+  if (options.full) parts.push(comparisons("Scenarios", report.scenarios));
+  return `<div class="cmx">${parts.join("")}</div>`;
+}

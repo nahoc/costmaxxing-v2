@@ -1,54 +1,91 @@
-# Chrome Web Store listing
+# Chrome Web Store submission
 
-Upload `extension/costmaxxing-extension.zip` (from `npm run build -w extension`) and the two screenshots in `extension/store/`.
+Everything the Chrome Web Store developer dashboard asks for, in the order it asks. Paste the values as written.
 
-## Name
+## 1. Register (once)
 
-costmaxxing
+1. Open https://chrome.google.com/webstore/devconsole and sign in with the Google account that will own the listing. The account email can't be changed later.
+2. Accept the developer agreement and pay the one-time registration fee.
+3. Set the publisher name to `Cohan Carpentier` and verify the contact email.
+4. If the dashboard asks for EU trader status, a free personal open-source project is a non-trader.
 
-## Summary (132 characters or fewer)
+## 2. Upload
 
-What your claude.ai team's usage costs at API prices, and on open-weight models. One click, for Owners. Nothing leaves your browser.
+1. Run `npm run build -w extension`. It writes `extension/costmaxxing-extension.zip`.
+2. Click **Add new item**, choose the zip, and click **Upload**.
 
-## Description
+## 3. Store listing tab
 
-costmaxxing prices your claude.ai Team or Enterprise usage at API rates and shows what the same usage would cost on open-weight models.
+- **Description:**
 
-Install it while signed in to claude.ai as an Owner, and your report opens in a tab right away. Later, click the toolbar button for a quick view. The extension fetches your organization's spend report for the last 30 days through your browser's own claude.ai session, prices every person, product, and model with rates from models.dev, and shows:
+  > costmaxxing shows how much your claude.ai team can save by moving from Anthropic to open-weight models.
+  >
+  > Install it while signed in to claude.ai as an Owner of a Team or Enterprise organization. Your team's report opens in a new tab right away: the last 30 days of usage priced at Anthropic's API rates, next to the same usage on a tiered open-weight plan (GLM-5.3, GLM-5.3 Flash, and DeepSeek V4.1 Flash).
+  >
+  > The report shows:
+  > - yearly and monthly savings on open-weight models
+  > - what your seats cost against what the usage is worth at API prices
+  > - cost by person, by product, and by model
+  > - the same plan priced at several inference providers
+  >
+  > Click the toolbar button for a quick view at any time, and use Download CSV to keep the spend report.
+  >
+  > Members who aren't Owners can't read the spend report, so the extension tells them the team view needs an Owner.
+  >
+  > Everything runs in your browser. The extension reads your organization's spend report from claude.ai with your own session and public prices from models.dev. It sends nothing anywhere else and has no analytics. It is open source under the MIT license: https://github.com/nahoc/costmaxxing-v2
 
-- the yearly and monthly savings on a tiered open-weight plan
-- what your seats cost against what the usage is worth at API prices
-- cost by person and by product
-- the same plan priced at several inference providers
+- **Category:** Developer Tools
+- **Language:** English
+- **Store icon:** taken from the zip (128×128).
+- **Screenshots (1280×800):** `extension/store/store-popup.png`, then `extension/store/store-report.png`.
+- **Small promo tile (440×280):** `extension/store/promo-small-440x280.png`
+- **Marquee promo tile:** leave empty (optional).
+- **Video:** leave empty. If the dashboard insists, record a 30-second screen capture of the install opening the report.
+- **Homepage URL:** https://costmaxxing.dev
+- **Support URL:** https://github.com/nahoc/costmaxxing-v2/issues
+- **Official URL:** optional. It needs costmaxxing.dev verified in Google Search Console first, and then shows a verified-publisher badge.
+- **Mature content:** off.
 
-The full report opens in a tab. Download CSV saves the spend report for the costmaxxing command-line tool (`npx costmaxxing import`).
+## 4. Privacy tab
 
-Members who aren't Owners can't read the spend report, so the extension tells them the team view needs an Owner. For your own Claude Code and Codex usage, run `npx costmaxxing` in a terminal.
+- **Single purpose:**
 
-costmaxxing is open source under the MIT license.
+  > Show a claude.ai Team or Enterprise Owner what their team's usage costs at Anthropic's API prices and how much it would save on open-weight models.
 
-## Category
+- **Host permission justification:**
 
-Developer Tools
+  > claude.ai: reads the organization list, the Owner spend report export, and the members export with the user's own signed-in session, when the user installs the extension or clicks it. models.dev: reads public model prices. The extension requests no other permissions.
 
-## Single purpose
+- **Remote code:** No, I am not using remote code.
+- **Data usage, collected types:** tick
+  - **Personally identifiable information:** the spend report lists member email addresses.
+  - **Financial and payment information:** the spend report lists spend per member.
+  - **Website content:** the extension reads the spend report from claude.ai.
 
-Show a claude.ai organization Owner what their team's usage costs at API prices and on open-weight models.
+  The extension handles these in the browser only. The Chrome Web Store user data FAQ says data handled locally still has to be disclosed.
+- **Certifications:** tick all three: no selling or transferring user data outside the approved use cases, no use unrelated to the single purpose, and no use for creditworthiness or lending.
+- **Privacy policy URL:** https://github.com/nahoc/costmaxxing-v2/blob/main/PRIVACY.md
 
-## Permission justification
+## 5. Distribution tab
 
-- `https://claude.ai/*`: reads the organization list and the Owner spend report export, using the signed-in session, when the user installs the extension or clicks it.
-- `https://models.dev/*`: reads public model prices.
+- **Payments:** free.
+- **Visibility:** Public.
+- **Regions:** all regions.
 
-The extension requests no other permissions. Its background script does one thing: it opens the report tab once, right after installation. It has no content scripts.
+## 6. Test instructions tab
 
-## Privacy
+> The extension needs a claude.ai Team or Enterprise organization where the signed-in account is an Owner, because only Owners can export the spend report. Without one, installing opens a tab that asks you to sign in to claude.ai (signed out) or explains that the team report needs the Owner role (signed in as a member). Both messages are expected. With an Owner account, the tab shows the team's savings report, and the toolbar popup shows the same report with Open full report and Download CSV buttons. An example of the report with synthetic data is on https://costmaxxing.dev.
 
-Nothing leaves the browser. The extension reads your claude.ai spend report and public prices, computes the report in the popup, and keeps nothing after you close it. It has no analytics, no telemetry, and no server.
+## 7. Submit
 
-Data usage answers for the developer dashboard:
+Click **Submit for Review**. Review time varies. After approval you have 30 days to publish if you chose deferred publishing.
 
-- The report shows member emails and usage counts from your own claude.ai spend report. The extension handles them only inside the popup and the report tab and sends them nowhere. Check the dashboard's current definition of "collect" before you tick the boxes: data that never leaves the device is usually not collected.
-- Sells no data and transfers none to third parties.
-- Uses no data for purposes unrelated to the single purpose.
-- Uses no data to determine creditworthiness or for lending.
+## After approval
+
+Point the landing page's button at the listing:
+
+```
+vercel env add STORE_URL production --scope boundless-network
+```
+
+Use the listing's `https://chromewebstore.google.com/detail/...` link as the value, then redeploy production from the Vercel dashboard or push any commit. The button then reads "Add to Chrome" instead of downloading the zip.

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "costmaxxing",
   "version": "1.0.0",
-  "description": "What your claude.ai team's usage costs at API prices, and what it would cost on open-weight models. Nothing leaves your browser.",
+  "description": "How much can your claude.ai team save by moving from Anthropic to open-weight models? One click for Owners, all in your browser.",
   "action": {
     "default_popup": "popup.html",
     "default_title": "costmaxxing",

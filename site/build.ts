@@ -1,4 +1,8 @@
-import { copyFile, cp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { build } from "esbuild";
+import { example } from "./src/example.ts";
+import { cursor } from "./src/icons.ts";
+import { renderPage, type Install } from "./src/page.ts";
 
 const here = (path: string) => new URL(path, import.meta.url).pathname;
 const dist = here("dist/");
@@ -6,17 +10,27 @@ const store = process.env.STORE_URL;
 if (store && !store.startsWith("https://chromewebstore.google.com/detail/")) {
   throw new Error("STORE_URL must be the extension's chromewebstore.google.com/detail/ link");
 }
+const zip = here("../extension/costmaxxing-extension.zip");
+const install: Install = store
+  ? { href: store, label: "Add to Chrome", zip: false }
+  : { href: "costmaxxing-extension.zip", label: "Download for Chrome", zip: true };
 
-const cta = store
-  ? `<a class="cta" href="${store}">Add to Chrome</a>`
-  : '<a class="cta" href="costmaxxing-extension.zip" download>Download for Chrome</a>';
-const installNote = store
-  ? ""
-  : '<p class="note">Unzip it, open <code>chrome://extensions</code>, turn on Developer mode, and choose Load unpacked. Your report opens as soon as it loads.</p>';
+const script = await build({
+  entryPoints: [here("src/site.ts")],
+  bundle: true,
+  format: "iife",
+  target: "es2022",
+  minify: true,
+  write: false,
+});
+const css = `${await readFile(here("src/site.css"), "utf8")}\nbody { --cursor: ${cursor()}; }`;
+const zipSize = `${Math.round((await stat(zip)).size / 1024)}K`;
 
 await mkdir(dist, { recursive: true });
 await cp(here("static/"), dist, { recursive: true });
 await copyFile(here("../extension/dist/icons/128.png"), `${dist}icon.png`);
-if (!store) await copyFile(here("../extension/costmaxxing-extension.zip"), `${dist}costmaxxing-extension.zip`);
-const page = (await readFile(here("index.html"), "utf8")).replace("%%CTA%%", cta).replace("%%INSTALL_NOTE%%", installNote);
-await writeFile(`${dist}index.html`, page);
+if (!store) await copyFile(zip, `${dist}costmaxxing-extension.zip`);
+await writeFile(
+  `${dist}index.html`,
+  renderPage({ example: example(), install, css, js: script.outputFiles[0]?.text ?? "", zipSize }),
+);

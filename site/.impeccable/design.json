@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-04T19:43:25.493Z",
+  "title": "Design System: costmaxxing",
+  "extensions": {
+    "colorMeta": {
+      "screen-ink": {
+        "role": "neutral",
+        "displayName": "Screen Ink",
+        "canonical": "#000000",
+        "tonalRamp": [
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000"
+        ]
+      },
+      "screen-paper": {
+        "role": "neutral",
+        "displayName": "Screen Paper",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#ffffff",
+          "#ffffff",
+          "#ffffff",
+          "#ffffff",
+          "#ffffff",
+          "#ffffff",
+          "#ffffff",
+          "#ffffff"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The one headline in the Read Me window."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Alert and shutdown questions; Team Bill figures at 64px."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Title bars, menu bar, buttons."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Window copy."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Status bars, captions, icon labels, tables."
+      }
+    },
+    "shadows": [
+      {
+        "name": "window-shadow",
+        "value": "2px 2px 0 #000",
+        "purpose": "Every window, menu, and dialog."
+      },
+      {
+        "name": "default-ring",
+        "value": "0 0 0 4px #fff, 0 0 0 8px #000",
+        "purpose": "The one default button in a dialog."
+      },
+      {
+        "name": "dialog-frame",
+        "value": "inset 0 0 0 4px #fff, inset 0 0 0 6px #000, 2px 2px 0 #000",
+        "purpose": "Alert double frame with a 4px ink border."
+      }
+    ],
+    "motion": [
+      {
+        "name": "zoom-outlines",
+        "value": "9 frames x 18ms, trailing 3 outlines",
+        "purpose": "Windows open from and close to their icon."
+      },
+      {
+        "name": "paint-in",
+        "value": "clip-path inset, steps(14), 0.6s",
+        "purpose": "The Strand plate draws top to bottom when its window opens."
+      },
+      {
+        "name": "menu-flash",
+        "value": "invert the menu bar for 90ms",
+        "purpose": "The visual beep when the alert appears."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "desktop",
+        "value": "1100px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "The one primary action in a dialog.",
+      "html": "<a class=\"ds-btn ds-btn-default\" href=\"#\">Download for Chrome</a>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;height:44px;padding:0 22px;border:2px solid #000;border-radius:12px;background:#fff;color:#000;font:28px/1 \"Jersey 15\",monospace;text-decoration:none}.ds-btn-default{box-shadow:0 0 0 4px #fff,0 0 0 8px #000}.ds-btn:hover{background:#fff url(\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%274%27 height=%274%27%3E%3Crect width=%272%27 height=%272%27/%3E%3C/svg%3E\")}.ds-btn:active{background:#000;color:#fff}.ds-btn:focus-visible{outline:2px dashed #000;outline-offset:3px}"
+    },
+    {
+      "name": "Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "A secondary dialog action.",
+      "html": "<button class=\"ds-btn\">Not Now</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;height:44px;padding:0 22px;border:2px solid #000;border-radius:12px;background:#fff;color:#000;font:28px/1 \"Jersey 15\",monospace}.ds-btn:hover{background:#fff url(\"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%274%27 height=%274%27%3E%3Crect width=%272%27 height=%272%27/%3E%3C/svg%3E\")}.ds-btn:active{background:#000;color:#fff}.ds-btn:focus-visible{outline:2px dashed #000;outline-offset:3px}"
+    },
+    {
+      "name": "Window",
+      "kind": "card",
+      "refersTo": "window",
+      "description": "The only container: title bar, body, and a status bar.",
+      "html": "<section class=\"ds-win\"><div class=\"ds-bar\"><span class=\"ds-close\"></span><span class=\"ds-title\">Read Me</span></div><div class=\"ds-body\">Window copy in the reading face.</div><div class=\"ds-status\"><span>0K uploaded</span><span>1 extension</span></div></section>",
+      "css": ".ds-win{background:#fff;border:2px solid #000;box-shadow:2px 2px 0 #000;font:18px/1.45 \"Geist Pixel\",monospace;color:#000}.ds-bar{position:relative;display:flex;align-items:center;justify-content:center;height:38px;border-bottom:2px solid #000;background:repeating-linear-gradient(#000 0 2px,#fff 2px 4px) content-box;padding:8px 6px}.ds-title{background:#fff;padding:0 12px;font:26px/1 \"Jersey 15\",monospace}.ds-close{position:absolute;left:14px;width:22px;height:22px;border:2px solid #000;background:#fff}.ds-body{padding:24px 28px}.ds-status{display:flex;justify-content:space-between;padding:6px 14px;border-top:2px solid #000;font-size:16px}"
+    },
+    {
+      "name": "Menu Bar",
+      "kind": "nav",
+      "description": "Sticky system menu bar; titles invert while open.",
+      "html": "<nav class=\"ds-menubar\"><button>File</button><button class=\"ds-open\">View</button><button>Special</button></nav>",
+      "css": ".ds-menubar{display:flex;height:40px;background:#fff;border-bottom:2px solid #000;font:26px/1 \"Jersey 15\",monospace}.ds-menubar button{border:0;background:none;padding:0 14px;font:inherit;color:#000}.ds-menubar button:hover,.ds-menubar .ds-open{background:#000;color:#fff}"
+    },
+    {
+      "name": "Alert",
+      "kind": "custom",
+      "description": "The signature dialog: icon, question, and one default action.",
+      "html": "<section class=\"ds-alert\"><strong>What will you do when the subsidies end?</strong><p>Your team&#39;s real bill is one click away.</p></section>",
+      "css": ".ds-alert{max-width:520px;padding:26px 28px;background:#fff;border:4px solid #000;box-shadow:inset 0 0 0 4px #fff,inset 0 0 0 6px #000,2px 2px 0 #000;font:17px/1.45 \"Geist Pixel\",monospace}.ds-alert strong{display:block;font:40px/0.95 \"Jersey 15\",monospace;font-weight:400;margin-bottom:6px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Subsidy Desktop",
+    "overview": "The page is a working 1984 one-bit desktop. Every surface is pure black or pure white pixels. Everything else, from the desktop field to share-bar tracks to the zebra on overspend, is an ordered dither drawn from tiny pixel tiles. Content lives in windows with close boxes, striped title bars, status bars, and size boxes. Actions are buttons and menus that behave the way the era's software did. A Team Owner should recognize the bill as a document and the subsidy as an alert, so the world carries the argument instead of decorating it.",
+    "keyCharacteristics": [
+      "Pure black and white, with every gray made by dithering",
+      "Bitmap type, with Jersey 15 for chrome and display and Geist Pixel for reading",
+      "Windows, alerts, icons, and menus as the only containers",
+      "Stepped motion that settles on whole pixels",
+      "Public-domain photography converted to one bit with Atkinson dithering"
+    ],
+    "rules": [
+      {
+        "name": "The One-Bit Rule",
+        "body": "No color and no flat gray, anywhere. A gray tone is a dither tile: 50% checker for the desktop, 25% stipple for tracks and hover, horizontal stripes for the active title bar, and 45° zebra for usage above the seat price.",
+        "section": "colors"
+      },
+      {
+        "name": "The Invert Rule",
+        "body": "Selection, pressing, and the open menu title all invert to Screen Ink with Screen Paper text. Nothing else signals state.",
+        "section": "colors"
+      },
+      {
+        "name": "The Self-Hosted Bitmap Rule",
+        "body": "Both faces ship from site/static/fonts/ with their OFL licenses. The page never asks a font service for them.",
+        "section": "typography"
+      },
+      {
+        "name": "The Era Shadow Rule",
+        "body": "A hard offset shadow is native to this desktop and belongs only to windows, menus, and dialogs. It is never a decoration on text or icons.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do compute every number on the page with costmaxxing's own core, and label example data as an example.",
+      "Do draw new grays as dither tiles on the 2px pixel unit.",
+      "Do keep stepped motion settled for reduced motion, which shows the finished desktop with no boot.",
+      "Do convert any new photograph to one bit with site/scripts/dither.ts and embed its origin."
+    ],
+    "donts": [
+      "Don't introduce color, flat gray, gradients, blur, or soft shadows.",
+      "Don't use easing curves; motion steps in whole frames.",
+      "Don't place more than one default-ring button on a screen.",
+      "Don't load fonts or images from third-party hosts."
+    ]
+  }
+}

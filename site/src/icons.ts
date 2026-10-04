@@ -1,0 +1,167 @@
+type Ink = "b" | "w" | undefined;
+
+class Bitmap {
+  readonly size: number;
+  readonly cells: Ink[][];
+
+  constructor(size: number) {
+    this.size = size;
+    this.cells = Array.from({ length: size }, () => Array<Ink>(size).fill(undefined));
+  }
+
+  set(x: number, y: number, ink: Ink = "b"): this {
+    if (x >= 0 && y >= 0 && x < this.size && y < this.size) this.cells[y]![x] = ink;
+    return this;
+  }
+
+  fill(x0: number, y0: number, x1: number, y1: number, ink: Ink = "b"): this {
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) this.set(x, y, ink);
+    return this;
+  }
+
+  box(x0: number, y0: number, x1: number, y1: number): this {
+    return this.fill(x0, y0, x1, y1, "w").fill(x0, y0, x1, y0).fill(x0, y1, x1, y1).fill(x0, y0, x0, y1).fill(x1, y0, x1, y1);
+  }
+
+  art(x0: number, y0: number, rows: string[]): this {
+    rows.forEach((row, y) => [...row].forEach((c, x) => c !== "." && this.set(x0 + x, y0 + y, c === "#" ? "b" : "w")));
+    return this;
+  }
+
+  svg(label?: string): string {
+    const rects: string[] = [];
+    for (const ink of ["w", "b"] as const) {
+      this.cells.forEach((row, y) => {
+        let start = -1;
+        for (let x = 0; x <= this.size; x++) {
+          if (x < this.size && row[x] === ink) {
+            if (start < 0) start = x;
+          } else if (start >= 0) {
+            rects.push(`<rect x="${start}" y="${y}" width="${x - start}" height="1" fill="${ink === "b" ? "#000" : "#fff"}"/>`);
+            start = -1;
+          }
+        }
+      });
+    }
+    const a11y = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"';
+    return `<svg class="px" viewBox="0 0 ${this.size} ${this.size}" shape-rendering="crispEdges" ${a11y}>${rects.join("")}</svg>`;
+  }
+}
+
+function page(): Bitmap {
+  const b = new Bitmap(24).box(5, 2, 18, 21);
+  for (let i = 0; i < 4; i++) b.fill(18 - i, 2, 18, 2 + i, undefined);
+  return b.fill(14, 2, 14, 6).fill(14, 6, 18, 6).set(15, 3).set(16, 4).set(17, 5).fill(15, 5, 16, 5, "w").set(15, 4, "w");
+}
+
+const computer = new Bitmap(24)
+  .box(4, 1, 19, 21)
+  .box(6, 3, 17, 12)
+  .fill(8, 6, 9, 11)
+  .fill(11, 8, 12, 11)
+  .fill(14, 10, 15, 11)
+  .fill(12, 16, 16, 16)
+  .fill(5, 22, 18, 22)
+  .fill(6, 23, 17, 23);
+
+const readMe = page().fill(8, 9, 15, 9).fill(8, 11, 13, 11).fill(8, 13, 15, 13).fill(8, 15, 12, 15).fill(8, 17, 14, 17);
+
+const bill = page().art(9, 7, [
+  "..#..",
+  ".####",
+  "#.#..",
+  "#.#..",
+  ".###.",
+  "..#.#",
+  "..#.#",
+  "####.",
+  "..#..",
+]);
+
+const paint = page().box(7, 9, 16, 18).art(8, 10, [
+  "........",
+  "......#.",
+  ".....##.",
+  "..#.###.",
+  ".#######",
+  "########",
+  "########",
+  "########",
+]);
+
+const floppy = new Bitmap(24)
+  .box(3, 3, 20, 20)
+  .fill(19, 3, 20, 4, undefined)
+  .set(19, 4)
+  .set(20, 5)
+  .fill(7, 3, 15, 8)
+  .fill(12, 4, 13, 7, "w")
+  .box(6, 12, 17, 20)
+  .fill(8, 15, 15, 15)
+  .fill(8, 17, 13, 17);
+
+const trash = new Bitmap(24)
+  .box(9, 2, 14, 4)
+  .box(3, 4, 20, 6)
+  .box(5, 6, 18, 21)
+  .fill(8, 9, 8, 18)
+  .fill(11, 9, 11, 18)
+  .fill(14, 9, 14, 18);
+
+const bomb = new Bitmap(24)
+  .art(3, 7, [
+    "....#######....",
+    "..###########..",
+    ".#############.",
+    ".##ww#########.",
+    "##w###########.",
+    "##w############",
+    "###############",
+    "###############",
+    "###############",
+    "###############",
+    ".#############.",
+    ".#############.",
+    "..###########..",
+    "....#######....",
+  ])
+  .fill(13, 4, 16, 7)
+  .art(16, 0, ["...#...", ".#.#.#.", "..###..", "####...", "#.###..", "#.#.#..", "...#..."]);
+
+const logo = new Bitmap(16).fill(2, 3, 4, 13).fill(7, 6, 9, 13).fill(12, 9, 14, 13);
+
+export const ICONS = {
+  computer: computer.svg(),
+  readMe: readMe.svg(),
+  bill: bill.svg(),
+  paint: paint.svg(),
+  floppy: floppy.svg(),
+  trash: trash.svg(),
+  bomb: bomb.svg("Alert"),
+  logo: logo.svg(),
+};
+
+const ARROW = [
+  "#...............",
+  "##..............",
+  "#w#.............",
+  "#ww#............",
+  "#www#...........",
+  "#wwww#..........",
+  "#wwwww#.........",
+  "#wwwwww#........",
+  "#wwwwwww#.......",
+  "#wwwww#####.....",
+  "#ww#ww#.........",
+  "#w#.#ww#........",
+  "##..#ww#........",
+  "#....#ww#.......",
+  ".....#ww#.......",
+  "......##........",
+];
+
+export function cursor(): string {
+  const arrow = new Bitmap(16).art(0, 0, ARROW);
+  const svg = arrow.svg().replace('class="px" ', 'xmlns="http://www.w3.org/2000/svg" width="32" height="32" ');
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}") 1 1, default`;
+}

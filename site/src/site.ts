@@ -40,7 +40,7 @@ function iconFor(id: string): HTMLElement | null {
 }
 
 async function open(el: HTMLElement, from?: Element | null): Promise<void> {
-  const wasHidden = el.hidden || el.style.visibility === "hidden" || getComputedStyle(el).visibility === "hidden";
+  const wasHidden = el.hidden || getComputedStyle(el).visibility === "hidden";
   el.hidden = false;
   if (wasHidden && from) {
     el.style.visibility = "hidden";
@@ -58,8 +58,7 @@ async function open(el: HTMLElement, from?: Element | null): Promise<void> {
 async function close(el: HTMLElement): Promise<void> {
   const to = iconFor(el.id) ?? $(`[data-info="${el.id}"]`);
   const rect = el.getBoundingClientRect();
-  if (el.classList.contains("info")) el.hidden = true;
-  else el.style.visibility = "hidden";
+  el.hidden = true;
   if (to) await zoom(rect, to.getBoundingClientRect());
 }
 
@@ -70,13 +69,13 @@ async function beep(): Promise<void> {
   root.classList.remove("flash");
 }
 
-async function showAlert(): Promise<void> {
-  const alert = $<HTMLElement>("#alert");
-  if (!alert) return;
-  alert.style.visibility = "visible";
-  front(alert);
+async function showHero(): Promise<void> {
+  const hero = $<HTMLElement>("#hero");
+  if (!hero) return;
+  hero.style.visibility = "visible";
+  front(hero);
   await beep();
-  $<HTMLElement>(".button.default", alert)?.focus({ preventScroll: true });
+  $<HTMLElement>(".button.default", hero)?.focus({ preventScroll: true });
 }
 
 async function boot(): Promise<void> {
@@ -93,8 +92,8 @@ async function boot(): Promise<void> {
   await step(500);
   screen?.classList.add("welcoming");
   await step(650);
-  const windows = ["readme", "paint", "bill"].map((id) => $<HTMLElement>(`#${id}`)).filter((w) => w !== null);
-  for (const w of [...windows, $<HTMLElement>("#alert")]) if (w) w.style.visibility = "hidden";
+  const windows = [$<HTMLElement>("#bill")].filter((w) => w !== null);
+  for (const w of [...windows, $<HTMLElement>("#hero")]) if (w) w.style.visibility = "hidden";
   const icons = $$<HTMLElement>(".icons li");
   for (const li of icons) li.style.visibility = "hidden";
   root.classList.remove("booting");
@@ -108,9 +107,8 @@ async function boot(): Promise<void> {
     else await open(w, iconFor(w.id));
     await step(120);
   }
-  front($<HTMLElement>("#readme")!);
   await step(220);
-  await showAlert();
+  await showHero();
 }
 
 function finishBoot(): void {
@@ -150,14 +148,12 @@ function drag(win: HTMLElement, bar: HTMLElement): void {
       bar.removeEventListener("pointermove", move);
       outline.remove();
       if (dx || dy) {
-        delete win.dataset.depth;
         Object.assign(win.style, {
           left: `${start.left + dx}px`,
           top: `${Math.max(0, start.top + dy)}px`,
           bottom: "auto",
           right: "auto",
           translate: "0 0",
-          transform: "",
         });
       }
     };
@@ -168,7 +164,7 @@ function drag(win: HTMLElement, bar: HTMLElement): void {
 }
 
 function cleanUp(): void {
-  for (const [win, pos] of home) Object.assign(win.style, { left: pos.left, top: pos.top, bottom: "", right: "", translate: "", transform: "" });
+  for (const [win, pos] of home) Object.assign(win.style, { left: pos.left, top: pos.top, bottom: "", right: "", translate: "" });
   home.clear();
   finishBoot();
 }
@@ -219,30 +215,6 @@ function menus(): void {
   });
 }
 
-function parallax(): void {
-  const planes = $$<HTMLElement>("[data-depth]");
-  let ticking = false;
-  const update = () => {
-    ticking = false;
-    const on = wide.matches && !still.matches;
-    for (const plane of planes) {
-      if (!plane.dataset.depth) continue;
-      const box = plane.parentElement?.getBoundingClientRect();
-      const offset = on && box ? Math.round((box.top * Number(plane.dataset.depth)) / 2) * 2 : 0;
-      plane.style.transform = offset ? `translateY(${offset}px)` : "";
-    }
-  };
-  addEventListener(
-    "scroll",
-    () => {
-      if (!ticking) requestAnimationFrame(update);
-      ticking = true;
-    },
-    { passive: true },
-  );
-  update();
-}
-
 function wire(): void {
   for (const win of $$<HTMLElement>(".window, .alert")) {
     win.addEventListener("pointerdown", () => front(win));
@@ -250,16 +222,16 @@ function wire(): void {
     if (bar) drag(win, bar);
     $<HTMLButtonElement>(".close", win)?.addEventListener("click", () => void close(win));
   }
-  for (const icon of $$<HTMLButtonElement>(".icon")) {
-    icon.addEventListener("click", () => {
+  for (const opener of $$<HTMLButtonElement>("[data-open]")) {
+    opener.addEventListener("click", () => {
       for (const i of $$(".icon.selected")) i.classList.remove("selected");
-      icon.classList.add("selected");
-      const id = icon.dataset.open ?? "";
-      if (id === "install") $<HTMLAnchorElement>(".alert .button.default")?.click();
-      else if (id === "trash") void showAlert();
+      if (opener.classList.contains("icon")) opener.classList.add("selected");
+      const id = opener.dataset.open ?? "";
+      if (id === "install") $<HTMLAnchorElement>(".hero .button.default")?.click();
+      else if (id === "hero") void showHero();
       else {
         const win = $<HTMLElement>(`#${id}`);
-        if (win) void open(win, icon);
+        if (win) void open(win, iconFor(id) ?? opener);
       }
     });
   }
@@ -269,20 +241,7 @@ function wire(): void {
       void openInfo(link.dataset.info ?? "", link);
     });
   }
-  $<HTMLButtonElement>('[data-dismiss="alert"]')?.addEventListener("click", () => {
-    const alert = $<HTMLElement>("#alert");
-    if (alert) void close(alert);
-  });
-  for (const button of $$<HTMLButtonElement>('[data-action="alert"]')) button.addEventListener("click", () => void showAlert());
   for (const button of $$<HTMLButtonElement>('[data-action="cleanup"]')) button.addEventListener("click", cleanUp);
-  for (const button of $$<HTMLButtonElement>("[data-copy]")) {
-    button.addEventListener("click", async () => {
-      await navigator.clipboard?.writeText(button.dataset.copy ?? "").catch(() => undefined);
-      const label = button.textContent;
-      button.textContent = "Copied";
-      setTimeout(() => (button.textContent = label), 1400);
-    });
-  }
   for (const link of $$<HTMLAnchorElement>("[data-zip]")) {
     link.addEventListener("click", () => {
       const note = $<HTMLElement>("#info-zip");
@@ -303,6 +262,5 @@ function wire(): void {
 
 wire();
 menus();
-parallax();
 if (root.classList.contains("booting")) void boot();
 else finishBoot();

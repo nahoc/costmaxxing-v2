@@ -28,23 +28,25 @@ class Bitmap {
     return this;
   }
 
-  svg(label?: string): string {
-    const rects: string[] = [];
-    for (const ink of ["w", "b"] as const) {
-      this.cells.forEach((row, y) => {
-        let start = -1;
-        for (let x = 0; x <= this.size; x++) {
-          if (x < this.size && row[x] === ink) {
-            if (start < 0) start = x;
-          } else if (start >= 0) {
-            rects.push(`<rect x="${start}" y="${y}" width="${x - start}" height="1" fill="${ink === "b" ? "#000" : "#fff"}"/>`);
-            start = -1;
+  paths(): string {
+    return (["p", "i"] as const)
+      .map((cls) => {
+        const ink = cls === "i" ? "b" : "w";
+        let d = "";
+        this.cells.forEach((row, y) => {
+          let start = -1;
+          for (let x = 0; x <= this.size; x++) {
+            if (x < this.size && row[x] === ink) {
+              if (start < 0) start = x;
+            } else if (start >= 0) {
+              d += `M${start} ${y}h${x - start}v1h${start - x}z`;
+              start = -1;
+            }
           }
-        }
-      });
-    }
-    const a11y = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"';
-    return `<svg class="px" viewBox="0 0 ${this.size} ${this.size}" shape-rendering="crispEdges" ${a11y}>${rects.join("")}</svg>`;
+        });
+        return d ? `<path ${cls === "i" ? 'fill="currentColor"' : 'style="fill:var(--icon-paper,#fff)"'} d="${d}"/>` : "";
+      })
+      .join("");
   }
 }
 
@@ -108,38 +110,30 @@ const trash = new Bitmap(24)
   .fill(11, 9, 11, 18)
   .fill(14, 9, 14, 18);
 
-const bomb = new Bitmap(24)
-  .art(3, 7, [
-    "....#######....",
-    "..###########..",
-    ".#############.",
-    ".##ww#########.",
-    "##w###########.",
-    "##w############",
-    "###############",
-    "###############",
-    "###############",
-    "###############",
-    ".#############.",
-    ".#############.",
-    "..###########..",
-    "....#######....",
-  ])
-  .fill(13, 4, 16, 7)
-  .art(16, 0, ["...#...", ".#.#.#.", "..###..", "####...", "#.###..", "#.#.#..", "...#..."]);
-
 const logo = new Bitmap(16).fill(2, 3, 4, 13).fill(7, 6, 9, 13).fill(12, 9, 14, 13);
 
-export const ICONS = {
-  computer: computer.svg(),
-  readMe: readMe.svg(),
-  bill: bill.svg(),
-  paint: paint.svg(),
-  floppy: floppy.svg(),
-  trash: trash.svg(),
-  bomb: bomb.svg("Alert"),
-  logo: logo.svg(),
-};
+const BITMAPS = { computer, readMe, bill, paint, floppy, trash, logo };
+export type IconName = keyof typeof BITMAPS;
+
+export const SPRITE = `<svg width="0" height="0" style="position:absolute" aria-hidden="true">${Object.entries(BITMAPS)
+  .map(([name, b]) => `<symbol id="i-${name}" viewBox="0 0 ${b.size} ${b.size}">${b.paths()}</symbol>`)
+  .join("")}</svg>`;
+
+export function icon(name: IconName): string {
+  return `<svg class="px" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+}
+
+export const INK = "#2e1065";
+
+function dataUri(b: Bitmap, size: number): string {
+  const paths = b.paths().replaceAll("currentColor", INK).replaceAll("var(--icon-paper,#fff)", "#fff");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${b.size} ${b.size}" shape-rendering="crispEdges">${paths}</svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+export function favicon(): string {
+  return dataUri(new Bitmap(16).fill(0, 0, 15, 15, "w").fill(2, 3, 4, 13).fill(7, 6, 9, 13).fill(12, 9, 14, 13), 32);
+}
 
 const ARROW = [
   "#...............",
@@ -161,7 +155,5 @@ const ARROW = [
 ];
 
 export function cursor(): string {
-  const arrow = new Bitmap(16).art(0, 0, ARROW);
-  const svg = arrow.svg().replace('class="px" ', 'xmlns="http://www.w3.org/2000/svg" width="32" height="32" ');
-  return `url("data:image/svg+xml,${encodeURIComponent(svg)}") 1 1, default`;
+  return `url("${dataUri(new Bitmap(16).art(0, 0, ARROW), 32)}") 1 1, default`;
 }

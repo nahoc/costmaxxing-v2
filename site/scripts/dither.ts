@@ -5,6 +5,7 @@ import { join } from "node:path";
 
 const SOURCE = "https://upload.wikimedia.org/wikipedia/commons/3/30/Wall_Street_by_Paul_Strand%2C_1915.jpg";
 const WIDTH = 560;
+const INK = "#2e1065";
 const out = new URL("../static/wall-street-1915.png", import.meta.url).pathname;
 
 const dir = mkdtempSync(join(tmpdir(), "dither-"));
@@ -44,5 +45,5 @@ for (let y = 0; y < height; y++) {
 }
 const pgm = join(dir, "dithered.pgm");
 writeFileSync(pgm, Buffer.concat([Buffer.from(`P5\n${WIDTH} ${height}\n255\n`), Buffer.from(bits)]));
-execFileSync("magick", [pgm, "-colors", "2", "-depth", "1", "-define", "png:color-type=0", "-define", "png:bit-depth=1", "-strip", out]);
+execFileSync("magick", [pgm, "+level-colors", `${INK},#ffffff`, "-type", "Palette", "-colors", "2", "-strip", out]);
 console.log(`${out} ${WIDTH}x${height}`);

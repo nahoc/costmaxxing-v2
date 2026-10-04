@@ -16,7 +16,7 @@ The primary visitor is the Owner of a claude.ai Team or Enterprise organization:
 
 ## Product Purpose
 
-costmaxxing is an open-source tool that prices AI coding and chat usage at API list rates and shows what the same usage would cost on open-weight models or at other inference providers. The landing page exists to get Team Owners to install the Chrome extension. Success is an install followed by the team report opening and rendering in the same minute.
+costmaxxing is an open-source tool that prices AI coding and chat usage at API list rates and shows what the same usage would cost on open-weight models or at other inference providers. The landing page exists to get Team Owners to install the Chrome extension, and its one takeaway is "How much can your team save by moving from Anthropic to open-weight models?". Success is an install followed by the team report opening and rendering in the same minute. The landing page promotes the extension only; the CLI is not featured there.
 
 ## Positioning
 
@@ -39,18 +39,18 @@ It reads a claude.ai organization's own spend report through the Owner's browser
 - Name: costmaxxing, always lowercase.
 - Voice: plain and specific. Terminal-report wording rules carry over: "savings" (never "you save"), "price" (never "list price"), compact numbers, no cents.
 - The closing line "What will you do when the subsidies end?" is Cohan's settled line.
-- The maintainer works at Boundless, and the default comparison uses Boundless's public rates. The page carries a small, honest credit saying so and otherwise stays a neutral open-source tool page.
+- The landing page credit reads "Made with <3 by Cohan Carpentier". The page never says the tool is made by Boundless. Boundless appears only as one provider in the price comparison.
 
 ## Evidence on Hand
 
-- The product itself: the extension popup and full report, rendered from synthetic team data (`site/static/popup-*.png`). Any page demonstration uses synthetic data and is labeled as an example.
+- The product itself: the landing page's Team Bill window is computed by costmaxxing's core from a synthetic team (`site/src/example.ts`). Any page demonstration uses synthetic data and is labeled as an example.
 - No customers, testimonials, press, benchmarks, or install counts exist. Do not invent them.
 
 ## Product Principles
 
 1. Real numbers over pitches: show the report doing its job.
 2. One action: install the extension. Everything else is secondary.
-3. Neutral by construction: compare against any provider, disclose the Boundless default.
+3. Neutral by construction: Boundless is one provider among several in the comparison.
 4. Nothing leaves the browser, and the page says so plainly.
 
 ## Accessibility & Inclusion

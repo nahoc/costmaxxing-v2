@@ -58,6 +58,9 @@ test("Owner: skips orgs that answer 403, uses the first CSV, exact seats from th
 
 test("signed out, not an Owner, and failed requests each get their own result", async () => {
   assert.deepEqual(await teamReport(fakeFetch({ [ORGS]: { status: 401, body: "" } }).fetch, NOW), { kind: "signed-out" });
+  assert.deepEqual(await teamReport(fakeFetch({ [ORGS]: { status: 403, body: "<title>Just a moment...</title>" } }).fetch, NOW), {
+    kind: "signed-out",
+  });
   assert.deepEqual(
     await teamReport(fakeFetch({ [`${ORGS}/`]: { status: 403, body: "" }, [ORGS]: orgList }).fetch, NOW),
     { kind: "not-owner" },

@@ -8,6 +8,7 @@ export function escapeHtml(text: string): string {
 const money = (n: number) => `<span title="${exactUsd(n)}">${usd(n)}</span>`;
 
 export const REPORT_CSS = `
+:root { color-scheme: light dark; }
 .cmx { font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif; color: #1c1c1c; max-width: 1080px; margin: 0 auto; padding: 16px; }
 .cmx h1 { font-size: 13px; font-weight: 600; margin: 0 0 12px; }
 .cmx h2 { font-size: 13px; font-weight: 600; margin: 20px 0 6px; }

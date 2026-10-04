@@ -57,7 +57,7 @@ export async function teamReport(get: Fetch, now: Date): Promise<TeamResult> {
   const prices = catalog(get);
   const list = await claude(CLAUDE).catch(() => undefined);
   if (!list) return { kind: "failed", request: "GET /api/organizations", status: "network error" };
-  if (list.status === 401) return { kind: "signed-out" };
+  if (list.status === 401 || list.status === 403) return { kind: "signed-out" };
   if (!list.ok) return { kind: "failed", request: "GET /api/organizations", status: String(list.status) };
   const { from, to } = lastThirtyDays(now);
   let failure: TeamResult | undefined;

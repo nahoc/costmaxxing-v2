@@ -52,8 +52,8 @@ function png(size: number): Buffer {
 
 await mkdir(`${dist}icons`, { recursive: true });
 await build({
-  entryPoints: [new URL("src/page.ts", import.meta.url).pathname],
-  outfile: `${dist}page.js`,
+  entryPoints: ["page", "background"].map((name) => new URL(`src/${name}.ts`, import.meta.url).pathname),
+  outdir: dist,
   bundle: true,
   format: "iife",
   target: "chrome120",

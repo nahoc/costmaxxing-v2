@@ -14,7 +14,7 @@ What your claude.ai team's usage costs at API prices, and on open-weight models.
 
 costmaxxing prices your claude.ai Team or Enterprise usage at API rates and shows what the same usage would cost on open-weight models.
 
-Click the toolbar button while signed in to claude.ai as an Owner. The extension fetches your organization's spend report for the last 30 days through your browser's own claude.ai session, prices every person, product, and model with rates from models.dev, and shows:
+Install it while signed in to claude.ai as an Owner, and your report opens in a tab right away. Later, click the toolbar button for a quick view. The extension fetches your organization's spend report for the last 30 days through your browser's own claude.ai session, prices every person, product, and model with rates from models.dev, and shows:
 
 - the yearly and monthly savings on a tiered open-weight plan
 - what your seats cost against what the usage is worth at API prices
@@ -37,10 +37,10 @@ Show a claude.ai organization Owner what their team's usage costs at API prices 
 
 ## Permission justification
 
-- `https://claude.ai/*`: reads the organization list and the Owner spend report export, using the signed-in session, after the user clicks the extension.
+- `https://claude.ai/*`: reads the organization list and the Owner spend report export, using the signed-in session, when the user installs the extension or clicks it.
 - `https://models.dev/*`: reads public model prices.
 
-The extension requests no other permissions. It has no background script and no content scripts.
+The extension requests no other permissions. Its background script does one thing: it opens the report tab once, right after installation. It has no content scripts.
 
 ## Privacy
 

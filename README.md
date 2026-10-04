@@ -55,7 +55,7 @@ Try next
 ## Get your number
 
 - **Your own usage.** Run `npx costmaxxing`. It reads Claude Code and Codex logs from the last 30 days and prints the report in a few seconds. There is nothing to configure.
-- **Your claude.ai Team or Enterprise org.** Install the costmaxxing browser extension and click it while signed in to claude.ai as an Owner. The popup shows the team report. Members who aren't Owners see a message that the team view needs an Owner.
+- **Your claude.ai Team or Enterprise org.** Install the costmaxxing browser extension while signed in to claude.ai as an Owner. The report opens in a tab as soon as the extension installs, and the toolbar button shows it again later. Members who aren't Owners see a message that the team view needs an Owner.
 - **A spend report you already have.** Run `npx costmaxxing import spend-report.csv`. The extension's **Download CSV** button saves this file.
 - **A session as it happens.** Run `npx costmaxxing claude` or `npx costmaxxing codex`. The agent runs as usual through a local counting proxy, and costmaxxing prints a one-line summary when it exits.
 
@@ -159,7 +159,7 @@ cache_read = 0.23
 
 - costmaxxing never reads browser cookie stores, the OS keychain, or another app's credentials.
 - It stores usage counts only: model, token counts, time, and request and session IDs. It never stores prompts, responses, code, keys, or auth headers.
-- It has no telemetry. The CLI talks only to models.dev. The extension talks only to claude.ai and models.dev, through your browser's existing session, and only after you click it.
+- It has no telemetry. The CLI talks only to models.dev. The extension talks only to claude.ai and models.dev, through your browser's existing session, and only when you install it or click it.
 - The proxy forwards each request unchanged to the same API the agent would call without it.
 
 ## Develop
@@ -172,6 +172,8 @@ npm run build
 ```
 
 `core/` is pure TypeScript with no Node or browser APIs. It parses usage, prices it, builds the report, and renders it as terminal text or HTML. `cli/` reads files and runs the servers. `extension/` fetches from claude.ai. Both bundle `core` with esbuild, so every number is computed in one place.
+
+`site/` is the landing page. `npm run build` writes it to `site/dist/`, a static folder you can host anywhere. Its button downloads the extension zip. To point it at the Chrome Web Store listing instead, build with `STORE_URL=https://chromewebstore.google.com/detail/... npm run build`.
 
 ## License
 

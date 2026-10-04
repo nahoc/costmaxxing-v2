@@ -5,13 +5,14 @@ const root = document.getElementById("root");
 const full = document.body.dataset.page === "report";
 
 function message(result: Exclude<TeamResult, { kind: "report" }>): string {
+  const again = full ? "reload this page" : "click costmaxxing again";
   switch (result.kind) {
     case "signed-out":
-      return '<p>Sign in to claude.ai in this browser, then click costmaxxing again.</p><p><a href="https://claude.ai/login" target="_blank">Open claude.ai</a></p>';
+      return `<p>Open claude.ai in this browser and sign in, then ${again}.</p><p><a href="https://claude.ai/login" target="_blank">Open claude.ai</a></p>`;
     case "not-owner":
       return "<p>The team report needs the Owner role on your claude.ai organization.</p><p>For your own Claude Code and Codex usage, run <code>npx costmaxxing</code> in a terminal.</p>";
     case "failed":
-      return `<p>${escape(result.request)} failed (${escape(result.status)}).</p><p class="muted">Try again in a moment. Nothing was sent anywhere else.</p>`;
+      return `<p>${escape(result.request)} failed (${escape(result.status)}).</p><p class="muted">Wait a moment, then ${again}. Nothing was sent anywhere else.</p>`;
     default: {
       const unreachable: never = result;
       return unreachable;

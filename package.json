@@ -11,7 +11,7 @@
   "scripts": {
     "test": "node --test \"core/test/*.test.ts\" \"cli/test/*.test.ts\" \"extension/test/*.test.ts\"",
     "typecheck": "tsc -p core && tsc -p cli && tsc -p extension && tsc -p site",
-    "build": "npm run build -w cli && npm run package -w extension && npm run build -w site"
+    "build": "npm run build -w cli && npm run build -w extension && npm run build -w site"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",

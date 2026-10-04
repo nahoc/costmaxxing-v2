@@ -1,6 +1,6 @@
 # Chrome Web Store listing
 
-Upload `extension/costmaxxing-extension.zip` (from `npm run package -w extension`) and the two screenshots in `extension/store/`.
+Upload `extension/costmaxxing-extension.zip` (from `npm run build -w extension`) and the two screenshots in `extension/store/`.
 
 ## Name
 

@@ -3,8 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node build.ts",
-    "package": "node build.ts && rm -f costmaxxing-extension.zip && cd dist && zip -qr ../costmaxxing-extension.zip ."
+    "build": "node build.ts"
   },
   "dependencies": {
     "@costmaxxing/core": "*"

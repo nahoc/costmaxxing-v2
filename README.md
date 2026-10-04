@@ -173,7 +173,7 @@ npm run build
 
 `core/` is pure TypeScript with no Node or browser APIs. It parses usage, prices it, builds the report, and renders it as terminal text or HTML. `cli/` reads files and runs the servers. `extension/` fetches from claude.ai. Both bundle `core` with esbuild, so every number is computed in one place.
 
-`site/` is the landing page. `npm run build` writes it to `site/dist/`, a static folder you can host anywhere. Its button downloads the extension zip. To point it at the Chrome Web Store listing instead, build with `STORE_URL=https://chromewebstore.google.com/detail/... npm run build`.
+`site/` is the landing page, deployed by Vercel with `site/vercel.json`. `npm run build` writes it to `site/dist/`, a static folder you can host anywhere. Its button downloads the extension zip. To point it at the Chrome Web Store listing instead, build with `STORE_URL=https://chromewebstore.google.com/detail/... npm run build`.
 
 ## License
 

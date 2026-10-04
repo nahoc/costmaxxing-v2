@@ -28,7 +28,6 @@ const zipSize = `${Math.round((await stat(zip)).size / 1024)}K`;
 
 await mkdir(dist, { recursive: true });
 await cp(here("static/"), dist, { recursive: true });
-await copyFile(here("../extension/dist/icons/128.png"), `${dist}icon.png`);
 if (!store) await copyFile(zip, `${dist}costmaxxing-extension.zip`);
 await writeFile(
   `${dist}index.html`,

@@ -5,16 +5,15 @@ import {
   buildReport,
   parseMembers,
   parseSpendReport,
-  priceBook,
   renderTerminal,
   spendReportPeriod,
   type Billing,
-  type PriceBook,
   type Report,
   type SeatCount,
 } from "@costmaxxing/core";
-import { loadCatalog } from "./catalog.ts";
-import { loadConfig, type Config } from "./config.ts";
+import { loadConfig } from "./config.ts";
+import { launch } from "./launch.ts";
+import { prices } from "./prices.ts";
 import { readUsage } from "./usage.ts";
 
 const DAY = 86_400_000;
@@ -52,15 +51,6 @@ function print(report: Report, json: boolean | undefined): void {
   }
   const color = interactive() && !process.env.NO_COLOR;
   process.stdout.write(renderTerminal(report, { color, width: process.stdout.columns || 100, command: command() }));
-}
-
-export async function prices(config: Config, offline: boolean | undefined, vs: string[] = []): Promise<PriceBook> {
-  const { prices } = await loadCatalog(Boolean(offline));
-  const book = priceBook(prices, config.prices);
-  for (const ref of vs) {
-    if (!book.has(ref)) throw new Error(`no price for ${ref}. Use a models.dev provider/model ID, like togetherai/zai-org/GLM-5.3`);
-  }
-  return book;
 }
 
 function positiveInteger(value: string, flag: string): number {
@@ -162,6 +152,9 @@ async function main(argv: string[]): Promise<void> {
   switch (first) {
     case "import":
       return importCommand(rest);
+    case "claude":
+    case "codex":
+      return launch(first, rest);
     default:
       return reportCommand(argv);
   }

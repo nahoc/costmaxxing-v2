@@ -20,7 +20,7 @@ export function savingsText(price: number, alt: number): string {
   return price >= alt ? `${usd(price - alt)} savings` : `${usd(alt - price)} more`;
 }
 
-function plural(n: number, word: string): string {
+export function plural(n: number, word: string): string {
   return `${count(n)} ${word}${n === 1 ? "" : "s"}`;
 }
 

@@ -7,3 +7,4 @@ export * from "./scenarios.ts";
 export * from "./spend.ts";
 export * from "./terminal.ts";
 export * from "./types.ts";
+export * from "./wire.ts";

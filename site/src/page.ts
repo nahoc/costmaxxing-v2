@@ -53,7 +53,7 @@ export function renderPage({ example, css, js }: { example: Example; css: string
   const team = "acme-7kq3x-m9pz2";
   const [best, glm, fable, flash] = SWE_BENCH.rows;
   if (!best || !glm || !fable || !flash) throw new Error("SWE_BENCH needs four rows");
-  const benchLine = `Not a downgrade: ${glm.name} scores ${glm.score.toFixed(1)}% on SWE-bench Verified. ${fable.name} scores ${fable.score.toFixed(1)}%.`;
+  const benchLine = `Almost the same intelligence at a fraction of the price: ${glm.name} scores ${glm.score.toFixed(1)}% on SWE-bench Verified. ${fable.name} scores ${fable.score.toFixed(1)}%.`;
   const topOutput = Math.max(...PRICE_LADDER.map((m) => m.output));
 
   const dialog = `<section class="alert hero" id="hero" aria-labelledby="hero-title">
@@ -116,7 +116,7 @@ ${figure("info-savings", `<span class="mid">Up to ${percent(hero.percent)}</span
     id: "bench",
     title: "Benchmarks",
     className: "bench",
-    body: `<p class="lead">Not a downgrade.</p>
+    body: `<p class="lead">Almost the same intelligence at a fraction of the price.</p>
 <p>On SWE-bench Verified, 500 real GitHub issues, ${esc(glm.name)} trails ${esc(best.name)} by ${(best.score - glm.score).toFixed(1)} points and beats ${esc(fable.name)}.</p>
 <table class="scores"><thead><tr><th scope="col"><span class="sr">Model</span></th><th scope="col" class="num">Score</th><th scope="col"><span class="sr">Score bar</span></th><th scope="col" class="num">Output</th></tr></thead><tbody>${SWE_BENCH.rows
       .map(
@@ -153,13 +153,6 @@ ${figure("info-savings", `<span class="mid">Up to ${percent(hero.percent)}</span
 <p class="plan-note">${esc(hero.detail ?? "")}</p>`,
   });
 
-  const about = win({
-    id: "about",
-    title: "costmaxxing Info",
-    className: "about",
-    body: `<div class="about-head">${icon("computer")}<div><p class="about-name">costmaxxing</p><p>Claude Code mod, open source (MIT)</p></div></div>
-<dl class="facts"><dt>Team IDs</dt><dd>Private, unguessable</dd><dt>Needs</dt><dd>Claude Code 2.1.287 or later</dd><dt>Sends</dt><dd>Model names and token counts</dd><dt>Never</dt><dd>Prompts, code, or keys</dd><dt>Source</dt><dd><a href="https://github.com/nahoc/costmaxxing-v2">GitHub</a></dd></dl>`,
-  });
 
   const infos = [
     info("info-price", "Info: Anthropic price", [
@@ -216,7 +209,7 @@ ${SPRITE}
 <header class="menubar">
 <nav aria-label="Menu">
 <div class="menu-group"><button class="menu-title logo" type="button" aria-expanded="false" aria-label="costmaxxing">${icon("logo")}</button>
-<div class="menu" hidden><a href="#about">About costmaxxing…</a></div></div>
+<div class="menu" hidden><a href="https://github.com/nahoc/costmaxxing-v2">costmaxxing on GitHub…</a></div></div>
 <div class="menu-group"><button class="menu-title" type="button" aria-expanded="false">File</button>
 <div class="menu" hidden><button type="button" data-copy="">Copy Install Command</button><button type="button" data-open="team">Open Team Page</button></div></div>
 </nav>
@@ -234,7 +227,6 @@ ${subsidy}
 ${bench}
 ${how}
 ${chooser}
-${about}
 </div>
 <section class="shutdown" id="shutdown" aria-labelledby="shutdown-title">
 <div class="shutdown-box"><h2 id="shutdown-title">What will you do when the subsidies end?</h2>${command()}${copy}</div>

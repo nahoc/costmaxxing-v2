@@ -74,9 +74,10 @@ let queue = Promise.resolve();
 let gain = { amount: 0, until: 0 };
 
 const TONES: Record<Tone, Record<string, unknown>> = {
-  brand: { bold: true, color: "inverseText", backgroundColor: "success" },
+  brand: { bold: true, color: "#ffffff", backgroundColor: "#8d71d6" },
   amount: { bold: true, color: "success" },
   label: { dimColor: true },
+  divider: { color: "#8d71d6" },
   gain: { color: "success" },
   warn: { color: "warning" },
 };

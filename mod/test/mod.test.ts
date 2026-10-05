@@ -31,27 +31,35 @@ test("the line shows cents under $100, and says when the team server can't be re
 
 type Hook = (...args: never[]) => unknown;
 
-test("with a team server, each step's token counts go to it, a failed post is sent again, and the line shows the team", async () => {
+test("with a team, steps reach costmaxxing.dev at most once a minute, a failed send is retried, and the line shows the team", async () => {
   const hooks = new Map<string, Hook>();
-  const posts: { url: string; headers: Record<string, string>; records: { id: string; subagent: boolean; tokens: unknown }[] }[] = [];
-  const timers: (() => Promise<void>)[] = [];
+  const posts: { url: string; user: string; ids: string[] }[] = [];
+  let timers: { at: number; run: () => Promise<void> }[] = [];
+  let time = NOW;
   let down = false;
   const $ = {
     session: { id: async () => "s9" },
-    clock: { now: async () => NOW, after: (_ms: number, run: () => Promise<void>) => void timers.push(run) },
+    clock: { now: async () => time, after: (ms: number, run: () => Promise<void>) => void timers.push({ at: time + ms, run }) },
     store: { get: async () => undefined, set: async () => {}, delete: async () => {}, keys: async () => [] },
     http: {
-      fetch: async (url: string, init: { headers: Record<string, string>; body: string }) => {
+      fetch: async (url: string, init: { body: string }) => {
         if (down) throw new TypeError("connection refused");
-        posts.push({ url, headers: init.headers, records: JSON.parse(init.body).records });
-        return { ok: true, status: 200, text: JSON.stringify({ days: 30, people: 3, requests: 40, price: 2000, alt: 250 }) };
+        const body = JSON.parse(init.body);
+        posts.push({ url, user: body.user, ids: body.records.map((r: { id: string }) => r.id) });
+        return { ok: true, status: 200, text: JSON.stringify({ counted: 0, days: 30, people: 3, requests: 40, price: 2000, alt: 250 }) };
       },
     },
     ui: { invalidate: () => {} },
   };
-  const settle = async () => {
-    while (timers.length > 0) await timers.shift()?.();
-    await new Promise((resolve) => setTimeout(resolve, 20));
+  const advance = async (ms: number) => {
+    time += ms;
+    for (;;) {
+      const due = timers.filter((t) => t.at <= time);
+      if (due.length === 0) break;
+      timers = timers.filter((t) => t.at > time);
+      for (const t of due) await t.run();
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
   };
   const step = async (e: { turnId: string; index: number; agentId?: string }) => {
     const next = async function* () {
@@ -61,32 +69,35 @@ test("with a team server, each step's token counts go to it, a failed post is se
     const run = (hooks.get("turn.step") as unknown as (...a: unknown[]) => AsyncGenerator)($, e, next);
     let r = await run.next();
     while (r.done !== true) r = await run.next();
-    await settle();
+    await advance(0);
   };
   const hint = async () => {
     const render = hooks.get("ui.render") as unknown as (...a: unknown[]) => Promise<{ props: { hint: string } }>;
     return (await render($, { props: { hint: "" } }, async (e: unknown) => e)).props.hint;
   };
 
-  register((event: string, a: unknown, b?: unknown) => void hooks.set(event, (b ?? a) as Hook), { server: " http://team.local:8787/ ", token: "T", user: "ada" });
+  register((event: string, a: unknown, b?: unknown) => void hooks.set(event, (b ?? a) as Hook), { team: " Acme ", user: "u1u1u1u1u1u1" });
   await (hooks.get("session.start") as unknown as (...a: unknown[]) => Promise<unknown>)($, {}, async (e: unknown) => e);
-  await settle();
-  assert.deepEqual(posts.map((p) => p.records.length), [0]);
-  assert.equal(posts[0]?.url, "http://team.local:8787/openmaxxing/usage");
-  assert.deepEqual(posts[0]?.headers, { "content-type": "application/json", "x-openmaxxing-token": "T", "x-openmaxxing-user": "ada" });
+  await advance(0);
+  assert.deepEqual(posts, [{ url: "https://costmaxxing.dev/api/teams/acme/usage", user: "u1u1u1u1u1u1", ids: [] }]);
   assert.match(await hint(), /· team \$1\.8k \(3 people\)$/);
 
-  down = true;
   await step({ turnId: "t1", index: 0 });
+  await advance(1000);
+  await step({ turnId: "t1", index: 1, agentId: "a7" });
+  assert.equal(posts.length, 1);
+  assert.equal(timers.length, 1);
+  await advance(60_000);
+  assert.deepEqual(posts.at(-1)?.ids, ["s9/t1/main/0", "s9/t1/a7/1"]);
+
+  down = true;
+  await step({ turnId: "t2", index: 0 });
+  await advance(60_000);
   assert.match(await hint(), /team server unreachable$/);
   down = false;
-  await step({ turnId: "t1", index: 1, agentId: "a7" });
-  const last = posts.at(-1);
-  assert.deepEqual(last?.records.map((r) => [r.id, r.subagent]), [
-    ["s9/t1/main/0", false],
-    ["s9/t1/a7/1", true],
-  ]);
-  assert.deepEqual(last?.records[0]?.tokens, { uncached: 1000, output: 2000, cacheRead: 50000, write5m: 4000, write1h: 0 });
+  await step({ turnId: "t3", index: 0 });
+  await advance(60_000);
+  assert.deepEqual(posts.at(-1)?.ids, ["s9/t2/main/0", "s9/t3/main/0"]);
   assert.match(await hint(), /^openmaxxing · open-weight savings: session \$[\d.]+ · 30 days \$[\d.]+ · team \$1\.8k \(3 people\)$/);
 });
 

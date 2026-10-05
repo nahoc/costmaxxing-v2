@@ -114,7 +114,7 @@ function items(dataset: Dataset): Item[] {
   const since = dataset.now - dataset.days * DAY;
   return dataset.records
     .filter((record) => record.time >= since && record.time <= dataset.now)
-    .map((record) => ({ ...record, requests: 1, providers: SOURCE_PROVIDERS[record.harness] }));
+    .map((record) => ({ ...record, requests: record.requests ?? 1, providers: SOURCE_PROVIDERS[record.harness] }));
 }
 
 function sum<T>(list: T[], value: (entry: T) => number): number {
@@ -284,6 +284,29 @@ export function buildReport(options: ReportOptions): Report {
     unpriced: [...unpriced].map(([model, requests]) => ({ model, requests })).sort((a, b) => b.requests - a.requests),
     fallbacks: [...pricer.fallbacks.values()],
   };
+}
+
+export function byFamily(rows: Row[]): Row[] {
+  const families = new Map<string, Row[]>();
+  for (const row of rows) {
+    const family = row.label.replace(/ \d[\d.]*$/, "");
+    families.set(family, [...(families.get(family) ?? []), row]);
+  }
+  return [...families]
+    .map(([family, members]): Row => {
+      const total = (key: "requests" | "tokens" | "price" | "alt") => members.reduce((n, m) => n + m[key], 0);
+      const versions = members.map((m) => m.label.slice(family.length + 1)).sort((a, b) => Number(b) - Number(a));
+      const replacements = [...new Set(members.flatMap((m) => m.replacement?.split(" / ") ?? []))];
+      return {
+        label: members.length === 1 ? (members[0]?.label ?? family) : `${family} ${versions.join(", ")}`,
+        requests: total("requests"),
+        tokens: total("tokens"),
+        price: total("price"),
+        alt: total("alt"),
+        replacement: replacements.join(" / ") || undefined,
+      };
+    })
+    .sort((a, b) => b.price - a.price);
 }
 
 export interface TeamTotals extends Cost {

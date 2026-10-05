@@ -15,6 +15,7 @@ export function parseRecord(line: string): RequestRecord | undefined {
     session,
     subagent: o?.subagent === true,
     user: str(o?.user),
+    ...(typeof o?.requests === "number" && o.requests > 1 && { requests: o.requests }),
     tokens: { uncached: num(t.uncached), output: num(t.output), cacheRead: num(t.cacheRead), write5m: num(t.write5m), write1h: num(t.write1h) },
   };
 }

@@ -237,7 +237,7 @@ function items(dataset) {
     return dataset.rows.map((row) => ({ ...row, subagent: false, providers: SOURCE_PROVIDERS["claude.ai"] }));
   }
   const since = dataset.now - dataset.days * DAY;
-  return dataset.records.filter((record) => record.time >= since && record.time <= dataset.now).map((record) => ({ ...record, requests: 1, providers: SOURCE_PROVIDERS[record.harness] }));
+  return dataset.records.filter((record) => record.time >= since && record.time <= dataset.now).map((record) => ({ ...record, requests: record.requests ?? 1, providers: SOURCE_PROVIDERS[record.harness] }));
 }
 function sum(list, value) {
   let total = 0;
@@ -462,7 +462,11 @@ function statusText(session2, month2, team2) {
 var book = priceBook(parseModelsDev(models_dev_snapshot_default));
 var DAY2 = 864e5;
 var KEY = /^(\d{4}-\d{2}-\d{2}) (.+)$/;
-var team = { server: "", token: "", user: "" };
+var HOSTED = "https://costmaxxing.dev";
+var GAP = 6e4;
+var team = { name: "", server: "", token: "", user: "" };
+var lastSent = 0;
+var waiting = false;
 var sessionId = "";
 var session = NONE;
 var month = NONE;
@@ -490,14 +494,38 @@ async function load($) {
   month = all;
   $.ui.invalidate("ui.render");
 }
-async function flush($) {
+var reporting = () => team.name !== "" || team.server !== "" && team.token !== "";
+async function flush($, force) {
   const days = unsaved;
   unsaved = /* @__PURE__ */ new Map();
   for (const [key, tally] of days) await $.store.set(key, add(asTally(await $.store.get(key)), tally));
-  if (!team.server || !team.token) return;
+  if (!reporting()) return;
+  const now = await $.clock.now();
+  if (!force && now - lastSent < GAP) {
+    if (!waiting) {
+      waiting = true;
+      $.clock.after(GAP - (now - lastSent), async () => {
+        waiting = false;
+        save($, false);
+      });
+    }
+    return;
+  }
+  lastSent = now;
+  if (team.name && !team.user) {
+    team.user = String(await $.store.get("user") ?? "");
+    if (!team.user) {
+      team.user = [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, "0")).join("");
+      await $.store.set("user", team.user);
+    }
+  }
   const records = pending.splice(0);
   try {
-    const response = await $.http.fetch(`${team.server}/openmaxxing/usage`, {
+    const response = team.name ? await $.http.fetch(`${team.server || HOSTED}/api/teams/${team.name}/usage`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ user: team.user, records })
+    }) : await $.http.fetch(`${team.server}/openmaxxing/usage`, {
       method: "POST",
       headers: { "content-type": "application/json", "x-openmaxxing-token": team.token, "x-openmaxxing-user": team.user || "unknown" },
       body: JSON.stringify({ records })
@@ -510,17 +538,25 @@ async function flush($) {
   }
   $.ui.invalidate("ui.render");
 }
-function save($) {
-  queue = queue.then(() => flush($)).catch(() => void 0);
+function save($, force) {
+  queue = queue.then(() => flush($, force)).catch(() => void 0);
 }
 function register(on, options) {
   const option = (name) => typeof options[name] === "string" ? options[name].trim() : "";
+  team.name = option("team").toLowerCase();
   team.server = option("server").replace(/\/+$/, "");
   team.token = option("token");
   team.user = option("user");
   on("session.start", async ($, e, next) => {
     await load($);
-    if (team.server && team.token) $.clock.after(0, async () => save($));
+    if (reporting()) $.clock.after(0, async () => save($, true));
+    return next(e);
+  });
+  on("session.end", async ($, e, next) => {
+    if (pending.length > 0) {
+      save($, true);
+      await queue;
+    }
     return next(e);
   });
   on("turn.step", async function* ($, e, next) {
@@ -534,9 +570,9 @@ function register(on, options) {
     month = add(month, tally);
     const key = `${localDay(time)} ${sessionId}`;
     unsaved.set(key, add(unsaved.get(key) ?? NONE, tally));
-    if (team.server && team.token) pending.push(record);
+    if (reporting()) pending.push(record);
     $.ui.invalidate("ui.render");
-    $.clock.after(0, async () => save($));
+    $.clock.after(0, async () => save($, false));
     return result;
   });
   on("ui.render", { component: "PromptHint" }, async ($, e, next) => {

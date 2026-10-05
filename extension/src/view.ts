@@ -1,4 +1,4 @@
-import { comparisonText, count, escapeHtml as esc, exactUsd, percent, usd, type Report, type Row } from "@openmaxxing/core";
+import { byFamily, comparisonText, count, escapeHtml as esc, exactUsd, percent, usd, type Report, type Row } from "@openmaxxing/core";
 import { icon } from "../../world/icons.ts";
 import type { Step, TeamResult } from "./team.ts";
 
@@ -29,29 +29,6 @@ function seatBar(overSeat: number, most: number): string {
 
 function times(n: number): string {
   return n < 0.1 ? "<0.1×" : `${n < 10 ? n.toFixed(1) : Math.round(n)}×`;
-}
-
-function byFamily(rows: Row[]): Row[] {
-  const families = new Map<string, Row[]>();
-  for (const row of rows) {
-    const family = row.label.replace(/ \d[\d.]*$/, "");
-    families.set(family, [...(families.get(family) ?? []), row]);
-  }
-  return [...families]
-    .map(([family, members]): Row => {
-      const total = (key: "requests" | "tokens" | "price" | "alt") => members.reduce((n, m) => n + m[key], 0);
-      const versions = members.map((m) => m.label.slice(family.length + 1)).sort((a, b) => Number(b) - Number(a));
-      const replacements = [...new Set(members.flatMap((m) => m.replacement?.split(" / ") ?? []))];
-      return {
-        label: members.length === 1 ? (members[0]?.label ?? family) : `${family} ${versions.join(", ")}`,
-        requests: total("requests"),
-        tokens: total("tokens"),
-        price: total("price"),
-        alt: total("alt"),
-        replacement: replacements.join(" / ") || undefined,
-      };
-    })
-    .sort((a, b) => b.price - a.price);
 }
 
 function savings(row: Row): string {

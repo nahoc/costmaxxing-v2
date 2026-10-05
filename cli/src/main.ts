@@ -14,6 +14,7 @@ import {
 import pkg from "../package.json" with { type: "json" };
 import { loadConfig } from "./config.ts";
 import { connectSettings, serve } from "./gateway.ts";
+import { joinTeam } from "./join.ts";
 import { launch } from "./launch.ts";
 import { personalReport } from "./personal.ts";
 import { prices } from "./prices.ts";
@@ -22,6 +23,7 @@ import { web } from "./web.ts";
 const HELP = `openmaxxing: what your AI usage costs at API prices, and what it would cost on open-weight models
 
   openmaxxing [--days N] [--vs provider/model]... [--json] [--offline] [--config PATH]
+  openmaxxing <team>             add your Claude Code to a team's savings at costmaxxing.dev/<team>
   openmaxxing import <spend-report.csv> [--members members.csv] [--seats premium=N,standard=N]
                      [--billing monthly|annual] [--from YYYY-MM-DD --to YYYY-MM-DD]
   openmaxxing claude [args…]     run Claude Code through a local counting proxy
@@ -171,6 +173,7 @@ async function main(argv: string[]): Promise<void> {
       return void process.stdout.write(connectSettings(url, values.token, values.user));
     }
     default:
+      if (first && !first.startsWith("-")) return joinTeam(first, interactive());
       return reportCommand(argv);
   }
 }

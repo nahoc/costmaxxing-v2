@@ -32,6 +32,7 @@ interface HintEvent {
 }
 
 interface On {
+  (event: "session.end", hook: ($: Mods, e: unknown, next: (e: unknown) => Promise<unknown>) => Promise<unknown>): void;
   (event: "session.start", hook: ($: Mods, e: unknown, next: (e: unknown) => Promise<unknown>) => Promise<unknown>): void;
   (
     event: "turn.step",
@@ -44,7 +45,12 @@ const book = priceBook(parseModelsDev(snapshot));
 const DAY = 86_400_000;
 const KEY = /^(\d{4}-\d{2}-\d{2}) (.+)$/;
 
-const team = { server: "", token: "", user: "" };
+const HOSTED = "https://costmaxxing.dev";
+const GAP = 60_000;
+
+const team = { name: "", server: "", token: "", user: "" };
+let lastSent = 0;
+let waiting = false;
 let sessionId = "";
 let session = NONE;
 let month = NONE;
@@ -74,18 +80,45 @@ async function load($: Mods): Promise<void> {
   $.ui.invalidate("ui.render");
 }
 
-async function flush($: Mods): Promise<void> {
+const reporting = () => team.name !== "" || (team.server !== "" && team.token !== "");
+
+async function flush($: Mods, force: boolean): Promise<void> {
   const days = unsaved;
   unsaved = new Map();
   for (const [key, tally] of days) await $.store.set(key, add(asTally(await $.store.get(key)), tally));
-  if (!team.server || !team.token) return;
+  if (!reporting()) return;
+  const now = await $.clock.now();
+  if (!force && now - lastSent < GAP) {
+    if (!waiting) {
+      waiting = true;
+      $.clock.after(GAP - (now - lastSent), async () => {
+        waiting = false;
+        save($, false);
+      });
+    }
+    return;
+  }
+  lastSent = now;
+  if (team.name && !team.user) {
+    team.user = String((await $.store.get("user")) ?? "");
+    if (!team.user) {
+      team.user = [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, "0")).join("");
+      await $.store.set("user", team.user);
+    }
+  }
   const records = pending.splice(0);
   try {
-    const response = await $.http.fetch(`${team.server}/openmaxxing/usage`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-openmaxxing-token": team.token, "x-openmaxxing-user": team.user || "unknown" },
-      body: JSON.stringify({ records }),
-    });
+    const response = team.name
+      ? await $.http.fetch(`${team.server || HOSTED}/api/teams/${team.name}/usage`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ user: team.user, records }),
+        })
+      : await $.http.fetch(`${team.server}/openmaxxing/usage`, {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-openmaxxing-token": team.token, "x-openmaxxing-user": team.user || "unknown" },
+          body: JSON.stringify({ records }),
+        });
     totals = (response.ok && asTeam(response.text)) || "unreachable";
     if (totals === "unreachable") pending = [...records, ...pending].slice(-5000);
   } catch {
@@ -95,19 +128,28 @@ async function flush($: Mods): Promise<void> {
   $.ui.invalidate("ui.render");
 }
 
-function save($: Mods): void {
-  queue = queue.then(() => flush($)).catch(() => undefined);
+function save($: Mods, force: boolean): void {
+  queue = queue.then(() => flush($, force)).catch(() => undefined);
 }
 
 export function register(on: On, options: Record<string, unknown>): void {
   const option = (name: string) => (typeof options[name] === "string" ? (options[name] as string).trim() : "");
+  team.name = option("team").toLowerCase();
   team.server = option("server").replace(/\/+$/, "");
   team.token = option("token");
   team.user = option("user");
 
   on("session.start", async ($, e, next) => {
     await load($);
-    if (team.server && team.token) $.clock.after(0, async () => save($));
+    if (reporting()) $.clock.after(0, async () => save($, true));
+    return next(e);
+  });
+
+  on("session.end", async ($, e, next) => {
+    if (pending.length > 0) {
+      save($, true);
+      await queue;
+    }
     return next(e);
   });
 
@@ -122,9 +164,9 @@ export function register(on: On, options: Record<string, unknown>): void {
     month = add(month, tally);
     const key = `${localDay(time)} ${sessionId}`;
     unsaved.set(key, add(unsaved.get(key) ?? NONE, tally));
-    if (team.server && team.token) pending.push(record);
+    if (reporting()) pending.push(record);
     $.ui.invalidate("ui.render");
-    $.clock.after(0, async () => save($));
+    $.clock.after(0, async () => save($, false));
     return result;
   });
 

@@ -17,6 +17,7 @@ export interface RequestRecord {
   subagent: boolean;
   tokens: Tokens;
   user?: string;
+  requests?: number;
 }
 
 export interface SpendRow {

@@ -1,0 +1,101 @@
+html {
+  background: var(--paper) var(--checker);
+}
+.menubar a.menu-title {
+  display: flex;
+  align-items: center;
+}
+.desk {
+  padding: 48px 24px 96px;
+}
+.team {
+  position: relative;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+.team .body {
+  padding: 48px 64px 56px;
+}
+.team h1 {
+  max-width: 16em;
+  font: var(--l) / 0.95 var(--display);
+  text-wrap: balance;
+}
+.team h2 {
+  margin: 48px 0 12px;
+  font: var(--m) / 1 var(--display);
+}
+.team .body > p {
+  max-width: 44em;
+  margin-top: 20px;
+}
+.figures {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 32px;
+  border-block: var(--u) solid var(--ink);
+}
+.figures div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 20px 12px;
+}
+.figures div:first-child {
+  padding-left: 0;
+}
+.figures div + div {
+  border-left: var(--u) solid var(--ink);
+}
+.mid {
+  font: var(--m) / 1 var(--display);
+}
+.sheet {
+  width: 100%;
+  border-collapse: collapse;
+}
+.sheet th {
+  padding: 0 12px 6px 0;
+  border-bottom: var(--u) solid var(--ink);
+  font-family: var(--display);
+  font-weight: 400;
+  text-align: left;
+}
+.sheet td {
+  padding: 7px 12px 7px 0;
+}
+.sheet tbody tr + tr {
+  background: linear-gradient(90deg, var(--ink) 2px, transparent 0) 0 0 / 4px 2px repeat-x;
+}
+.sheet .num {
+  text-align: right;
+}
+.cmd {
+  margin: 16px 0 0;
+  padding: 14px 18px;
+  background: var(--ink);
+  color: var(--paper);
+  font: var(--m) / 1 var(--text);
+  overflow-x: auto;
+}
+.cmd code {
+  padding: 0;
+}
+.fine {
+  margin-top: 36px;
+}
+@media (max-width: 760px) {
+  .team .body {
+    padding: 32px 22px 40px;
+  }
+  .figures {
+    grid-template-columns: 1fr;
+  }
+  .figures div {
+    padding-left: 0;
+  }
+  .figures div + div {
+    border-left: 0;
+    border-top: var(--u) solid var(--ink);
+  }
+}

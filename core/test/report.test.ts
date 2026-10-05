@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   buildReport,
+  byFamily,
   parseMembers,
   parseModelsDev,
   parseSpendReport,
@@ -263,4 +264,29 @@ test("team report: each person carries a seat and how far usage runs past it, an
     ],
   );
   assert.equal(JSON.stringify(estimated.seats).includes("byUser"), false);
+});
+
+test("byFamily groups Claude models by name and GPT models by tier, newest version first", () => {
+  const row = (label: string, price: number, replacement = "GLM-5.3") => ({ label, requests: 1, tokens: 1, price, alt: price / 10, replacement });
+  const grouped = byFamily([
+    row("Claude Opus 5.5", 10),
+    row("Claude Opus 4.8", 2),
+    row("GPT-5.6 Sol", 5),
+    row("GPT-6.1 Sol", 1),
+    row("GPT-6 Sol", 1),
+    row("GPT-6 Astra", 3),
+    row("GPT-5.6 Luna", 1, "DeepSeek V4.1 Flash"),
+    row("GPT-6 Luna", 1, "DeepSeek V4.1 Flash"),
+    row("Claude Haiku 4.5", 1, "DeepSeek V4.1 Flash"),
+  ]);
+  assert.deepEqual(
+    grouped.map((r) => [r.label, r.requests, r.price]),
+    [
+      ["Claude Opus 5.5, 4.8", 2, 12],
+      ["GPT Sol 6.1, 6, 5.6", 3, 7],
+      ["GPT-6 Astra", 1, 3],
+      ["GPT Luna 6, 5.6", 2, 2],
+      ["Claude Haiku 4.5", 1, 1],
+    ],
+  );
 });

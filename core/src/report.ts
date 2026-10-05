@@ -288,19 +288,26 @@ export function buildReport(options: ReportOptions): Report {
   };
 }
 
+function family(label: string): [name: string, version: string] {
+  const tiered = /^([A-Za-z]+)-(\d[\d.]*) (\S.*)$/.exec(label);
+  if (tiered) return [`${tiered[1]} ${tiered[3]}`, tiered[2] ?? ""];
+  const trailing = /^(.*) (\d[\d.]*)$/.exec(label);
+  return trailing ? [trailing[1] ?? label, trailing[2] ?? ""] : [label, ""];
+}
+
 export function byFamily(rows: Row[]): Row[] {
-  const families = new Map<string, Row[]>();
+  const families = new Map<string, { row: Row; version: string }[]>();
   for (const row of rows) {
-    const family = row.label.replace(/ \d[\d.]*$/, "");
-    families.set(family, [...(families.get(family) ?? []), row]);
+    const [name, version] = family(row.label);
+    families.set(name, [...(families.get(name) ?? []), { row, version }]);
   }
   return [...families]
-    .map(([family, members]): Row => {
-      const total = (key: "requests" | "tokens" | "price" | "alt") => members.reduce((n, m) => n + m[key], 0);
-      const versions = members.map((m) => m.label.slice(family.length + 1)).sort((a, b) => Number(b) - Number(a));
-      const replacements = [...new Set(members.flatMap((m) => m.replacement?.split(" / ") ?? []))];
+    .map(([name, members]): Row => {
+      const total = (key: "requests" | "tokens" | "price" | "alt") => members.reduce((n, m) => n + m.row[key], 0);
+      const versions = members.map((m) => m.version).sort((a, b) => Number(b) - Number(a));
+      const replacements = [...new Set(members.flatMap((m) => m.row.replacement?.split(" / ") ?? []))];
       return {
-        label: members.length === 1 ? (members[0]?.label ?? family) : `${family} ${versions.join(", ")}`,
+        label: members.length === 1 ? (members[0]?.row.label ?? name) : `${name} ${versions.join(", ")}`,
         requests: total("requests"),
         tokens: total("tokens"),
         price: total("price"),

@@ -1,4 +1,4 @@
-import { parseModelsDev, priceBook, type RequestRecord } from "@costmaxxing/core";
+import { parseModelsDev, priceBook, type PriceBook, type RequestRecord, type TeamPricing } from "@costmaxxing/core";
 import snapshot from "@costmaxxing/core/snapshot" with { type: "json" };
 import { add, asTally, asTeam, localDay, NONE, priceRecord, statusParts, stepRecord, type StepUsage, type Tally, type TeamState, type Tone } from "./meter.ts";
 
@@ -47,7 +47,14 @@ interface On {
   (event: "ui.render", matcher: { component: "PromptHint" }, hook: ($: Mods, e: HintEvent, next: (e: HintEvent) => Promise<unknown>) => Promise<unknown>): void;
 }
 
-const book = priceBook(parseModelsDev(snapshot));
+const catalog = parseModelsDev(snapshot);
+let book: PriceBook = priceBook(catalog);
+let pricing: TeamPricing | undefined;
+
+function usePricing(next: TeamPricing | undefined): void {
+  pricing = next ?? undefined;
+  book = priceBook(catalog, pricing?.prices ?? {});
+}
 const DAY = 86_400_000;
 const KEY = /^(\d{4}-\d{2}-\d{2}) (.+)$/;
 
@@ -92,6 +99,7 @@ async function load($: Mods): Promise<void> {
   }
   session = ours;
   month = all;
+  usePricing(((await $.store.get("pricing")) ?? undefined) as TeamPricing | undefined);
   $.ui.invalidate("ui.render");
 }
 
@@ -135,6 +143,13 @@ async function flush($: Mods, force: boolean): Promise<void> {
           body: JSON.stringify({ records }),
         });
     totals = response.status === 404 ? "missing" : (response.ok && asTeam(response.text)) || "unreachable";
+    if (response.ok && team.name) {
+      const sentPricing = (JSON.parse(response.text) as { pricing?: TeamPricing | null }).pricing ?? undefined;
+      if (JSON.stringify(sentPricing) !== JSON.stringify(pricing)) {
+        usePricing(sentPricing);
+        await $.store.set("pricing", sentPricing ?? null);
+      }
+    }
     if (totals === "unreachable") pending = [...records, ...pending].slice(-5000);
   } catch {
     totals = "unreachable";
@@ -174,7 +189,7 @@ export function register(on: On, options: Record<string, unknown>): void {
     const time = await $.clock.now();
     const subagent = e.agentId !== undefined;
     const record = stepRecord(result.usage, { id: `${sessionId}/${e.turnId}/${e.agentId ?? "main"}/${e.index}`, session: sessionId, subagent, time });
-    const tally = priceRecord(record, book);
+    const tally = priceRecord(record, book, pricing?.scenario);
     session = add(session, tally);
     month = add(month, tally);
     gain = { amount: (Date.now() < gain.until ? gain.amount : 0) + (tally.price - tally.alt), until: Date.now() + 4000 };

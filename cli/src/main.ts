@@ -15,7 +15,7 @@ import pkg from "../package.json" with { type: "json" };
 import { loadConfig } from "./config.ts";
 import { connectSettings, serve } from "./gateway.ts";
 import { createInterface } from "node:readline/promises";
-import { joinTeam, startTeam } from "./join.ts";
+import { codexHook, joinTeam, startTeam } from "./join.ts";
 import { launch } from "./launch.ts";
 import { personalReport } from "./personal.ts";
 import { prices } from "./prices.ts";
@@ -148,6 +148,11 @@ async function main(argv: string[]): Promise<void> {
   switch (first) {
     case "import":
       return importCommand(rest);
+    case "codex-hook": {
+      let input = "";
+      for await (const chunk of process.stdin) input += chunk;
+      return codexHook(input).catch(() => undefined);
+    }
     case "claude":
     case "codex":
       return launch(first, rest);

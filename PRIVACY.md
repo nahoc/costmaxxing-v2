@@ -13,7 +13,8 @@ costmaxxing is an open-source command-line tool and Claude Code mod that prices 
 `npx costmaxxing` can start a team, and `npx costmaxxing <team-id>` installs the mod for that team. From then on, costmaxxing.dev receives:
 
 - for each Claude Code request: the model name, token counts (input, output, cache reads, cache writes), the time, and request and session IDs, sent at most once a minute;
-- once, when you join: daily sums of the same counts from your existing Claude Code logs, up to a year back;
+- for each Codex turn, if Codex is installed: the same counts, sent by a background Codex hook after the turn;
+- once, when you join: daily sums of the same counts from your existing Claude Code and Codex logs, up to a year back, with the session IDs of each day;
 - an anonymous ID for you, made by hashing the team name with your Claude account email. The email itself is never sent.
 
 It never receives prompts, responses, code, file names, keys, or credentials.
@@ -29,7 +30,7 @@ Each team's totals are shown at costmaxxing.dev/<team-id>. Team IDs are generate
 
 ## Leaving a team
 
-Run `claude plugin uninstall costmaxxing@costmaxxing`, or clear the team option with `/plugin configure costmaxxing@costmaxxing`. To have a team's data deleted, open an issue at https://github.com/nahoc/costmaxxing-v2/issues.
+Run `claude plugin uninstall costmaxxing@costmaxxing`, or clear the team option with `/plugin configure costmaxxing@costmaxxing`, and remove the costmaxxing entry from the Stop hooks in `~/.codex/hooks.json`. To have a team's data deleted, open an issue at https://github.com/nahoc/costmaxxing-v2/issues.
 
 ## Changes and contact
 

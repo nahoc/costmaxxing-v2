@@ -1,4 +1,4 @@
-import { buildReport, count, exactUsd, usd, type PriceBook, type RequestRecord, type TeamTotals } from "@costmaxxing/core";
+import { buildReport, count, exactUsd, usd, type PriceBook, type RequestRecord, type Scenario, type TeamTotals } from "@costmaxxing/core";
 
 export interface StepUsage {
   model: string;
@@ -53,8 +53,8 @@ export function stepRecord(usage: StepUsage, step: { id: string; session: string
   };
 }
 
-export function priceRecord(record: RequestRecord, book: PriceBook): Tally {
-  const { hero } = buildReport({ dataset: { kind: "logs", records: [record], days: 1, now: record.time }, book });
+export function priceRecord(record: RequestRecord, book: PriceBook, scenario?: Scenario): Tally {
+  const { hero } = buildReport({ dataset: { kind: "logs", records: [record], days: 1, now: record.time }, book, ...(scenario && { hero: scenario }) });
   return { requests: 1, price: hero.price, alt: hero.alt };
 }
 

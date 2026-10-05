@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { promisify } from "node:util";
 import type { RequestRecord } from "@costmaxxing/core";
-import { claudeLine } from "../../core/test/fixtures.ts";
+import { claudeLine, codexLine, codexUsage } from "../../core/test/fixtures.ts";
 import { dailySums, teamId, tooOld } from "../src/join.ts";
 
 const DAY = 86_400_000;
@@ -38,7 +38,12 @@ test("team names, the Claude Code version gate, and daily sums", () => {
   ]);
   assert.deepEqual(
     sums.map((s) => [s.id, s.requests, s.tokens.output]),
-    [["2026-10-01|claude-opus-5-5|0", 2, 4], ["2026-10-01|claude-opus-5-5|1", 1, 2], ["2026-10-02|claude-opus-5-5|0", 1, 2]],
+    [
+      ["2026-10-01|Claude Code|claude-opus-5-5|0", 2, 4],
+      ["2026-10-01|Claude Code|claude-opus-5-5|1", 1, 2],
+      ["2026-10-02|Claude Code|claude-opus-5-5|0", 1, 2],
+      ["2026-10-02|Codex|claude-opus-5-5|0", 1, 2],
+    ],
   );
 });
 
@@ -48,6 +53,9 @@ async function setup(version: string) {
   const fake = join(root, "claude");
   await writeFile(fake, `#!/bin/sh\necho "$*" >> "${calls}"\nif [ "$1" = "--version" ]; then echo "${version}"; fi\nif [ "$2" = "configure" ]; then cat >> "${calls}"; echo; fi\n`);
   await chmod(fake, 0o755);
+  const codexHome = join(root, "codex");
+  await mkdir(join(codexHome, "sessions"), { recursive: true });
+  await writeFile(join(codexHome, "hooks.json"), JSON.stringify({ hooks: { Stop: [{ hooks: [{ type: "command", command: "other-tool stop" }] }] } }));
   const project = join(root, "claude-home", "projects", "-repo");
   await mkdir(project, { recursive: true });
   const usage = { input_tokens: 100, output_tokens: 200, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 };
@@ -75,7 +83,7 @@ async function setup(version: string) {
   const env = {
     PATH: process.env.PATH ?? "",
     CLAUDE_CONFIG_DIR: join(root, "claude-home"),
-    CODEX_HOME: join(root, "codex"),
+    CODEX_HOME: codexHome,
     COSTMAXXING_HOME: join(root, "home"),
     COSTMAXXING_CLAUDE: fake,
     COSTMAXXING_URL: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
@@ -87,7 +95,12 @@ async function setup(version: string) {
       return error as { stdout: string; stderr: string; code: number };
     }
   };
-  return { run, bodies, calls: () => readFile(calls, "utf8"), close: () => server.close() };
+  const runWithInput = (input: string) =>
+    new Promise<void>((resolve) => {
+      const child = execFile(process.execPath, [MAIN, "codex-hook"], { env }, () => resolve());
+      child.stdin?.end(input);
+    });
+  return { run, hook: runWithInput, bodies, codexHome, root, calls: () => readFile(calls, "utf8"), close: () => server.close() };
 }
 
 test("npx costmaxxing <team>: installs and configures the mod, then uploads a year of daily sums", async () => {
@@ -145,4 +158,28 @@ test("npx costmaxxing <id>: a wrong or unknown ID stops before touching Claude C
   assert.equal(unknown.code, 1);
   assert.match(unknown.stderr, /no team has the ID acme-zzzzz-zzzzz/);
   assert.equal(await s.calls().catch(() => ""), "");
+});
+
+test("joining adds a background Codex Stop hook beside existing ones, and the hook sends each Codex turn once", async () => {
+  const s = await setup("2.1.289 (Claude Code)");
+  assert.equal((await s.run()).code, 0);
+  const hooks = JSON.parse(await readFile(join(s.codexHome, "hooks.json"), "utf8")).hooks.Stop;
+  assert.equal(hooks.length, 2);
+  assert.equal(hooks[0].hooks[0].command, "other-tool stop");
+  assert.match(hooks[1].hooks[0].command, / codex-hook$/);
+  assert.equal(hooks[1].hooks[0].async, true);
+  assert.equal((await s.run()).code, 0);
+  assert.equal(JSON.parse(await readFile(join(s.codexHome, "hooks.json"), "utf8")).hooks.Stop.length, 2);
+
+  const transcript = join(s.codexHome, "sessions", "rollout-1.jsonl");
+  const turn = (id: string) => at(codexLine("token_usage_record", { response_id: id, session_id: "c1", usage: codexUsage(2000, 1000, 100) }), -0.0001);
+  const before = s.bodies.length;
+  await writeFile(transcript, [codexLine("session_meta", { id: "c1" }, 0), codexLine("turn_context", { model: "gpt-5.6-sol" }, 0), at(JSON.parse(JSON.stringify(turn("r_old"))), 3), turn("r1")].join("\n"));
+  await s.hook(JSON.stringify({ transcript_path: transcript, session_id: "c1" }));
+  await writeFile(transcript, [codexLine("session_meta", { id: "c1" }, 0), codexLine("turn_context", { model: "gpt-5.6-sol" }, 0), at(JSON.parse(JSON.stringify(turn("r_old"))), 3), turn("r1"), turn("r2")].join("\n"));
+  await s.hook(JSON.stringify({ transcript_path: transcript, session_id: "c1" }));
+  await s.hook(JSON.stringify({ transcript_path: transcript, session_id: "c1" }));
+  s.close();
+  const sent = s.bodies.slice(before).filter((b) => b.url?.endsWith("/usage"));
+  assert.deepEqual(sent.map((b) => b.body.records.map((r) => [r.harness, r.model])), [[["Codex", "gpt-5.6-sol"]], [["Codex", "gpt-5.6-sol"]]]);
 });

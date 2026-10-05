@@ -47,6 +47,18 @@ html {
 .figures div + div {
   border-left: var(--u) solid var(--ink);
 }
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 24px 0 0;
+}
+.stats dt {
+  font: var(--m) / 1 var(--display);
+}
+.stats dd {
+  margin: 4px 0 0;
+}
 .mid {
   font: var(--m) / 1 var(--display);
 }
@@ -106,6 +118,9 @@ html {
   .figures div + div {
     border-left: 0;
     border-top: var(--u) solid var(--ink);
+  }
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
   }
   .sheet th:nth-child(2),
   .sheet td:nth-child(2),

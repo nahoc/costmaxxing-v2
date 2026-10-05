@@ -22,6 +22,15 @@ test("a step's cache writes are priced at the 5-minute rate, and a subagent's st
   assert.ok(sub.alt < main.alt);
 });
 
+test("a team's own comparison prices the same request differently, from the team's price overrides", () => {
+  const overrides = priceBook(parseModelsDev(snapshot), { "boundless/kimi-k3": { input: 2.3, output: 11.4, cacheRead: 0.23 } });
+  const record = stepRecord(USAGE, { id: "k", session: "s", subagent: false, time: NOW });
+  const plain = priceRecord(record, book);
+  const kimi = priceRecord(record, overrides, { name: "Opus on Kimi", routes: [["claude-opus-*", "boundless/kimi-k3"]] });
+  assert.equal(kimi.price, plain.price);
+  assert.ok(Math.abs(kimi.alt - (1000 * 2.3 + 2000 * 11.4 + 50000 * 0.23 + 4000 * 2.3) / 1e6) < 1e-12);
+});
+
 test("the line shows cents under $100, and says when the team server can't be reached", () => {
   const tally = { requests: 2, price: 4.5, alt: 0.25 };
   assert.equal(statusText(tally, { requests: 9, price: 2500, alt: 300 }, undefined), "costmaxxing  $4.25 session · $2.2k 30 days");

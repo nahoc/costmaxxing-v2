@@ -1,7 +1,7 @@
 import { findPrice, Pricer, type Fallback } from "./prices.ts";
 import { modelScenario, PLAN_PROVIDERS, planDetail, planScenario, route, type Scenario } from "./scenarios.ts";
 import type { Seat, SeatCount } from "./spend.ts";
-import { totalTokens, type Dataset, type Harness, type PriceBook, type Tokens } from "./types.ts";
+import { totalTokens, type Dataset, type Harness, type PriceBook, type Rates, type Tokens } from "./types.ts";
 
 const DAY = 86_400_000;
 
@@ -53,6 +53,7 @@ export interface ReportOptions {
   dataset: Dataset;
   book: PriceBook;
   vs?: string[];
+  hero?: Scenario;
   scenarios?: Scenario[];
   plan?: Plan;
   seats?: SeatCount;
@@ -170,7 +171,8 @@ export function buildReport(options: ReportOptions): Report {
 
   const [vsHero, ...vsRest] = options.vs ?? [];
   const plan = PLAN_PROVIDERS[0]!;
-  const hero = vsHero ? modelScenario(vsHero, book) : planScenario(plan);
+  const hero = options.hero ?? (vsHero ? modelScenario(vsHero, book) : planScenario(plan));
+  const custom = options.hero !== undefined || vsHero !== undefined;
   const heroMissing = missing(hero);
   if (heroMissing.length > 0) throw new Error(`no price for ${heroMissing.join(", ")}`);
 
@@ -266,8 +268,8 @@ export function buildReport(options: ReportOptions): Report {
     requests: sum(all, (item) => item.requests),
     tokens: sum(all, (item) => totalTokens(item.tokens)),
     hero: {
-      name: vsHero ? hero.name : "open-weight models",
-      detail: vsHero ? undefined : planDetail(plan, book),
+      name: custom ? hero.name : "open-weight models",
+      detail: custom ? undefined : planDetail(plan, book),
       ...window,
       month: pacing.month.price - pacing.month.alt,
       year: pacing.year.price - pacing.year.alt,
@@ -307,6 +309,11 @@ export function byFamily(rows: Row[]): Row[] {
       };
     })
     .sort((a, b) => b.price - a.price);
+}
+
+export interface TeamPricing {
+  scenario?: Scenario;
+  prices?: Record<string, Partial<Rates>>;
 }
 
 export interface TeamTotals extends Cost {

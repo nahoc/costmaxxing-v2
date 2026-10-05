@@ -1,6 +1,6 @@
 import { byFamily, count, escapeHtml as esc, exactUsd, percent, plural, usd, type Report } from "@costmaxxing/core";
 import { icon, SPRITE } from "../../world/icons.ts";
-import { addBackfill, addLive, createTeam, monthTotals, overLimit, parseUpload, readRecords, teamMeta, teamReport, teamSlug, type Redis } from "./teams.ts";
+import { addBackfill, addLive, createTeam, monthTotals, overLimit, parsePricing, parseUpload, readRecords, sessionCount, teamMeta, teamReport, teamSlug, type Redis } from "./teams.ts";
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 
@@ -19,6 +19,34 @@ function figures(report: Report): string {
 <div><span class="mid">${usd(hero.alt)}</span><span>on open&#8209;weight models</span></div>
 <div><span class="mid">Up to ${percent(hero.percent)}</span><span>you could save</span></div>
 </div>`;
+}
+
+function stats(report: Report): string {
+  const cells: [string, string][] = [
+    [count(report.users ?? 0), report.users === 1 ? "person" : "people"],
+    [count(report.sessions ?? 0), report.sessions === 1 ? "session" : "sessions"],
+    [count(report.requests), "requests"],
+    [count(report.tokens), "tokens"],
+  ];
+  return `<dl class="stats">${cells.map(([n, label]) => `<div><dt>${n}</dt><dd>${label}, last 30 days</dd></div>`).join("")}</dl>`;
+}
+
+function forecast(report: Report): string {
+  const rows = report.forecast
+    .map(
+      (f) =>
+        `<tr><td>At the ${esc(f.label)} pace</td><td class="num">${usd(f.month.price)}</td><td class="num">${usd(f.month.alt)}</td><td class="num">${usd(f.year.price - f.year.alt)}</td></tr>`,
+    )
+    .join("");
+  return `<table class="sheet"><thead><tr><th>Pace</th><th class="num">API price a month</th><th class="num">Open&#8209;weight a month</th><th class="num">Savings a year</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function tools(report: Report): string {
+  const rows = report.byHarness ?? [];
+  if (rows.length < 2) return "";
+  return `<h2>By tool, last 30 days</h2><table class="sheet"><thead><tr><th>Tool</th><th class="num">Requests</th><th class="num">API price</th><th class="num">Open&#8209;weight cost</th></tr></thead><tbody>${rows
+    .map((row) => `<tr><td>${esc(row.label)}</td><td class="num">${count(row.requests)}</td><td class="num">${usd(row.price)}</td><td class="num">${usd(row.alt)}</td></tr>`)
+    .join("")}</tbody></table>`;
 }
 
 function models(report: Report): string {
@@ -51,11 +79,15 @@ export function teamPage(id: string, team: string, month: Report, all: Report, c
       ? `<h1>No usage for ${esc(team)} yet.</h1>
 <p>Everyone on the team runs this once. Their Claude Code then reports token counts here, and the savings show under their prompt.</p>${join}`
       : `<h1>${esc(team)} could save ${usd(month.hero.year)} a&nbsp;year on open&#8209;weight models.</h1>
-<p>${count(month.users ?? 0)} ${month.users === 1 ? "person" : "people"} made ${plural(month.requests, "Claude Code request")} in the last 30 days. Everything recorded so far, over ${plural(all.days, "day")}: ${exactUsd(all.hero.price)} at API prices, ${exactUsd(all.hero.alt)} on open&#8209;weight models.</p>
+<p>Compared with ${esc(month.hero.detail ?? month.hero.name)}. Everything recorded so far, over ${plural(all.days, "day")}: ${exactUsd(all.hero.price)} at API prices, ${exactUsd(all.hero.alt)} on open&#8209;weight models.</p>
 ${figures(month)}
+${stats(month)}
+<h2>Forecast</h2>
+${forecast(month)}
+${tools(month)}
 <h2>Models, last 30 days</h2>
 ${models(month)}
-<h2>Add your Claude Code</h2>${join}
+<h2>Join this team</h2>${join}
 <p class="fine">Only model names and token counts reach this page. Anyone with this link can see it, so share it only with your team.</p>`;
   return frame(team, body, css);
 }
@@ -72,11 +104,11 @@ export async function handle(request: Request, redis: Redis, now: number, css: s
   };
   if (raw === "" && request.method === "POST") {
     if (await overLimit(redis, `new:${ip}`, 5, now)) return json({ error: "slow down" }, 429);
-    let name = "";
+    let body: { name?: unknown; pricing?: unknown } = {};
     try {
-      name = String(((await request.json()) as { name?: unknown }).name ?? "");
+      body = (await request.json()) as typeof body;
     } catch {}
-    return json(await createTeam(redis, name, now), 201);
+    return json(await createTeam(redis, String(body.name ?? ""), parsePricing(body.pricing), now), 201);
   }
   const team = teamSlug(raw);
   const meta = team ? await teamMeta(redis, team) : undefined;
@@ -86,17 +118,17 @@ export async function handle(request: Request, redis: Redis, now: number, css: s
     if (await overLimit(redis, `write:${ip}`, 600, now)) return json({ error: "slow down" }, 429);
     const sent = await upload(request);
     if (!sent) return json({ error: 'send {"user": "...", "records": [...]}' }, 400);
-    const counted = action === "usage" ? (await addLive(redis, team, sent.user, sent.records), sent.records.length) : await addBackfill(redis, team, sent.user, sent.records, now);
-    return json({ counted, name: meta.name, ...(await monthTotals(redis, team, now)) });
+    const counted = action === "usage" ? (await addLive(redis, team, sent), sent.records.length) : await addBackfill(redis, team, sent, now);
+    return json({ counted, name: meta.name, pricing: meta.pricing ?? null, ...(await monthTotals(redis, team, now, meta.pricing)) });
   }
-  if (action === "") return json({ name: meta.name, ...(await monthTotals(redis, team, now)) });
+  if (action === "") return json({ name: meta.name, pricing: meta.pricing ?? null, ...(await monthTotals(redis, team, now, meta.pricing)) });
   if (action === "page") {
-    const records = await readRecords(redis, team, 366, now);
-    const month = teamReport(records, 30, now);
-    const all = teamReport(records, 366, now);
+    const [records, sessions] = await Promise.all([readRecords(redis, team, 366, now), sessionCount(redis, team, 30, now)]);
+    const month = teamReport(records, 30, now, meta.pricing);
+    const all = teamReport(records, 366, now, meta.pricing);
     const first = Math.min(...records.map((r) => r.time));
     const days = records.length > 0 ? Math.round((now - first) / 86_400_000) + 1 : 0;
-    return new Response(teamPage(team, meta.name, month, { ...all, days }, css), {
+    return new Response(teamPage(team, meta.name, { ...month, sessions }, { ...all, days }, css), {
       headers: { "content-type": "text/html; charset=utf-8", "cache-control": records.length > 0 ? "private, max-age=60" : "no-store", "x-robots-tag": "noindex" },
     });
   }

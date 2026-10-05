@@ -83,8 +83,8 @@ function parseModelsDev(data) {
   }
   return prices;
 }
-function priceBook(catalog, overrides = {}) {
-  const book2 = new Map([...BOUNDLESS, ...catalog].map((price) => [price.ref, price]));
+function priceBook(catalog2, overrides = {}) {
+  const book2 = new Map([...BOUNDLESS, ...catalog2].map((price) => [price.ref, price]));
   for (const [ref, override] of Object.entries(overrides)) {
     const slash = ref.indexOf("/");
     const merged = { ...book2.get(ref)?.rates, ...override };
@@ -285,7 +285,8 @@ function buildReport(options) {
   };
   const [vsHero, ...vsRest] = options.vs ?? [];
   const plan = PLAN_PROVIDERS[0];
-  const hero = vsHero ? modelScenario(vsHero, book2) : planScenario(plan);
+  const hero = options.hero ?? (vsHero ? modelScenario(vsHero, book2) : planScenario(plan));
+  const custom = options.hero !== void 0 || vsHero !== void 0;
   const heroMissing = missing(hero);
   if (heroMissing.length > 0) throw new Error(`no price for ${heroMissing.join(", ")}`);
   const priced = [];
@@ -376,8 +377,8 @@ function buildReport(options) {
     requests: sum(all, (item) => item.requests),
     tokens: sum(all, (item) => totalTokens(item.tokens)),
     hero: {
-      name: vsHero ? hero.name : "open-weight models",
-      detail: vsHero ? void 0 : planDetail(plan, book2),
+      name: custom ? hero.name : "open-weight models",
+      detail: custom ? void 0 : planDetail(plan, book2),
       ...window,
       month: pacing.month.price - pacing.month.alt,
       year: pacing.year.price - pacing.year.alt,
@@ -439,8 +440,8 @@ function stepRecord(usage, step) {
     }
   };
 }
-function priceRecord(record, book2) {
-  const { hero } = buildReport({ dataset: { kind: "logs", records: [record], days: 1, now: record.time }, book: book2 });
+function priceRecord(record, book2, scenario) {
+  const { hero } = buildReport({ dataset: { kind: "logs", records: [record], days: 1, now: record.time }, book: book2, ...scenario && { hero: scenario } });
   return { requests: 1, price: hero.price, alt: hero.alt };
 }
 function localDay(time) {
@@ -462,7 +463,13 @@ function statusParts(session2, month2, team2, gain2 = 0) {
 }
 
 // src/register.ts
-var book = priceBook(parseModelsDev(models_dev_snapshot_default));
+var catalog = parseModelsDev(models_dev_snapshot_default);
+var book = priceBook(catalog);
+var pricing;
+function usePricing(next) {
+  pricing = next ?? void 0;
+  book = priceBook(catalog, pricing?.prices ?? {});
+}
 var DAY2 = 864e5;
 var KEY = /^(\d{4}-\d{2}-\d{2}) (.+)$/;
 var HOSTED = "https://costmaxxing.dev";
@@ -503,6 +510,7 @@ async function load($) {
   }
   session = ours;
   month = all;
+  usePricing(await $.store.get("pricing") ?? void 0);
   $.ui.invalidate("ui.render");
 }
 var reporting = () => team.name !== "" || team.server !== "" && team.token !== "";
@@ -542,6 +550,13 @@ async function flush($, force) {
       body: JSON.stringify({ records })
     });
     totals2 = response.status === 404 ? "missing" : response.ok && asTeam(response.text) || "unreachable";
+    if (response.ok && team.name) {
+      const sentPricing = JSON.parse(response.text).pricing ?? void 0;
+      if (JSON.stringify(sentPricing) !== JSON.stringify(pricing)) {
+        usePricing(sentPricing);
+        await $.store.set("pricing", sentPricing ?? null);
+      }
+    }
     if (totals2 === "unreachable") pending = [...records, ...pending].slice(-5e3);
   } catch {
     totals2 = "unreachable";
@@ -576,7 +591,7 @@ function register(on, options) {
     const time = await $.clock.now();
     const subagent = e.agentId !== void 0;
     const record = stepRecord(result.usage, { id: `${sessionId}/${e.turnId}/${e.agentId ?? "main"}/${e.index}`, session: sessionId, subagent, time });
-    const tally = priceRecord(record, book);
+    const tally = priceRecord(record, book, pricing?.scenario);
     session = add(session, tally);
     month = add(month, tally);
     gain = { amount: (Date.now() < gain.until ? gain.amount : 0) + (tally.price - tally.alt), until: Date.now() + 4e3 };

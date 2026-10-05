@@ -8,6 +8,7 @@ import type { Redis } from "../src/teams.ts";
 function memory(): Redis & { keys: () => string[] } {
   const hashes = new Map<string, Map<string, number>>();
   const strings = new Map<string, string>();
+  const sets = new Map<string, Set<string>>();
   const run = async (c: (string | number)[]): Promise<unknown> => {
     const [op, ...a] = c.map(String);
     if (op === "EVAL") {
@@ -33,6 +34,13 @@ function memory(): Redis & { keys: () => string[] } {
       return n;
     }
     if (op === "EXPIRE") return 1;
+    if (op === "PFADD") {
+      const set = sets.get(a[0]!) ?? new Set<string>();
+      for (const id of a.slice(1)) set.add(id);
+      sets.set(a[0]!, set);
+      return 1;
+    }
+    if (op === "PFCOUNT") return new Set(a.flatMap((k) => [...(sets.get(k) ?? [])])).size;
     if (op === "DEL") return Number(strings.delete(a[0]!));
     if (op === "HGETALL") return [...(hashes.get(a[0]!) ?? [])].flatMap(([k, v]) => [k, String(v)]);
     throw new Error(`unexpected ${op}`);
@@ -55,7 +63,8 @@ const record = (id: string, time: number, model = "claude-opus-5-5", subagent = 
 const post = (redis: Redis, path: string, body: unknown, now = NOW, ip = "1.2.3.4") =>
   handle(new Request(`https://x/api/teams?p=${path}`, { method: "POST", body: JSON.stringify(body), headers: { "x-forwarded-for": ip } }), redis, now, "");
 const get = (redis: Redis, path: string, ip = "1.2.3.4") => handle(new Request(`https://x/api/teams?p=${path}`, { headers: { "x-forwarded-for": ip } }), redis, NOW, "");
-const create = async (redis: Redis, name = "Acme Robotics") => ((await (await post(redis, "", { name })).json()) as { id: string }).id;
+const create = async (redis: Redis, name = "Acme Robotics", pricing?: unknown) =>
+  ((await (await post(redis, "", { name, pricing })).json()) as { id: string }).id;
 
 test("daily sums price exactly like the requests they came from", async () => {
   const redis = memory();
@@ -117,4 +126,39 @@ test("teams get unguessable IDs; unknown and plain-name IDs are 404s, and guessi
   const created = [];
   for (let i = 0; i < 6; i++) created.push((await post(redis, "", { name: "spam" }, NOW, "8.8.8.8")).status);
   assert.deepEqual(created, [201, 201, 201, 201, 201, 429]);
+});
+
+test("Codex counts beside Claude Code, sessions are counted, and the page splits by tool with a forecast", async () => {
+  const redis = memory();
+  const acme = await create(redis);
+  const codex = { ...record("x1", NOW - 1000, "gpt-5.6-sol"), harness: "Codex" as const, session: "codex-1" };
+  await post(redis, `${acme}/usage`, { user: USER, records: [{ ...record("c1", NOW - 1000), session: "cc-1" }, { ...record("c2", NOW - 2000), session: "cc-1" }, codex] });
+  await post(redis, `${acme}/backfill`, { user: "f0e1d2c3b4a59687", records: [{ ...record("b1", NOW - 3 * DAY), session: "" }], sessions: { [new Date(NOW - 3 * DAY).toISOString().slice(0, 10)]: ["old-1", "old-2"] } });
+  const page = await (await get(redis, `${acme}/page`)).text();
+  assert.match(page, /<dt>4<\/dt><dd>sessions, last 30 days/);
+  assert.match(page, /<dt>4<\/dt><dd>requests, last 30 days/);
+  assert.match(page, /By tool, last 30 days/);
+  assert.match(page, /<td>Codex<\/td><td class="num">1<\/td>/);
+  assert.match(page, /At the 7-day average pace/);
+  assert.match(page, /At the 30-day average pace/);
+});
+
+test("team pricing from the starter's config decides the comparison everywhere", async () => {
+  const redis = memory();
+  const pricing = {
+    scenario: { name: "Opus on Kimi", routes: [["claude-opus-*", "boundless/kimi-k3"]] },
+    prices: { "boundless/kimi-k3": { input: 2.3, output: 11.4, cacheRead: 0.23 } },
+  };
+  const kimi = await create(redis, "Kimi Fans", pricing);
+  const plain = await create(redis, "Plain");
+  for (const id of [kimi, plain]) await post(redis, `${id}/usage`, { user: USER, records: [record("1", NOW)] });
+  const priced = await (await get(redis, kimi)).json();
+  const defaults = await (await get(redis, plain)).json();
+  assert.deepEqual(priced.pricing.scenario.routes, [["claude-opus-*", "boundless/kimi-k3"]]);
+  assert.equal(defaults.pricing, null);
+  assert.equal(priced.price, defaults.price);
+  assert.notEqual(priced.alt, defaults.alt);
+  assert.match(await (await get(redis, `${kimi}/page`)).text(), /Compared with Opus on Kimi\./);
+  const bogus = await create(redis, "Bogus", { scenario: { name: "x", routes: [["*", "nowhere/model"]] } });
+  assert.equal((await (await get(redis, bogus)).json()).pricing, null);
 });

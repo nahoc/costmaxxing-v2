@@ -72,9 +72,9 @@ It asks for a team ID; press Enter to start a new team and give it a name. costm
 npx costmaxxing acme-7kq3x-m9pz2
 ```
 
-It installs the costmaxxing mod into Claude Code (v2.1.287 or later; it offers to update an older one), sets it to report to the team, and adds the history from the person's Claude Code logs, up to a year. Claude Code keeps the setting, so it works in every session from then on. The savings then show under the prompt and update after every request.
+It installs the costmaxxing mod into Claude Code (v2.1.287 or later; it offers to update an older one), sets it to report to the team, adds a background Stop hook to Codex if Codex is installed (Codex asks once to trust it), and adds the history from the person's Claude Code and Codex logs, up to a year. Claude Code keeps the setting, so it works in every session from then on. The savings then show under the prompt and update after every request.
 
-The team's page is costmaxxing.dev/acme-7kq3x-m9pz2. The ID is the key: it has 50 random bits, unknown IDs get a 404, and guesses are rate limited, so only people you give the ID to can see the page or add to it.
+The team's page is costmaxxing.dev/acme-7kq3x-m9pz2. It shows the savings, people, sessions, requests, and tokens for the last 30 days, a forecast at the 7-day and 30-day pace, a split between Claude Code and Codex, and the models. The ID is the key: it has 50 random bits, unknown IDs get a 404, and guesses are rate limited, so only people you give the ID to can see the page or add to it.
 
 What leaves the machine: for each request, the model, token counts, time, and request and session IDs, sent to costmaxxing.dev at most once a minute, plus daily sums of the same from the logs. Each person is an anonymous ID made from the team name and their Claude account email; the email itself is never sent. Prompts, responses, code, and keys never leave. Running the command again changes nothing: history is only counted from before the person first joined.
 
@@ -169,6 +169,8 @@ claude.ai seats cost $25 a month (Standard) or $125 (Premium), or $20 and $100 w
 ## Configuration
 
 costmaxxing reads `~/.costmaxxing/config.toml` if it exists, or the file given with `--config`.
+
+When you start a team with `npx costmaxxing`, the file's first `[[scenario]]` and its `[prices]` become the team's comparison: the team page, and the line under every member's prompt, price usage that way instead of the default open-weight plan.
 
 ```toml
 window_days = 30

@@ -1,4 +1,4 @@
-import { comparisonText, count, escapeHtml as esc, exactUsd, percent, seatText, usd } from "@costmaxxing/core";
+import { comparisonText, count, escapeHtml as esc, exactUsd, percent, usd } from "@costmaxxing/core";
 import type { Example } from "./example.ts";
 import { PRICE_LADDER, SWE_BENCH } from "./claims.ts";
 import { SEAT } from "./example.ts";
@@ -47,7 +47,7 @@ function meter(share: number, anthropic: boolean): string {
   return `<span class="meter"><span class="${anthropic ? "anthropic" : ""}" style="width:${Math.max(1.5, share * 100).toFixed(1)}%"></span></span>`;
 }
 
-export function renderPage({ example, install, css, js, zipSize }: { example: Example; install: Install; css: string; js: string; zipSize: string }): string {
+export function renderPage({ example, install, css, js }: { example: Example; install: Install; css: string; js: string }): string {
   const { report, people, subsidized } = example;
   const { hero } = report;
   const top = people.slice(0, 5);
@@ -55,17 +55,15 @@ export function renderPage({ example, install, css, js, zipSize }: { example: Ex
   const zipAttrs = install.zip ? ' download data-zip=""' : "";
   const [best, glm, fable, flash] = SWE_BENCH.rows;
   if (!best || !glm || !fable || !flash) throw new Error("SWE_BENCH needs four rows");
-  const benchLine = `Not a downgrade: ${glm.name} scores ${glm.score.toFixed(1)}% on SWE-bench Verified, ahead of ${fable.name} at ${fable.score.toFixed(1)}%.`;
-  const [fable51, opus55] = PRICE_LADDER;
-  if (!fable51 || !opus55) throw new Error("PRICE_LADDER needs Fable and Opus");
+  const benchLine = `Not a downgrade: ${glm.name} scores ${glm.score.toFixed(1)}% on SWE-bench Verified. ${fable.name} scores ${fable.score.toFixed(1)}%.`;
   const topOutput = Math.max(...PRICE_LADDER.map((m) => m.output));
   const cta = `<a class="button default" href="${esc(install.href)}"${zipAttrs}>${esc(install.label)}</a>`;
 
   const dialog = `<section class="alert hero" id="hero" aria-labelledby="hero-title">
 <div class="alert-icon">${icon("computer")}</div>
 <div class="alert-text"><h1 id="hero-title">How much can your team save by moving from Anthropic to open&#8209;weight models?</h1>
-<p>Add costmaxxing to Chrome as a claude.ai Owner, and your team's real bill opens on its own: every person, product, and model at Anthropic's API prices, next to the same usage on open&#8209;weight models.</p>
-<p>It runs in your browser. Nothing is uploaded.</p>
+<p>Install it as a claude.ai Owner. Your team's real bill opens right away, priced at Anthropic's API rates and on open&#8209;weight models.</p>
+<p>It runs in your browser and uploads nothing.</p>
 <p class="claim">${figure("info-bench", esc(benchLine))}</p></div>
 <div class="buttons">${cta}</div>
 </section>`;
@@ -75,16 +73,16 @@ export function renderPage({ example, install, css, js, zipSize }: { example: Ex
     title: "Team Bill (example)",
     className: "bill",
     label: "Team Bill, an example team with synthetic data",
-    body: `<p class="meta">${esc(report.org ?? "")} · last ${report.days} days · ${count(report.users ?? 0)} people</p>
+    body: `<p class="meta">${esc(report.org ?? "")} · ${count(report.users ?? 0)} people · last ${report.days} days</p>
 <p class="savings">${figure("info-savings", `<span class="big">${usd(hero.year)}</span> a year in savings`)}</p>
 <div class="figures">
 ${figure("info-price", `<span class="mid">${usd(hero.price)}</span> on Anthropic`)}
 ${figure("info-alt", `<span class="mid">${usd(hero.alt)}</span> on open&#8209;weight models`)}
 ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savings`)}
 </div>
-<p class="seatline">${figure("info-seats", esc(report.seats ? seatText(report.seats) : ""))}</p>
+<p class="seatline">${figure("info-seats", report.seats ? `Seats cost ${usd(report.seats.monthly)} a month for usage worth ${usd(report.seats.worth)}.` : "")}</p>
 <table class="people">
-<caption>Top ${top.length} of ${people.length} people. <span class="zebra-chip" aria-hidden="true"></span> ${subsidized} use more than their seat costs.</caption>
+<caption><span class="zebra-chip" aria-hidden="true"></span> uses more than the seat costs</caption>
 <thead><tr><th scope="col">Person</th><th scope="col">Seat</th><th scope="col" class="num">Price</th><th scope="col"><span class="sr">Share of the bill</span></th></tr></thead>
 <tbody>${top
       .map(
@@ -93,7 +91,7 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
       )
       .join("")}</tbody>
 </table>`,
-    status: ["synthetic example", "priced by models.dev"],
+    status: ["example data"],
   });
 
   const paint = win({
@@ -102,7 +100,7 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
     className: "paint",
     closed: true,
     body: `<img src="wall-street-1915.png" width="560" height="441" alt="Paul Strand's 1915 photograph of Wall Street: tiny figures walk past the enormous dark windows of a bank, dithered to two colors." />`,
-    status: ["Paul Strand", "public domain"],
+    status: ["Paul Strand, 1915", "public domain"],
   });
 
   const desktopIcons: [string, IconName, string][] = [
@@ -119,13 +117,10 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
     title: "The Subsidy",
     className: "subsidy",
     body: `<p class="lead">Anthropic's API prices are wild.</p>
-<table class="ladder"><caption class="sr">Output price per million tokens</caption><tbody>${PRICE_LADDER.map(
+<table class="ladder"><caption>Price per million output tokens</caption><tbody>${PRICE_LADDER.map(
       (m) => `<tr><td>${esc(m.name)}</td><td>${meter(m.output / topOutput, m.anthropic)}</td><td class="num">${rate(m.output)}</td></tr>`,
     ).join("")}</tbody></table>
-<p>${esc(fable51.name)} costs ${rate(fable51.input)} per million input tokens and ${rate(fable51.output)} per million output tokens. ${esc(opus55.name)} costs ${rate(opus55.input)} and ${rate(opus55.output)}. ${esc(glm.name)} costs ${rate(glm.input)} and ${rate(glm.output)}.</p>
-<p>claude.ai seats hide those prices. A Premium seat costs $${SEAT.Premium} a month, and the usage inside it never shows up on the bill. For a busy engineer, that usage can be worth several times the seat at API prices. That gap is the subsidy, and it's why the seats feel like a great deal right now.</p>
-<p>Subsidies like this rarely last. When seat prices move toward API prices, you'll want to know your team's real bill, and what the same work costs on open&#8209;weight models.</p>`,
-    status: ["output price per million tokens", "public rates"],
+<p>A $${SEAT.Premium} Premium seat hides these prices. For a busy engineer, the usage inside it can be worth several times the seat. That gap is a subsidy, and subsidies rarely last.</p>`,
   });
 
   const bench = win({
@@ -133,30 +128,25 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
     title: "Benchmarks",
     className: "bench",
     body: `<p class="lead">Not a downgrade.</p>
-<p>SWE-bench Verified asks a model to fix 500 real GitHub issues. ${esc(glm.name)} lands ${(best.score - glm.score).toFixed(1)} points behind ${esc(best.name)} and ahead of ${esc(fable.name)}, at a fraction of the price.</p>
-<table class="scores"><thead><tr><th scope="col">Model</th><th scope="col" class="num">Score</th><th scope="col"><span class="sr">Score bar</span></th><th scope="col" class="num">Output</th></tr></thead><tbody>${SWE_BENCH.rows
+<p>On SWE-bench Verified, 500 real GitHub issues, ${esc(glm.name)} trails ${esc(best.name)} by ${(best.score - glm.score).toFixed(1)} points and beats ${esc(fable.name)}.</p>
+<table class="scores"><thead><tr><th scope="col"><span class="sr">Model</span></th><th scope="col" class="num">Score</th><th scope="col"><span class="sr">Score bar</span></th><th scope="col" class="num">Output</th></tr></thead><tbody>${SWE_BENCH.rows
       .map(
         (m) =>
           `<tr><td>${esc(m.name)}</td><td class="num">${m.score.toFixed(1)}%</td><td>${meter(m.score / 100, m.anthropic)}</td><td class="num">${rate(m.output)}</td></tr>`,
       )
       .join("")}</tbody></table>
-<p><a href="${SWE_BENCH.url}">${SWE_BENCH.source}</a>, ${SWE_BENCH.harness} harness, updated ${SWE_BENCH.updated}. Output is the price per million output tokens. Claude still leads on the hardest long-horizon agent benchmarks.</p>`,
-    status: ["SWE-bench Verified", `source: ${SWE_BENCH.source}`],
+<p><a href="${SWE_BENCH.url}">${SWE_BENCH.source}</a>, updated ${SWE_BENCH.updated}. Output is per million tokens. Claude still leads on the hardest long agent tasks.</p>`,
   });
 
   const how = win({
     id: "how",
     title: "How It Works",
     className: "how",
-    body: `<table class="list">
-<thead><tr><th scope="col">Name</th><th scope="col">When</th><th scope="col">What happens</th></tr></thead>
-<tbody>
-<tr><td>${icon("floppy")}Add to Chrome</td><td>Now</td><td>Install it while you're signed in to claude.ai as an Owner.</td></tr>
-<tr><td>${icon("bill")}Your bill opens</td><td>Next</td><td>A new tab reads your org's spend report with your own claude.ai session and prices every row with models.dev.</td></tr>
-<tr><td>${icon("readMe")}The savings</td><td>Same tab</td><td>Every person, product, and model at Anthropic's API prices, next to the same usage on open&#8209;weight models.</td></tr>
-<tr><td>${icon("paint")}Download CSV</td><td>Any time</td><td>Save the spend report as a file to keep or share.</td></tr>
+    body: `<table class="list"><tbody>
+<tr><td>${icon("floppy")}Add to Chrome</td><td>Sign in to claude.ai as an Owner first.</td></tr>
+<tr><td>${icon("bill")}Your bill opens</td><td>A new tab prices your org's last 30 days.</td></tr>
+<tr><td>${icon("paint")}Download CSV</td><td>Keep the spend report as a file.</td></tr>
 </tbody></table>`,
-    status: ["4 items", "Owners only", "Chrome"],
   });
 
   const providers = report.providers
@@ -169,9 +159,9 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
     id: "chooser",
     title: "Providers",
     className: "chooser",
-    body: `<div class="chooser-grid"><div class="chooser-left"><p>Same plan, example team, last ${report.days} days</p><ul class="providers">${providers}</ul></div>
-<div class="chooser-right"><p>The plan:</p><p class="plan">${esc(hero.detail ?? "")}</p><p>Public rates from each provider.</p></div></div>`,
-    status: ["5 providers", "same token counts assumed"],
+    body: `<p>The example team's switch, priced at each provider:</p>
+<ul class="providers">${providers}</ul>
+<p class="plan-note">${esc(hero.detail ?? "")}</p>`,
   });
 
   const about = win({
@@ -179,7 +169,7 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
     title: "costmaxxing Info",
     className: "about",
     body: `<div class="about-head">${icon("computer")}<div><p class="about-name">costmaxxing</p><p>Chrome extension, open source (MIT)</p></div></div>
-<dl class="facts"><dt>Size</dt><dd>${zipSize}</dd><dt>Where</dt><dd>Your browser</dd><dt>Permissions</dt><dd>claude.ai, models.dev</dd><dt>Uploads</dt><dd>None</dd><dt>Telemetry</dt><dd>None</dd></dl>`,
+<dl class="facts"><dt>Permissions</dt><dd>claude.ai, models.dev</dd><dt>Uploads</dt><dd>None</dd><dt>Telemetry</dt><dd>None</dd><dt>Source</dt><dd><a href="https://github.com/nahoc/costmaxxing-v2">GitHub</a></dd></dl>`,
   });
 
   const infos = [

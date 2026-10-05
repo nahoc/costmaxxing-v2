@@ -6,6 +6,7 @@
     "build": "node build.ts"
   },
   "dependencies": {
-    "@costmaxxing/core": "*"
+    "@costmaxxing/core": "*",
+    "@vercel/analytics": "^2.0.1"
   }
 }

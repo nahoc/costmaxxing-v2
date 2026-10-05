@@ -1,3 +1,5 @@
+import { inject } from "@vercel/analytics";
+
 const root = document.documentElement;
 const wide = matchMedia("(min-width: 1100px)");
 const still = matchMedia("(prefers-reduced-motion: reduce)");
@@ -250,6 +252,7 @@ function wire(): void {
   }
 }
 
+inject();
 wire();
 menus();
 if (root.classList.contains("booting")) void boot();

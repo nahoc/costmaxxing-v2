@@ -30,7 +30,7 @@ It reads a claude.ai organization's own spend report through the Owner's browser
 
 ## Capabilities and Constraints
 
-- The report shows yearly and monthly savings on a tiered open-weight plan (GLM-5.3, GLM-5.3 Flash, DeepSeek V4.1 Flash), seat cost against usage worth, cost by person, by product, and by model, and the same plan priced at Boundless, Together AI, Baseten, Fireworks, and Morph.
+- The report shows yearly and monthly savings on a tiered open-weight plan (GLM-5.3, GLM-5.3 Flash, DeepSeek V4.1 Flash), seat cost against usage worth, cost by person, by product, and by model, and the same plan priced at Boundless, Together AI, Baseten, and Fireworks.
 - The extension asks only for claude.ai and models.dev host permissions.
 - Chrome installs extensions only from the Web Store; a page cannot install one directly.
 

@@ -28,8 +28,8 @@ export interface ForecastRow {
 }
 
 export type Comparison =
-  | { kind: "priced"; name: string; alt: number; savings: number; percent: number }
-  | { kind: "missing"; name: string; models: string[] };
+  | { kind: "priced"; name: string; url?: string; alt: number; savings: number; percent: number }
+  | { kind: "missing"; name: string; url?: string; models: string[] };
 
 export type SeatLine = { monthly: number; worth: number } & (
   | { kind: "plan"; name: string }
@@ -189,13 +189,14 @@ export function buildReport(options: ReportOptions): Report {
 
   const compare = (scenario: Scenario): Comparison => {
     const absent = missing(scenario);
+    const named = { name: scenario.name, ...(scenario.url && { url: scenario.url }) };
     if (absent.length > 0) {
-      return { kind: "missing", name: scenario.name, models: absent.map((ref) => ref.slice(ref.indexOf("/") + 1)) };
+      return { kind: "missing", ...named, models: absent.map((ref) => ref.slice(ref.indexOf("/") + 1)) };
     }
     const window = totals(priced);
     const alt = sum(priced, (p) => costUnder(scenario, p));
     const savings = window.price - alt;
-    return { kind: "priced", name: scenario.name, alt, savings, percent: window.price > 0 ? savings / window.price : 0 };
+    return { kind: "priced", ...named, alt, savings, percent: window.price > 0 ? savings / window.price : 0 };
   };
   const bySavings = (list: Comparison[]) => [
     ...list.flatMap((c) => (c.kind === "priced" ? [c] : [])).sort((a, b) => b.savings - a.savings),

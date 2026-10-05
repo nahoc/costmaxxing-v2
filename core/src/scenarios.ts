@@ -2,6 +2,7 @@ import type { PriceBook } from "./types.ts";
 
 export interface Scenario {
   name: string;
+  url?: string;
   routes: [pattern: string, ref: string][];
   subagent?: string;
 }
@@ -10,6 +11,7 @@ type Tier = "frontier" | "mid" | "grunt";
 
 export interface PlanProvider {
   name: string;
+  url: string;
   provider: string;
   models: Record<Tier, string>;
 }
@@ -23,24 +25,21 @@ const OPEN_WEIGHT_IDS = {
 export const PLAN_PROVIDERS: PlanProvider[] = [
   {
     name: "Boundless",
+    url: "https://inference.boundless.network",
     provider: "boundless",
     models: { frontier: "glm-5.3", mid: "glm-5.3-flash", grunt: "deepseek-v4.1-flash" },
   },
-  { name: "Together AI", provider: "togetherai", models: OPEN_WEIGHT_IDS },
-  { name: "Baseten", provider: "baseten", models: OPEN_WEIGHT_IDS },
+  { name: "Together AI", url: "https://www.together.ai", provider: "togetherai", models: OPEN_WEIGHT_IDS },
+  { name: "Baseten", url: "https://www.baseten.co", provider: "baseten", models: OPEN_WEIGHT_IDS },
   {
     name: "Fireworks",
+    url: "https://fireworks.ai",
     provider: "fireworks-ai",
     models: {
       frontier: "accounts/fireworks/models/glm-5p3",
       mid: "accounts/fireworks/models/glm-5p3-flash",
       grunt: "accounts/fireworks/models/deepseek-v4p1-flash",
     },
-  },
-  {
-    name: "Morph",
-    provider: "morph",
-    models: { frontier: "glm-5.3", mid: "glm-5.3-flash", grunt: "deepseek-v4.1-flash" },
   },
 ];
 
@@ -62,6 +61,7 @@ export function planScenario(plan: PlanProvider): Scenario {
   const ref = (tier: Tier) => `${plan.provider}/${plan.models[tier]}`;
   return {
     name: plan.name,
+    url: plan.url,
     routes: TIER_ROUTES.map(([pattern, tier]) => [pattern, ref(tier)]),
     subagent: ref("grunt"),
   };

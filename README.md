@@ -42,7 +42,6 @@ Boundless     $1k savings · 78%
 Baseten       $966 savings · 72%
 Together AI   $900 savings · 67%
 Fireworks     $900 savings · 67%
-Morph         doesn't list deepseek-v4.1-flash, glm-5.3-flash, glm-5.3
 
 Try next
   npx costmaxxing --vs togetherai/zai-org/GLM-5.3   price everything on one model
@@ -126,7 +125,7 @@ The default comparison is a tiered open-weight plan:
 | `claude-sonnet-*`, `*-terra` | mid | GLM-5.3 Flash | $0.12 | $0.02 | $0.40 |
 | everything else | frontier | GLM-5.3 | $1.12 | $0.14 | $3.52 |
 
-The default rates are Boundless's public rates (inference.boundless.network/models.md, checked 2026-10-03). The maintainer works at Boundless. Cache writes bill at the input rate because that page lists no cache-write price. The Providers section prices the same plan at Together AI, Baseten, Fireworks, and Morph from models.dev, and shows the savings at each, largest first. A provider that doesn't list one of the three models says so. Use `--vs` or a `[[scenario]]` to compare against anything on models.dev.
+The default rates are Boundless's public rates (inference.boundless.network/models.md, checked 2026-10-03). The maintainer works at Boundless. Cache writes bill at the input rate because that page lists no cache-write price. The Providers section prices the same plan at Together AI, Baseten, and Fireworks from models.dev, and shows the savings at each, largest first. A provider that doesn't list one of the three models says so. Use `--vs` or a `[[scenario]]` to compare against anything on models.dev.
 
 claude.ai seats cost $25 a month (Standard) or $125 (Premium), or $20 and $100 with annual billing. Fable models need a Premium seat. Without a members export or `--seats`, costmaxxing estimates that everyone with Fable usage has a Premium seat and everyone else a Standard one.
 

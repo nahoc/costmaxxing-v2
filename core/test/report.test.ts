@@ -119,17 +119,17 @@ test("providers: the same plan at each provider, savings first, missing models l
   );
   near(priced[1]?.alt, 0.0572 + 0.42 + 0.3 + 0.65);
   assert.deepEqual(providers.slice(2), [
-    { kind: "missing", name: "Baseten", models: ["deepseek-ai/DeepSeek-V4.1-Flash"] },
+    { kind: "missing", name: "Baseten", url: "https://www.baseten.co", models: ["deepseek-ai/DeepSeek-V4.1-Flash"] },
     {
       kind: "missing",
       name: "Fireworks",
+      url: "https://fireworks.ai",
       models: [
         "accounts/fireworks/models/deepseek-v4p1-flash",
         "accounts/fireworks/models/glm-5p3-flash",
         "accounts/fireworks/models/glm-5p3",
       ],
     },
-    { kind: "missing", name: "Morph", models: ["deepseek-v4.1-flash", "glm-5.3-flash", "glm-5.3"] },
   ]);
 });
 

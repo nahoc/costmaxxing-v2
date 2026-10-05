@@ -286,6 +286,16 @@ export function buildReport(options: ReportOptions): Report {
   };
 }
 
+export interface TeamTotals extends Cost {
+  days: number;
+  people: number;
+  requests: number;
+}
+
+export function teamTotals(report: Report): TeamTotals {
+  return { days: report.days, people: report.users ?? 0, requests: report.requests, price: report.hero.price, alt: report.hero.alt };
+}
+
 export function estimateSeats(rows: { user: string; model: string }[]): SeatCount {
   const everyone = new Set(rows.map((row) => row.user).filter((user) => user !== ""));
   const premium = new Set(rows.filter((row) => everyone.has(row.user) && /fable/i.test(row.model)).map((row) => row.user));

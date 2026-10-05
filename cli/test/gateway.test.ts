@@ -29,18 +29,24 @@ async function upstream(name: string) {
 async function gateway() {
   const [anthropic, openai, chatgpt] = await Promise.all([upstream("anthropic"), upstream("openai"), upstream("chatgpt")]);
   const records: RequestRecord[] = [];
+  const ingested: RequestRecord[] = [];
   const proxy = createProxy({ session: "gateway", onRecord: (r) => records.push(r) });
   const server = await listen(
     gatewayHandler({
       token: TOKEN,
       forward: proxy.forward,
       dashboard: async () => "<html>team dashboard</html>",
+      ingest: async (list) => {
+        ingested.push(...list);
+        return { days: 30, people: new Set(ingested.map((r) => r.user)).size, requests: ingested.length, price: 12, alt: 2 };
+      },
       upstreams: { anthropic: anthropic.url, openai: `${openai.url}/v1`, chatgpt: `${chatgpt.url}/backend-api/codex` },
     }),
   );
   return {
     url: server.url,
     records,
+    ingested,
     anthropic,
     openai,
     chatgpt,
@@ -120,12 +126,39 @@ test("gateway: dashboard asks for the token with Basic auth; unknown paths are 4
   await g.close();
 });
 
+test("gateway: the mod posts token counts, stamped with the sender, and gets the team totals back", async () => {
+  const g = await gateway();
+  const record = {
+    id: "s1/t1/main/0",
+    harness: "Claude Code",
+    model: "claude-opus-5-5",
+    time: 1_791_000_000_000,
+    session: "s1",
+    subagent: false,
+    user: "mallory",
+    tokens: { uncached: 10, output: 5, cacheRead: 100, write5m: 20, write1h: 0 },
+  };
+  const post = (body: string, headers: Record<string, string> = auth) =>
+    fetch(`${g.url}/costmaxxing/usage`, { method: "POST", headers: { ...headers, "content-type": "application/json" }, body });
+  assert.equal((await post(JSON.stringify({ records: [record] }), {})).status, 401);
+  assert.equal((await post("not json")).status, 400);
+  assert.equal((await post(JSON.stringify({ records: "x".repeat(1_100_000) }))).status, 400);
+  assert.equal((await fetch(`${g.url}/costmaxxing/usage`)).status, 405);
+  const ok = await post(JSON.stringify({ records: [record, { id: "missing fields" }] }));
+  assert.equal(ok.status, 200);
+  assert.deepEqual(await ok.json(), { days: 30, people: 1, requests: 1, price: 12, alt: 2 });
+  assert.deepEqual(g.ingested, [{ ...record, user: "ada" }]);
+  assert.equal(g.anthropic.seen.length, 0);
+  await g.close();
+});
+
 test("connect: prints Claude Code and Codex settings for the gateway", () => {
   const text = connectSettings("http://gateway.local:8787/", TOKEN, "ada");
   assert.ok(text.includes('"ANTHROPIC_BASE_URL": "http://gateway.local:8787/anthropic"'));
   assert.ok(text.includes(`"ANTHROPIC_CUSTOM_HEADERS": "x-costmaxxing-token: ${TOKEN}\\nx-costmaxxing-user: ada"`));
   assert.ok(text.includes('base_url = "http://gateway.local:8787/openai"'));
   assert.ok(text.includes(`http_headers = { "x-costmaxxing-token" = "${TOKEN}", "x-costmaxxing-user" = "ada" }`));
+  assert.ok(text.includes(`claude plugin install costmaxxing@costmaxxing --config server=http://gateway.local:8787 --config token=${TOKEN} --config user=ada`));
   assert.throws(() => connectSettings("gateway.local", TOKEN), /gateway URL/);
   assert.throws(() => connectSettings("ftp://gateway.local", TOKEN), /http:\/\/ or https:\/\//);
 });

@@ -72,7 +72,13 @@ It asks for a team ID; press Enter to start a new team and give it a name. costm
 npx costmaxxing acme-7kq3x-m9pz2
 ```
 
-It installs the costmaxxing mod into Claude Code (v2.1.287 or later; it offers to update an older one), sets it to report to the team, adds a background Stop hook to Codex if Codex is installed (Codex asks once to trust it), and adds the history from the person's Claude Code and Codex logs, up to a year. Claude Code keeps the setting, so it works in every session from then on. The savings then show under the prompt and update after every request.
+It installs the costmaxxing mod into Claude Code (v2.1.287 or later; it offers to update an older one), sets it to report to the team, adds a background Stop hook to Codex if Codex is installed (Codex asks once to trust it), and adds the history from the person's Claude Code and Codex logs, up to a year. Claude Code keeps the setting, so it works in every session from then on. The savings then show under the prompt and update after every request:
+
+```
+costmaxxing  Open-weight would save: $3.74 this session │ $612 last 30 days (you) · $9.4k (team) │ 12 people │ team page ↗
+```
+
+Every amount is savings: what the usage costs at Anthropic's API prices, minus what it would cost on open-weight models.
 
 The team's page is costmaxxing.dev/acme-7kq3x-m9pz2. It shows the savings, people, sessions, requests, and tokens for the last 30 days, a forecast at the 7-day and 30-day pace, a split between Claude Code and Codex, and the models. The ID is the key: it has 50 random bits, unknown IDs get a 404, and guesses are rate limited, so only people you give the ID to can see the page or add to it.
 

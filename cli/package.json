@@ -1,6 +1,6 @@
 {
   "name": "costmaxxing",
-  "version": "1.8.3",
+  "version": "1.8.4",
   "description": "What your AI coding usage costs at API prices, and what it would cost on open-weight models",
   "keywords": [
     "claude-code",
@@ -25,7 +25,7 @@
   },
   "scripts": {
     "build": "node build.ts",
-    "prepack": "node build.ts && cp ../README.md ../LICENSE ."
+    "prepack": "node build.ts && cp ../LICENSE ."
   },
   "devDependencies": {
     "@costmaxxing/core": "*",

@@ -3,7 +3,6 @@ dist/
 *.tsbuildinfo
 *.tgz
 *.zip
-cli/README.md
 cli/LICENSE
 site/.impeccable/review/
 .impeccable/questions/

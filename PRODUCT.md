@@ -16,7 +16,7 @@ The primary visitor is the Owner of a claude.ai Team or Enterprise organization:
 
 ## Product Purpose
 
-costmaxxing is an open-source tool that prices AI coding and chat usage at API list rates and shows what the same usage would cost on open-weight models or at other inference providers. The landing page exists to get a team to run one command, `npx costmaxxing <team>`, and its one takeaway is "How much can your team save by moving from Anthropic to open-weight models?". Success is the savings line appearing under someone's Claude Code prompt in the same minute, and the team page filling up as more people run it.
+costmaxxing is an open-source tool that prices AI coding and chat usage at API list rates and shows what the same usage would cost on open-weight models or at other inference providers. The landing page exists to get a team to run one command, `npx costmaxxing <team-id>`, and its one takeaway is "How much can your team save by moving from Anthropic to open-weight models?". Success is the savings line appearing under someone's Claude Code prompt in the same minute, and the team page filling up as more people run it.
 
 ## Positioning
 
@@ -24,8 +24,8 @@ It prices every Claude Code request the team actually makes, from the usage Clau
 
 ## Operating Context
 
-- `npx costmaxxing <team>` installs a Claude Code mod (Claude Code 2.1.287 or later), sets it to report to the team, and uploads up to a year of daily sums from the person's Claude Code logs. The setting persists across sessions.
-- The mod shows the savings under the prompt after every request and sends model names and token counts to costmaxxing.dev at most once a minute. Prompts, code, and keys never leave the machine. Team pages at costmaxxing.dev/<team> are public by design.
+- `npx costmaxxing <team-id>` installs a Claude Code mod (Claude Code 2.1.287 or later), sets it to report to the team, and uploads up to a year of daily sums from the person's Claude Code logs. The setting persists across sessions.
+- The mod shows the savings under the prompt after every request and sends model names and token counts to costmaxxing.dev at most once a minute. Prompts, code, and keys never leave the machine. Team pages at costmaxxing.dev/<team-id> are private by an unguessable ID.
 - Developers can still run `npx costmaxxing` for a local report of their own Claude Code and Codex logs.
 
 ## Capabilities and Constraints

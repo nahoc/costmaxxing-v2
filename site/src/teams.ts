@@ -32,9 +32,44 @@ for i = 3, #ARGV, 3 do
 end
 return 1`;
 
+const ALPHABET = "0123456789abcdefghjkmnpqrstvwxyz";
+const ID = /^[a-z0-9](?:[a-z0-9-]{0,22}[a-z0-9])?-[0-9a-hjkmnp-tv-z]{5}-[0-9a-hjkmnp-tv-z]{5}$/;
+
 export function teamSlug(raw: string): string | undefined {
-  const slug = raw.trim().toLowerCase();
-  return /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(slug) && slug !== "api" ? slug : undefined;
+  const id = raw.trim().toLowerCase();
+  return ID.test(id) ? id : undefined;
+}
+
+export function newTeamId(name: string): string {
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 24).replace(/-+$/, "") || "team";
+  const random = [...crypto.getRandomValues(new Uint8Array(10))].map((b) => ALPHABET[b % 32]).join("");
+  return `${slug}-${random.slice(0, 5)}-${random.slice(5)}`;
+}
+
+export interface TeamMeta {
+  name: string;
+  created: number;
+}
+
+export async function createTeam(redis: Redis, name: string, now: number): Promise<{ id: string; name: string }> {
+  const clean = name.trim().replace(/\s+/g, " ").slice(0, 60) || "Team";
+  for (;;) {
+    const id = newTeamId(clean);
+    const meta: TeamMeta = { name: clean, created: now };
+    if ((await redis.run(["SET", `t:${id}:meta`, JSON.stringify(meta), "NX"])) === "OK") return { id, name: clean };
+  }
+}
+
+export async function teamMeta(redis: Redis, id: string): Promise<TeamMeta | undefined> {
+  const raw = await redis.run(["GET", `t:${id}:meta`]);
+  return typeof raw === "string" ? (JSON.parse(raw) as TeamMeta) : undefined;
+}
+
+export async function overLimit(redis: Redis, bucket: string, max: number, now: number): Promise<boolean> {
+  const key = `rl:${bucket}:${Math.floor(now / 60_000)}`;
+  const n = Number(await redis.run(["INCR", key]));
+  if (n === 1) await redis.run(["EXPIRE", key, 120]);
+  return n > max;
 }
 
 const utcDay = (time: number) => new Date(time).toISOString().slice(0, 10);

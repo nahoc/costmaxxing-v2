@@ -456,6 +456,7 @@ function statusParts(session2, month2, team2, gain2 = 0) {
   if (gain2 > 0) parts.push([` \u25B2 +${exactUsd(gain2)}`, "gain"]);
   parts.push([" session \xB7 ", "label"], [savings(month2), "amount"], [" 30 days", "label"]);
   if (team2 === "unreachable") parts.push([" \xB7 ", "label"], ["team server unreachable", "warn"]);
+  else if (team2 === "missing") parts.push([" \xB7 ", "label"], ["team ID not found", "warn"]);
   else if (team2) parts.push([" \xB7 ", "label"], [savings(team2), "amount"], [` team \xB7 ${count(team2.people)} ${team2.people === 1 ? "person" : "people"}`, "label"]);
   return parts;
 }
@@ -540,7 +541,7 @@ async function flush($, force) {
       headers: { "content-type": "application/json", "x-costmaxxing-token": team.token, "x-costmaxxing-user": team.user || "unknown" },
       body: JSON.stringify({ records })
     });
-    totals2 = response.ok && asTeam(response.text) || "unreachable";
+    totals2 = response.status === 404 ? "missing" : response.ok && asTeam(response.text) || "unreachable";
     if (totals2 === "unreachable") pending = [...records, ...pending].slice(-5e3);
   } catch {
     totals2 = "unreachable";

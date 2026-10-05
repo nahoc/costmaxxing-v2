@@ -42,7 +42,7 @@ function meter(share: number, anthropic: boolean): string {
 }
 
 function command(): string {
-  return `<label class="command"><span>npx costmaxxing</span><input class="team-input" name="team" value="your-team" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Your team's name" /></label>`;
+  return `<div class="command"><code>npx costmaxxing</code></div>`;
 }
 
 const copy = `<button class="button default" type="button" data-copy="">Copy Command</button>`;
@@ -50,7 +50,7 @@ const copy = `<button class="button default" type="button" data-copy="">Copy Com
 export function renderPage({ example, css, js }: { example: Example; css: string; js: string }): string {
   const { report } = example;
   const { hero } = report;
-  const team = "acme-robotics";
+  const team = "acme-7kq3x-m9pz2";
   const [best, glm, fable, flash] = SWE_BENCH.rows;
   if (!best || !glm || !fable || !flash) throw new Error("SWE_BENCH needs four rows");
   const benchLine = `Not a downgrade: ${glm.name} scores ${glm.score.toFixed(1)}% on SWE-bench Verified. ${fable.name} scores ${fable.score.toFixed(1)}%.`;
@@ -59,7 +59,7 @@ export function renderPage({ example, css, js }: { example: Example; css: string
   const dialog = `<section class="alert hero" id="hero" aria-labelledby="hero-title">
 <div class="alert-icon">${icon("computer")}</div>
 <div class="alert-text"><h1 id="hero-title">How much can your team save by moving from Anthropic to open&#8209;weight models?</h1>
-<p>Everyone on your team runs this once with your team's name. Claude Code then shows the open&#8209;weight price of every request under the prompt, and your team page adds it all up.</p>
+<p>Run it to start your team. It prints a private team ID to share, and everyone who joins sees the open&#8209;weight price of every Claude Code request under the prompt. Your team page adds it all up.</p>
 ${command()}
 <p class="claim">${figure("info-bench", esc(benchLine))}</p></div>
 <div class="buttons">${copy}</div>
@@ -70,17 +70,17 @@ ${command()}
     .join("");
   const teamPage = win({
     id: "team",
-    title: `costmaxxing.dev/${team}`,
+    title: "Team Page",
     className: "teampage",
     label: "An example team page with synthetic data",
-    body: `<p class="savings">${team} could save ${figure("info-savings", `<span class="big">${usd(hero.year)}</span>`)} a&nbsp;year on open&#8209;weight models.</p>
+    body: `<p class="savings">Acme Robotics could save ${figure("info-savings", `<span class="big">${usd(hero.year)}</span>`)} a&nbsp;year on open&#8209;weight models.</p>
 <div class="figures">
 ${figure("info-price", `<span class="mid">${usd(hero.price)}</span> at API prices`)}
 ${figure("info-alt", `<span class="mid">${usd(hero.alt)}</span> on open&#8209;weight models`)}
 ${figure("info-savings", `<span class="mid">Up to ${percent(hero.percent)}</span> you could save`)}
 </div>
 <table class="models"><thead><tr><th scope="col">Model, last 30 days</th><th scope="col" class="num">API price</th><th scope="col" class="num">Open&#8209;weight</th></tr></thead><tbody>${models}</tbody></table>`,
-    status: ["example data", `${count(report.users ?? 0)} people`],
+    status: [`costmaxxing.dev/${team}`, "example"],
   });
 
   const paint = win({
@@ -132,9 +132,9 @@ ${figure("info-savings", `<span class="mid">Up to ${percent(hero.percent)}</span
     title: "How It Works",
     className: "how",
     body: `<table class="list"><tbody>
-<tr><td>${icon("floppy")}Run the command</td><td>It installs the costmaxxing mod into Claude Code and adds up to a year of history.</td></tr>
-<tr><td>${icon("computer")}Keep coding</td><td>Every request shows its open&#8209;weight price under the prompt, in every session.</td></tr>
-<tr><td>${icon("bill")}Open the team page</td><td>costmaxxing.dev/your-team adds up everyone who ran it.</td></tr>
+<tr><td>${icon("floppy")}Start a team</td><td>npx costmaxxing names your team and gives you a private ID to share.</td></tr>
+<tr><td>${icon("computer")}Everyone joins</td><td>npx costmaxxing &lt;team-id&gt; installs the mod and adds up to a year of history.</td></tr>
+<tr><td>${icon("bill")}Watch it add up</td><td>Every request shows its open&#8209;weight price under the prompt, and the team page totals it.</td></tr>
 </tbody></table>`,
   });
 
@@ -158,7 +158,7 @@ ${figure("info-savings", `<span class="mid">Up to ${percent(hero.percent)}</span
     title: "costmaxxing Info",
     className: "about",
     body: `<div class="about-head">${icon("computer")}<div><p class="about-name">costmaxxing</p><p>Claude Code mod, open source (MIT)</p></div></div>
-<dl class="facts"><dt>Needs</dt><dd>Claude Code 2.1.287 or later</dd><dt>Sends</dt><dd>Model names and token counts</dd><dt>Never</dt><dd>Prompts, code, or keys</dd><dt>Source</dt><dd><a href="https://github.com/nahoc/costmaxxing-v2">GitHub</a></dd></dl>`,
+<dl class="facts"><dt>Team IDs</dt><dd>Private, unguessable</dd><dt>Needs</dt><dd>Claude Code 2.1.287 or later</dd><dt>Sends</dt><dd>Model names and token counts</dd><dt>Never</dt><dd>Prompts, code, or keys</dd><dt>Source</dt><dd><a href="https://github.com/nahoc/costmaxxing-v2">GitHub</a></dd></dl>`,
   });
 
   const infos = [

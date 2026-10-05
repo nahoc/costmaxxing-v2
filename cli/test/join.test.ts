@@ -10,17 +10,18 @@ import { test } from "node:test";
 import { promisify } from "node:util";
 import type { RequestRecord } from "@costmaxxing/core";
 import { claudeLine } from "../../core/test/fixtures.ts";
-import { dailySums, teamName, tooOld } from "../src/join.ts";
+import { dailySums, teamId, tooOld } from "../src/join.ts";
 
 const DAY = 86_400_000;
+const ID = "acme-7kq3x-m9pz2";
 const MAIN = new URL("../src/main.ts", import.meta.url).pathname;
 const at = (line: string, daysAgo: number) => JSON.stringify({ ...JSON.parse(line), timestamp: new Date(Date.now() - daysAgo * DAY).toISOString() });
 
 test("team names, the Claude Code version gate, and daily sums", () => {
-  assert.equal(teamName(" Acme-Robotics "), "acme-robotics");
-  assert.equal(teamName("a"), undefined);
-  assert.equal(teamName("api"), undefined);
-  assert.equal(teamName("acme/x"), undefined);
+  assert.equal(teamId(" Acme-7KQ3X-m9pz2 "), "acme-7kq3x-m9pz2");
+  assert.equal(teamId("acme"), undefined);
+  assert.equal(teamId("acme-robotics"), undefined);
+  assert.equal(teamId("acme-7kq3x-m9pzu"), undefined);
   assert.equal(tooOld("2.1.284 (Claude Code)"), true);
   assert.equal(tooOld("2.1.287 (Claude Code)"), false);
   assert.equal(tooOld("2.2.0 (Claude Code)"), false);
@@ -57,6 +58,11 @@ async function setup(version: string) {
   await writeFile(join(root, "claude-home", ".claude.json"), JSON.stringify({ oauthAccount: { emailAddress: "Ada@Acme.example" } }));
   const bodies: { url?: string; body: { user: string; records: RequestRecord[] } }[] = [];
   const server = createServer((req, res) => {
+    if (req.method === "GET") {
+      if (req.url === `/api/teams/${ID}`) res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ name: "Acme", days: 30, people: 0, requests: 0, price: 0, alt: 0 }));
+      else res.writeHead(404).end("{}");
+      return;
+    }
     let text = "";
     req.on("data", (c) => (text += c));
     req.on("end", () => {
@@ -74,7 +80,7 @@ async function setup(version: string) {
     COSTMAXXING_CLAUDE: fake,
     COSTMAXXING_URL: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
   };
-  const run = async (args = ["Acme"]) => {
+  const run = async (args = [ID]) => {
     try {
       return { ...(await promisify(execFile)(process.execPath, [MAIN, ...args], { env })), code: 0 };
     } catch (error) {
@@ -99,14 +105,15 @@ test("npx costmaxxing <team>: installs and configures the mod, then uploads a ye
     "plugin configure costmaxxing@costmaxxing --values-stdin",
   ]);
   const options = JSON.parse(lines[6] ?? "{}");
-  assert.equal(options.team, "acme");
+  assert.equal(options.team, ID);
   assert.match(options.user, /^[0-9a-f]{16}$/);
   const upload = s.bodies[0];
-  assert.equal(upload?.url, "/api/teams/acme/backfill");
+  assert.equal(upload?.url, `/api/teams/${ID}/backfill`);
   assert.equal(upload?.body.user, options.user);
   assert.deepEqual(upload?.body.records.map((r) => r.requests).sort(), [1, 1, 2]);
-  assert.match(result.stdout, /costmaxxing is on for acme\./);
-  assert.match(result.stdout, /Team page: http:\/\/127\.0\.0\.1:\d+\/acme/);
+  assert.match(result.stdout, /costmaxxing is on for Acme\./);
+  assert.ok(result.stdout.includes(`/${ID}\n`));
+  assert.ok(result.stdout.includes(`Teammates join with: npx costmaxxing ${ID}`));
 });
 
 test("npx costmaxxing <team>: an old Claude Code stops before touching anything when there's no one to ask", async () => {
@@ -126,4 +133,16 @@ test("plain costmaxxing asks for the team ID in a terminal; piped, it prints the
   assert.equal(piped.code, 0, piped.stderr);
   assert.doesNotMatch(piped.stdout, /team ID/);
   assert.equal(s.bodies.length, 0);
+});
+
+test("npx costmaxxing <id>: a wrong or unknown ID stops before touching Claude Code", async () => {
+  const s = await setup("2.1.289 (Claude Code)");
+  const plain = await s.run(["acme"]);
+  const unknown = await s.run(["acme-zzzzz-zzzzz"]);
+  s.close();
+  assert.equal(plain.code, 1);
+  assert.match(plain.stderr, /isn't a team ID/);
+  assert.equal(unknown.code, 1);
+  assert.match(unknown.stderr, /no team has the ID acme-zzzzz-zzzzz/);
+  assert.equal(await s.calls().catch(() => ""), "");
 });

@@ -27,6 +27,7 @@ test("the line shows cents under $100, and says when the team server can't be re
   assert.equal(statusText(tally, { requests: 9, price: 2500, alt: 300 }, undefined), "costmaxxing  $4.25 session · $2.2k 30 days");
   assert.equal(statusText(tally, tally, "unreachable"), "costmaxxing  $4.25 session · $4.25 30 days · team server unreachable");
   assert.equal(statusText(tally, tally, { days: 30, people: 1, requests: 5, price: 900, alt: 100 }), "costmaxxing  $4.25 session · $4.25 30 days · $800 team · 1 person");
+  assert.equal(statusText(tally, tally, "missing"), "costmaxxing  $4.25 session · $4.25 30 days · team ID not found");
   assert.equal(statusText(tally, tally, undefined, 0.12), "costmaxxing  $4.25 ▲ +$0.12 session · $4.25 30 days");
 });
 
@@ -83,10 +84,10 @@ test("with a team, steps reach costmaxxing.dev at most once a minute, a failed s
     return text(tree.children[1] ?? "").trim();
   };
 
-  register((event: string, a: unknown, b?: unknown) => void hooks.set(event, (b ?? a) as Hook), { team: " Acme ", user: "u1u1u1u1u1u1" });
+  register((event: string, a: unknown, b?: unknown) => void hooks.set(event, (b ?? a) as Hook), { team: " Acme-7KQ3X-m9pz2 ", user: "u1u1u1u1u1u1" });
   await (hooks.get("session.start") as unknown as (...a: unknown[]) => Promise<unknown>)($, {}, async (e: unknown) => e);
   await advance(0);
-  assert.deepEqual(posts, [{ url: "https://costmaxxing.dev/api/teams/acme/usage", user: "u1u1u1u1u1u1", ids: [] }]);
+  assert.deepEqual(posts, [{ url: "https://costmaxxing.dev/api/teams/acme-7kq3x-m9pz2/usage", user: "u1u1u1u1u1u1", ids: [] }]);
   assert.match(await hint(), /· \$1\.8k team · 3 people$/);
 
   await step({ turnId: "t1", index: 0 });

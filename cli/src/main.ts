@@ -15,7 +15,7 @@ import pkg from "../package.json" with { type: "json" };
 import { loadConfig } from "./config.ts";
 import { connectSettings, serve } from "./gateway.ts";
 import { createInterface } from "node:readline/promises";
-import { joinTeam } from "./join.ts";
+import { joinTeam, startTeam } from "./join.ts";
 import { launch } from "./launch.ts";
 import { personalReport } from "./personal.ts";
 import { prices } from "./prices.ts";
@@ -24,7 +24,7 @@ import { web } from "./web.ts";
 const HELP = `costmaxxing: what your AI usage costs at API prices, and what it would cost on open-weight models
 
   costmaxxing [--days N] [--vs provider/model]... [--json] [--offline] [--config PATH]
-  costmaxxing <team>             add your Claude Code to a team's savings at costmaxxing.dev/<team>
+  costmaxxing <team-id>          add your Claude Code to a team's savings at costmaxxing.dev/<team-id>
   costmaxxing import <spend-report.csv> [--members members.csv] [--seats premium=N,standard=N]
                      [--billing monthly|annual] [--from YYYY-MM-DD --to YYYY-MM-DD]
   costmaxxing claude [args…]     run Claude Code through a local counting proxy
@@ -177,9 +177,11 @@ async function main(argv: string[]): Promise<void> {
       if (first && !first.startsWith("-")) return joinTeam(first, interactive());
       if (argv.length === 0 && interactive()) {
         const rl = createInterface({ input: process.stdin, output: process.stdout });
-        const team = (await rl.question("What's your team ID? (like acme; press Enter for just your own report) ")).trim();
+        const id = (await rl.question("Your team ID (press Enter to start a new team): ")).trim();
+        const name = id ? "" : (await rl.question("Name your team, like Acme (press Enter for just your own report): ")).trim();
         rl.close();
-        if (team) return joinTeam(team, true);
+        if (id) return joinTeam(id, true);
+        if (name) return joinTeam(await startTeam(name), true, true);
       }
       return reportCommand(argv);
   }

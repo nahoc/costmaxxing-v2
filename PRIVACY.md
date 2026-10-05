@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-05
 
-costmaxxing is an open-source command-line tool and Claude Code mod that prices AI usage at API rates and on open-weight models. This policy covers the mod, the `costmaxxing <team>` command, and the team pages at costmaxxing.dev.
+costmaxxing is an open-source command-line tool and Claude Code mod that prices AI usage at API rates and on open-weight models. This policy covers the mod, the `costmaxxing <team-id>` command, and the team pages at costmaxxing.dev.
 
 ## On your machine only
 
@@ -10,7 +10,7 @@ costmaxxing is an open-source command-line tool and Claude Code mod that prices 
 
 ## When you join a team
 
-`npx costmaxxing <team>` installs the mod with that team's name. From then on, costmaxxing.dev receives:
+`npx costmaxxing` can start a team, and `npx costmaxxing <team-id>` installs the mod for that team. From then on, costmaxxing.dev receives:
 
 - for each Claude Code request: the model name, token counts (input, output, cache reads, cache writes), the time, and request and session IDs, sent at most once a minute;
 - once, when you join: daily sums of the same counts from your existing Claude Code logs, up to a year back;
@@ -20,7 +20,7 @@ It never receives prompts, responses, code, file names, keys, or credentials.
 
 ## Team pages
 
-Each team's totals are shown at costmaxxing.dev/<team>. Anyone who knows the team name can see the page, and anyone who knows it can add counts to it. Pick a name that's hard to guess if that matters. Counts are kept for about 400 days.
+Each team's totals are shown at costmaxxing.dev/<team-id>. Team IDs are generated with 50 random bits, unknown IDs return nothing, and guessing is rate limited, so only people who have the ID can see the page or add counts to it. Anyone you share the ID with can do both. Counts are kept for about 400 days.
 
 ## What we don't do
 

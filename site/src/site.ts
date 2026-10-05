@@ -221,7 +221,7 @@ function wire(): void {
       for (const i of $$(".icon.selected")) i.classList.remove("selected");
       if (opener.classList.contains("icon")) opener.classList.add("selected");
       const id = opener.dataset.open ?? "";
-      if (id === "install") $<HTMLInputElement>(".hero .team-input")?.focus();
+      if (id === "install") $<HTMLButtonElement>(".hero .button.default")?.click();
       else {
         const win = $<HTMLElement>(`#${id}`);
         if (win) void open(win, iconFor(id) ?? opener);
@@ -248,19 +248,10 @@ function wire(): void {
 
 inject();
 function teamCommand(): void {
-  const inputs = $$<HTMLInputElement>(".team-input");
-  const value = () => inputs[0]?.value || "your-team";
-  for (const input of inputs) {
-    input.addEventListener("focus", () => input.select());
-    input.addEventListener("input", () => {
-      const clean = input.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40);
-      for (const other of inputs) if (other.value !== clean) other.value = clean;
-    });
-  }
   for (const button of $$<HTMLButtonElement>("[data-copy]")) {
     const label = button.textContent ?? "";
     button.addEventListener("click", async () => {
-      await navigator.clipboard.writeText(`npx costmaxxing ${value()}`).catch(() => undefined);
+      await navigator.clipboard.writeText("npx costmaxxing").catch(() => undefined);
       button.textContent = "Copied";
       setTimeout(() => (button.textContent = label), 1600);
     });

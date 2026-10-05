@@ -48,7 +48,7 @@ Try next
   npx costmaxxing claude                            count a Claude Code session live
   npx costmaxxing web                               open this report in your browser
   npx costmaxxing --json                            every number, every model
-  npx costmaxxing <team>                            your savings under the Claude Code prompt, added up for your team
+  npx costmaxxing <team-id>                            your savings under the Claude Code prompt, added up for your team
 ```
 
 ## Get your number
@@ -56,23 +56,25 @@ Try next
 - **Your own usage.** Run `npx costmaxxing`. It reads Claude Code and Codex logs from the last 30 days and prints the report in a few seconds. There is nothing to configure.
 - **A claude.ai spend report.** An Owner can download the org's spend report from claude.ai. Run `npx costmaxxing import spend-report.csv`.
 - **A session as it happens.** Run `npx costmaxxing claude` or `npx costmaxxing codex`. The agent runs as usual through a local counting proxy, and costmaxxing prints a one-line summary when it exits.
-- **Live, under the Claude Code prompt, for the whole team.** Everyone runs `npx costmaxxing <team>` (below). No Owner role needed.
+- **Live, under the Claude Code prompt, for the whole team.** Everyone runs `npx costmaxxing <team-id>` (below). No Owner role needed.
 
 ## Your team, live in Claude Code
 
-Everyone on the team runs one command with the team's name:
+One person starts the team:
 
 ```
-npx costmaxxing acme
+npx costmaxxing
 ```
 
-It installs the costmaxxing mod into Claude Code (v2.1.287 or later; it offers to update an older one), sets it to report to the team, and adds the history from the person's Claude Code logs, up to a year. Claude Code keeps the setting, so it works in every session from then on. The savings then show under the prompt and update after every request:
+It asks for a team ID; press Enter to start a new team and give it a name. costmaxxing.dev answers with a private ID like `acme-7kq3x-m9pz2` and the command to share. Everyone else runs that once:
 
 ```
-costmaxxing · open-weight savings: session $3.74 · 30 days $612 · team $9.4k (12 people)
+npx costmaxxing acme-7kq3x-m9pz2
 ```
 
-The team's page is costmaxxing.dev/acme. Anyone with the name can see it, so pick a name that's hard to guess if that matters.
+It installs the costmaxxing mod into Claude Code (v2.1.287 or later; it offers to update an older one), sets it to report to the team, and adds the history from the person's Claude Code logs, up to a year. Claude Code keeps the setting, so it works in every session from then on. The savings then show under the prompt and update after every request.
+
+The team's page is costmaxxing.dev/acme-7kq3x-m9pz2. The ID is the key: it has 50 random bits, unknown IDs get a 404, and guesses are rate limited, so only people you give the ID to can see the page or add to it.
 
 What leaves the machine: for each request, the model, token counts, time, and request and session IDs, sent to costmaxxing.dev at most once a minute, plus daily sums of the same from the logs. Each person is an anonymous ID made from the team name and their Claude account email; the email itself is never sent. Prompts, responses, code, and keys never leave. Running the command again changes nothing: history is only counted from before the person first joined.
 
@@ -95,7 +97,7 @@ Leave the options empty. The mod then keeps everything on your machine: it price
 
 ```
 costmaxxing [--days N] [--vs provider/model]... [--json] [--offline] [--config PATH]
-costmaxxing <team>
+costmaxxing <team-id>
 costmaxxing import <spend-report.csv> [--members members.csv] [--seats premium=N,standard=N]
                    [--billing monthly|annual] [--from YYYY-MM-DD --to YYYY-MM-DD]
 costmaxxing claude [args...]
@@ -108,7 +110,7 @@ costmaxxing connect <url> --token T [--user NAME]
 | Command | What it does |
 | --- | --- |
 | `costmaxxing` | Prints the report for your Claude Code and Codex usage. |
-| `costmaxxing <team>` | Adds your Claude Code to the team at costmaxxing.dev/<team>: installs the mod and uploads your history. |
+| `costmaxxing <team-id>` | Adds your Claude Code to that team: installs the mod and uploads your history. With no arguments in a terminal, it asks for the ID or starts a new team. |
 | `--days N` | Sets the window. The default is 30 days. |
 | `--vs provider/model` | Compares against one models.dev model, such as `--vs togetherai/zai-org/GLM-5.3`. The first `--vs` replaces the open-weight plan in the summary box. Each extra `--vs` adds a row under Scenarios. |
 | `--json` | Prints every number as JSON, including all models, unpriced models, and the rate fallbacks used. |
@@ -193,7 +195,7 @@ cache_read = 0.23
 
 - costmaxxing never reads browser cookie stores, the OS keychain, or another app's credentials.
 - It stores usage counts only: model, token counts, time, and request and session IDs. It never stores prompts, responses, code, keys, or auth headers.
-- It has no telemetry. The CLI talks only to models.dev, and to costmaxxing.dev when you run `costmaxxing <team>`. Then it sends usage counts only, to costmaxxing.dev or your own server, and `costmaxxing <team>` sends daily sums of the same from your logs.
+- It has no telemetry. The CLI talks only to models.dev, and to costmaxxing.dev when you run `costmaxxing <team-id>`. Then it sends usage counts only, to costmaxxing.dev or your own server, and `costmaxxing <team-id>` sends daily sums of the same from your logs.
 - The proxy forwards each request unchanged to the same API the agent would call without it.
 
 ## Develop

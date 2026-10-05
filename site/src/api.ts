@@ -1,6 +1,6 @@
 import { byFamily, count, escapeHtml as esc, exactUsd, percent, plural, usd, type Report } from "@costmaxxing/core";
 import { icon, SPRITE } from "../../world/icons.ts";
-import { addBackfill, addLive, monthTotals, parseUpload, readRecords, teamReport, teamSlug, type Redis } from "./teams.ts";
+import { addBackfill, addLive, createTeam, monthTotals, overLimit, parseUpload, readRecords, teamMeta, teamReport, teamSlug, type Redis } from "./teams.ts";
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 
@@ -28,8 +28,24 @@ function models(report: Report): string {
   return `<table class="sheet"><thead><tr><th>Model</th><th class="num">Requests</th><th class="num">API price</th><th>Replaced by</th><th class="num">Open&#8209;weight cost</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-export function teamPage(team: string, month: Report, all: Report, css: string): string {
-  const join = `<pre class="cmd"><code>npx costmaxxing ${esc(team)}</code></pre>`;
+function frame(title: string, body: string, css: string): string {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>${esc(title)} · costmaxxing</title><link rel="icon" href="/favicon.png"><style>${css}</style><script defer src="/_vercel/insights/script.js"></script></head>
+<body>${SPRITE}<header class="menubar"><nav><a class="menu-title logo" href="/" aria-label="costmaxxing">${icon("logo")}</a></nav><div class="menubar-right"><a href="https://github.com/nahoc/costmaxxing-v2">GitHub</a></div></header>
+<main class="desk"><article class="window team active"><div class="titlebar"><span class="title">${esc(title)} · open&#8209;weight savings</span></div><div class="body">${body}</div></article></main></body></html>`;
+}
+
+export function missingPage(css: string): string {
+  return frame(
+    "No team here",
+    `<h1>No team has this ID.</h1>
+<p>Check the link you were sent. To start a team of your own, run:</p><pre class="cmd"><code>npx costmaxxing</code></pre>`,
+    css,
+  );
+}
+
+export function teamPage(id: string, team: string, month: Report, all: Report, css: string): string {
+  const join = `<pre class="cmd"><code>npx costmaxxing ${esc(id)}</code></pre>`;
   const body =
     all.requests === 0
       ? `<h1>No usage for ${esc(team)} yet.</h1>
@@ -40,36 +56,49 @@ ${figures(month)}
 <h2>Models, last 30 days</h2>
 ${models(month)}
 <h2>Add your Claude Code</h2>${join}
-<p class="fine">Only model names and token counts reach this page. Anyone with the link can see it.</p>`;
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(team)} · costmaxxing</title><link rel="icon" href="/favicon.png"><style>${css}</style><script defer src="/_vercel/insights/script.js"></script></head>
-<body>${SPRITE}<header class="menubar"><nav><a class="menu-title logo" href="/" aria-label="costmaxxing">${icon("logo")}</a></nav><div class="menubar-right"><a href="https://github.com/nahoc/costmaxxing-v2">GitHub</a></div></header>
-<main class="desk"><article class="window team active"><div class="titlebar"><span class="title">${esc(team)} · open&#8209;weight savings</span></div><div class="body">${body}</div></article></main></body></html>`;
+<p class="fine">Only model names and token counts reach this page. Anyone with this link can see it, so share it only with your team.</p>`;
+  return frame(team, body, css);
 }
 
 export async function handle(request: Request, redis: Redis, now: number, css: string): Promise<Response> {
   const path = new URL(request.url).searchParams.get("p") ?? "";
+  const ip = (request.headers.get("x-forwarded-for") ?? "local").split(",")[0]?.trim() ?? "local";
   const [raw = "", action = ""] = path.split("/");
+  const notFound = async () => {
+    if (await overLimit(redis, `miss:${ip}`, 30, now)) return json({ error: "slow down" }, 429);
+    return action === "page"
+      ? new Response(missingPage(css), { status: 404, headers: { "content-type": "text/html; charset=utf-8" } })
+      : json({ error: "no team has this ID" }, 404);
+  };
+  if (raw === "" && request.method === "POST") {
+    if (await overLimit(redis, `new:${ip}`, 5, now)) return json({ error: "slow down" }, 429);
+    let name = "";
+    try {
+      name = String(((await request.json()) as { name?: unknown }).name ?? "");
+    } catch {}
+    return json(await createTeam(redis, name, now), 201);
+  }
   const team = teamSlug(raw);
-  if (!team) return action === "page" ? new Response("Not found", { status: 404 }) : json({ error: "team names are 3 to 40 lowercase letters, digits, or dashes" }, 400);
+  const meta = team ? await teamMeta(redis, team) : undefined;
+  if (!team || !meta) return notFound();
   if (action === "usage" || action === "backfill") {
     if (request.method !== "POST") return json({ error: "POST" }, 405);
+    if (await overLimit(redis, `write:${ip}`, 600, now)) return json({ error: "slow down" }, 429);
     const sent = await upload(request);
     if (!sent) return json({ error: 'send {"user": "...", "records": [...]}' }, 400);
     const counted = action === "usage" ? (await addLive(redis, team, sent.user, sent.records), sent.records.length) : await addBackfill(redis, team, sent.user, sent.records, now);
-    return json({ counted, ...(await monthTotals(redis, team, now)) });
+    return json({ counted, name: meta.name, ...(await monthTotals(redis, team, now)) });
   }
-  if (action === "") return json(await monthTotals(redis, team, now));
+  if (action === "") return json({ name: meta.name, ...(await monthTotals(redis, team, now)) });
   if (action === "page") {
     const records = await readRecords(redis, team, 366, now);
     const month = teamReport(records, 30, now);
     const all = teamReport(records, 366, now);
     const first = Math.min(...records.map((r) => r.time));
     const days = records.length > 0 ? Math.round((now - first) / 86_400_000) + 1 : 0;
-    return new Response(teamPage(team, month, { ...all, days }, css), {
-      headers: { "content-type": "text/html; charset=utf-8", "cache-control": records.length > 0 ? "public, s-maxage=60" : "no-store" },
+    return new Response(teamPage(team, meta.name, month, { ...all, days }, css), {
+      headers: { "content-type": "text/html; charset=utf-8", "cache-control": records.length > 0 ? "private, max-age=60" : "no-store", "x-robots-tag": "noindex" },
     });
   }
   return json({ error: "not found" }, 404);
 }
-

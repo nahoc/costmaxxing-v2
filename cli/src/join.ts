@@ -10,9 +10,21 @@ import { readLogs } from "./usage.ts";
 const MOD_VERSION = [2, 1, 287];
 const DAY = 86_400_000;
 
-export function teamName(raw: string): string | undefined {
-  const name = raw.trim().toLowerCase();
-  return /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(name) && name !== "api" ? name : undefined;
+const BASE = () => process.env.COSTMAXXING_URL ?? "https://costmaxxing.dev";
+
+export function teamId(raw: string): string | undefined {
+  const id = raw.trim().toLowerCase();
+  return /^[a-z0-9](?:[a-z0-9-]{0,22}[a-z0-9])?-[0-9a-hjkmnp-tv-z]{5}-[0-9a-hjkmnp-tv-z]{5}$/.test(id) ? id : undefined;
+}
+
+export async function startTeam(name: string): Promise<string> {
+  const response = await fetch(`${BASE()}/api/teams`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!response.ok) throw new Error(`${BASE()} answered ${response.status} when starting the team. Try again in a minute.`);
+  return ((await response.json()) as { id: string }).id;
 }
 
 export function tooOld(version: string): boolean {
@@ -63,10 +75,15 @@ async function confirm(question: string): Promise<boolean> {
   return answer === "" || answer === "y" || answer === "yes";
 }
 
-export async function joinTeam(raw: string, interactive: boolean): Promise<void> {
-  const team = teamName(raw);
-  if (!team) throw new Error(`${raw} isn't a team name. Use 3 to 40 lowercase letters, digits, or dashes, like npx costmaxxing acme`);
+export async function joinTeam(raw: string, interactive: boolean, started = false): Promise<void> {
+  const team = teamId(raw);
+  if (!team) throw new Error(`${raw} isn't a team ID. Team IDs look like acme-7kq3x-m9pz2. Run npx costmaxxing to start a team.`);
   const say = (line: string) => process.stdout.write(`${line}\n`);
+  const base = BASE();
+  const found = await fetch(`${base}/api/teams/${team}`).catch(() => undefined);
+  if (found?.status === 404) throw new Error(`no team has the ID ${team}. Check it, or run npx costmaxxing to start a team.`);
+  if (!found?.ok) throw new Error(`couldn't reach ${base}${found ? ` (${found.status})` : ""}. Try again in a minute.`);
+  const { name } = (await found.json()) as { name: string };
 
   let version: string;
   try {
@@ -90,10 +107,9 @@ export async function joinTeam(raw: string, interactive: boolean): Promise<void>
   claude(["plugin", "update", "costmaxxing@costmaxxing"]);
   claude(["plugin", "configure", "costmaxxing@costmaxxing", "--values-stdin"], JSON.stringify({ team, user }));
 
-  const base = process.env.COSTMAXXING_URL ?? "https://costmaxxing.dev";
   const now = Date.now();
   const sums = dailySums(await readLogs(now - 366 * DAY));
-  say(`Adding your Claude Code history to ${team}…`);
+  say(`Adding your Claude Code history to ${name}…`);
   const response = await fetch(`${base}/api/teams/${team}/backfill`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -104,7 +120,7 @@ export async function joinTeam(raw: string, interactive: boolean): Promise<void>
   const oldest = Math.min(...sums.map((s) => s.time));
   const days = sums.length > 0 ? Math.round((now - oldest) / DAY) + 1 : 0;
   say("");
-  say(`costmaxxing is on for ${team}.`);
+  say(`costmaxxing is on for ${name}.`);
   say(
     totals.counted > 0
       ? `Your logs covered ${days} days and ${totals.counted.toLocaleString("en-US")} requests. The team's last 30 days: ${exactUsd(totals.price)} at API prices, ${exactUsd(totals.alt)} on open-weight models.`
@@ -112,4 +128,5 @@ export async function joinTeam(raw: string, interactive: boolean): Promise<void>
   );
   say("Restart Claude Code to see the savings under the prompt. They keep counting in every session from now on.");
   say(`Team page: ${base}/${team}`);
+  say(started ? `Share this with your team: npx costmaxxing ${team}` : `Teammates join with: npx costmaxxing ${team}`);
 }

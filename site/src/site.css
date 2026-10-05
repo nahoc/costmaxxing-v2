@@ -129,32 +129,9 @@ dl.body dt {
   color: var(--paper);
   font: var(--m) / 1 var(--text);
 }
-.command span {
-  white-space: nowrap;
-}
-.alert-text {
-  min-width: 0;
-}
-.team-input {
-  flex: 1;
-  width: 100%;
-  min-width: 0;
-  padding: 2px 4px;
-  border: 0;
-  border-bottom: var(--u) dashed var(--paper);
+.command code {
+  padding: 0;
   background: none;
-  color: var(--paper);
-  font: inherit;
-  caret-color: var(--paper);
-}
-.team-input:focus {
-  outline: none;
-  background: var(--paper);
-  color: var(--ink);
-}
-.team-input::selection {
-  background: var(--paper);
-  color: var(--ink);
 }
 
 .paint .body {

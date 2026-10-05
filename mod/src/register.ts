@@ -1,6 +1,6 @@
-import { parseModelsDev, priceBook, type RequestRecord, type TeamTotals } from "@costmaxxing/core";
+import { parseModelsDev, priceBook, type RequestRecord } from "@costmaxxing/core";
 import snapshot from "@costmaxxing/core/snapshot" with { type: "json" };
-import { add, asTally, asTeam, localDay, NONE, priceRecord, statusParts, stepRecord, type StepUsage, type Tally, type Tone } from "./meter.ts";
+import { add, asTally, asTeam, localDay, NONE, priceRecord, statusParts, stepRecord, type StepUsage, type Tally, type TeamState, type Tone } from "./meter.ts";
 
 interface Mods {
   session: { id: () => Promise<string> };
@@ -60,7 +60,7 @@ let waiting = false;
 let sessionId = "";
 let session = NONE;
 let month = NONE;
-let totals: TeamTotals | "unreachable" | undefined;
+let totals: TeamState;
 let unsaved = new Map<string, Tally>();
 let pending: RequestRecord[] = [];
 let queue = Promise.resolve();
@@ -134,7 +134,7 @@ async function flush($: Mods, force: boolean): Promise<void> {
           headers: { "content-type": "application/json", "x-costmaxxing-token": team.token, "x-costmaxxing-user": team.user || "unknown" },
           body: JSON.stringify({ records }),
         });
-    totals = (response.ok && asTeam(response.text)) || "unreachable";
+    totals = response.status === 404 ? "missing" : (response.ok && asTeam(response.text)) || "unreachable";
     if (totals === "unreachable") pending = [...records, ...pending].slice(-5000);
   } catch {
     totals = "unreachable";

@@ -27,6 +27,12 @@ function memory(): Redis & { keys: () => string[] } {
       return "OK";
     }
     if (op === "GET") return strings.get(a[0]!) ?? null;
+    if (op === "INCR") {
+      const n = Number(strings.get(a[0]!) ?? 0) + 1;
+      strings.set(a[0]!, String(n));
+      return n;
+    }
+    if (op === "EXPIRE") return 1;
     if (op === "DEL") return Number(strings.delete(a[0]!));
     if (op === "HGETALL") return [...(hashes.get(a[0]!) ?? [])].flatMap(([k, v]) => [k, String(v)]);
     throw new Error(`unexpected ${op}`);
@@ -46,14 +52,16 @@ const record = (id: string, time: number, model = "claude-opus-5-5", subagent = 
   subagent,
   tokens: { uncached: 900, output: 1800, cacheRead: 60_000, write5m: 3000, write1h: 1500 },
 });
-const post = (redis: Redis, path: string, body: unknown, now = NOW) =>
-  handle(new Request(`https://x/api/teams?p=${path}`, { method: "POST", body: JSON.stringify(body) }), redis, now, "");
-const get = (redis: Redis, path: string) => handle(new Request(`https://x/api/teams?p=${path}`), redis, NOW, "");
+const post = (redis: Redis, path: string, body: unknown, now = NOW, ip = "1.2.3.4") =>
+  handle(new Request(`https://x/api/teams?p=${path}`, { method: "POST", body: JSON.stringify(body), headers: { "x-forwarded-for": ip } }), redis, now, "");
+const get = (redis: Redis, path: string, ip = "1.2.3.4") => handle(new Request(`https://x/api/teams?p=${path}`, { headers: { "x-forwarded-for": ip } }), redis, NOW, "");
+const create = async (redis: Redis, name = "Acme Robotics") => ((await (await post(redis, "", { name })).json()) as { id: string }).id;
 
 test("daily sums price exactly like the requests they came from", async () => {
   const redis = memory();
+  const acme = await create(redis);
   const live = [record("1", NOW - 1000), record("2", NOW - 2 * DAY, "claude-sonnet-5"), record("3", NOW - 3 * DAY, "claude-opus-5-5", true)];
-  const totals = await (await post(redis, "acme/usage", { user: USER, records: live })).json();
+  const totals = await (await post(redis, `${acme}/usage`, { user: USER, records: live })).json();
   const direct = buildReport({ dataset: { kind: "logs", records: live, days: 30, now: NOW }, book: priceBook(parseModelsDev(snapshot)) });
   assert.equal(totals.counted, 3);
   assert.equal(totals.requests, 3);
@@ -64,30 +72,49 @@ test("daily sums price exactly like the requests they came from", async () => {
 
 test("backfill counts only usage from before the first join, and running it again changes nothing", async () => {
   const redis = memory();
+  const acme = await create(redis);
   const old = [record("a", NOW - 40 * DAY), record("b", NOW - 5 * DAY), record("c", NOW - 400 * DAY)];
-  const first = await (await post(redis, "acme/backfill", { user: USER, records: old })).json();
+  const first = await (await post(redis, `${acme}/backfill`, { user: USER, records: old })).json();
   assert.equal(first.counted, 2);
   assert.equal(first.requests, 1);
-  const again = await (await post(redis, "acme/backfill", { user: USER, records: [...old, record("d", NOW + 60_000)] }, NOW + 120_000)).json();
+  const again = await (await post(redis, `${acme}/backfill`, { user: USER, records: [...old, record("d", NOW + 60_000)] }, NOW + 120_000)).json();
   assert.equal(again.counted, 2);
   assert.deepEqual({ requests: again.requests, price: again.price }, { requests: first.requests, price: first.price });
-  await post(redis, "acme/usage", { user: "f0e1d2c3b4a59687", records: [record("e", NOW)] });
-  const totals = await (await get(redis, "acme")).json();
+  await post(redis, `${acme}/usage`, { user: "f0e1d2c3b4a59687", records: [record("e", NOW)] });
+  const totals = await (await get(redis, acme)).json();
   assert.equal(totals.people, 2);
   assert.equal(totals.requests, 2);
 });
 
 test("the team page shows the savings and how to join, and bad input is refused", async () => {
   const redis = memory();
-  const empty = await (await get(redis, "acme/page")).text();
-  assert.match(empty, /No usage for acme yet\./);
-  assert.match(empty, /npx costmaxxing acme/);
-  await post(redis, "acme/usage", { user: USER, records: [record("1", NOW)] });
-  const page = await (await get(redis, "acme/page")).text();
-  assert.match(page, /acme could save \$[\d.k]+ a&nbsp;year on open&#8209;weight models\./);
+  const acme = await create(redis);
+  const empty = await (await get(redis, `${acme}/page`)).text();
+  assert.match(empty, /No usage for Acme Robotics yet\./);
+  assert.ok(empty.includes(`npx costmaxxing ${acme}`));
+  await post(redis, `${acme}/usage`, { user: USER, records: [record("1", NOW)] });
+  const page = await (await get(redis, `${acme}/page`)).text();
+  assert.match(page, /Acme Robotics could save \$[\d.k]+ a&nbsp;year on open&#8209;weight models\./);
   assert.match(page, /Claude Opus 5\.5/);
-  assert.equal((await get(redis, "API/page")).status, 404);
-  assert.equal((await post(redis, "a/usage", { user: USER, records: [] })).status, 400);
-  assert.equal((await post(redis, "acme/usage", { user: "Bob <script>", records: [] })).status, 400);
-  assert.equal((await get(redis, "acme/usage")).status, 405);
+  assert.equal((await post(redis, "a/usage", { user: USER, records: [] })).status, 404);
+  assert.equal((await post(redis, `${acme}/usage`, { user: "Bob <script>", records: [] })).status, 400);
+  assert.equal((await get(redis, `${acme}/usage`)).status, 405);
+});
+
+test("teams get unguessable IDs; unknown and plain-name IDs are 404s, and guessing and creating are rate limited", async () => {
+  const redis = memory();
+  const id = await create(redis, "Acme Robotics!");
+  assert.match(id, /^acme-robotics-[0-9a-hjkmnp-tv-z]{5}-[0-9a-hjkmnp-tv-z]{5}$/);
+  assert.notEqual(await create(redis), id);
+  assert.equal((await get(redis, id)).status, 200);
+  assert.equal((await get(redis, "acme")).status, 404);
+  assert.equal((await get(redis, "acme-robotics-aaaaa-bbbbb")).status, 404);
+  assert.equal((await get(redis, "acme-robotics-aaaaa-bbbbb/page")).status, 404);
+  assert.equal((await post(redis, "acme/usage", { user: USER, records: [] })).status, 404);
+  const statuses = [];
+  for (let i = 0; i < 31; i++) statuses.push((await get(redis, `nope-${i}`, "9.9.9.9")).status);
+  assert.deepEqual([statuses[29], statuses[30]], [404, 429]);
+  const created = [];
+  for (let i = 0; i < 6; i++) created.push((await post(redis, "", { name: "spam" }, NOW, "8.8.8.8")).status);
+  assert.deepEqual(created, [201, 201, 201, 201, 201, 429]);
 });

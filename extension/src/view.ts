@@ -31,6 +31,29 @@ function times(n: number): string {
   return n < 0.1 ? "<0.1×" : `${n < 10 ? n.toFixed(1) : Math.round(n)}×`;
 }
 
+function byFamily(rows: Row[]): Row[] {
+  const families = new Map<string, Row[]>();
+  for (const row of rows) {
+    const family = row.label.replace(/ \d[\d.]*$/, "");
+    families.set(family, [...(families.get(family) ?? []), row]);
+  }
+  return [...families]
+    .map(([family, members]): Row => {
+      const total = (key: "requests" | "tokens" | "price" | "alt") => members.reduce((n, m) => n + m[key], 0);
+      const versions = members.map((m) => m.label.slice(family.length + 1)).sort((a, b) => Number(b) - Number(a));
+      const replacements = [...new Set(members.flatMap((m) => m.replacement?.split(" / ") ?? []))];
+      return {
+        label: members.length === 1 ? (members[0]?.label ?? family) : `${family} ${versions.join(", ")}`,
+        requests: total("requests"),
+        tokens: total("tokens"),
+        price: total("price"),
+        alt: total("alt"),
+        replacement: replacements.join(" / ") || undefined,
+      };
+    })
+    .sort((a, b) => b.price - a.price);
+}
+
 function savings(row: Row): string {
   return row.price >= row.alt ? usd(row.price - row.alt) : `${usd(row.alt - row.price)} more`;
 }
@@ -116,7 +139,7 @@ ${subsidy}
 <div class="figures">
 ${figure("info-price", `<span class="mid">${usd(hero.price)}</span><span>at Anthropic's API prices</span>`)}
 ${figure("info-alt", `<span class="mid">${usd(hero.alt)}</span><span>on open&#8209;weight models</span>`)}
-${figure("info-year", `<span class="mid">${percent(hero.percent)}</span><span>saved</span>`)}
+${figure("info-year", `<span class="mid">Up to ${percent(hero.percent)}</span><span>you could save</span>`)}
 </div>`;
 }
 
@@ -135,7 +158,7 @@ function people(report: Report): string {
   return `<section class="section" aria-labelledby="people-title">
 <h2 id="people-title">People</h2>
 <p>${count(over)} of ${count(rows.length)} people use more than their seat costs.${top?.overSeat && top.overSeat > 1 ? ` ${esc(top.label)} uses ${times(top.overSeat)} theirs.` : ""} <span class="legend"><span class="zebra-chip"></span> marks usage past the seat price.</span></p>
-<table class="sheet"><thead><tr><th scope="col">Person</th><th scope="col">Seat</th><th scope="col" class="num">API price</th><th scope="col" class="num">Vs seat</th><th scope="col" class="bar"><span class="sr">Usage against the seat price</span></th><th scope="col" class="num">Savings</th></tr></thead>
+<table class="sheet"><thead><tr><th scope="col">Person</th><th scope="col">Seat</th><th scope="col" class="num">API price</th><th scope="col" class="num">Vs seat</th><th scope="col" class="bar"><span class="sr">Usage against the seat price</span></th><th scope="col" class="num">Open&#8209;weight savings</th></tr></thead>
 <tbody>${body}</tbody></table>
 ${rows.length > PEOPLE_SHOWN ? `<button class="button more" type="button" data-action="more">Show All ${count(rows.length)}</button>` : ""}
 </section>`;
@@ -145,7 +168,8 @@ function productsAndModels(report: Report): string {
   const products = report.byProduct ?? [];
   const total = report.hero.price;
   const product = products[0];
-  const model = report.models[0];
+  const models = byFamily(report.models);
+  const model = models[0];
   const insight = [
     product && total > 0 ? `${esc(product.label)} is ${percent(product.price / total)} of the bill.` : "",
     model?.replacement ? `${esc(model.label)} costs the most, ${usd(model.price)}. ${esc(model.replacement)} does the same work for ${usd(model.alt)}.` : "",
@@ -153,32 +177,32 @@ function productsAndModels(report: Report): string {
   const productRows = products
     .map((row) => `<tr><td class="name">${esc(row.label)}</td><td class="num">${usd(row.price)}</td><td class="bar">${bar(total > 0 ? row.price / total : 0)}</td><td class="num">${usd(row.alt)}</td><td class="num">${savings(row)}</td></tr>`)
     .join("");
-  const modelRows = report.models
+  const modelRows = models
     .map((row) => `<tr><td class="name">${esc(row.label)}</td><td class="num">${count(row.requests)}</td><td class="num">${usd(row.price)}</td><td>${esc(row.replacement ?? "")}</td><td class="num">${usd(row.alt)}</td><td class="num">${savings(row)}</td></tr>`)
     .join("");
   return `<section class="section" aria-labelledby="models-title">
 <h2 id="models-title">Products and models</h2>
 <p>${insight}</p>
-${products.length > 0 ? `<table class="sheet"><thead><tr><th scope="col">Product</th><th scope="col" class="num">API price</th><th scope="col" class="bar"><span class="sr">Share of the bill</span></th><th scope="col" class="num">Open&#8209;weight</th><th scope="col" class="num">Savings</th></tr></thead><tbody>${productRows}</tbody></table>` : ""}
-<table class="sheet"><thead><tr><th scope="col">Model</th><th scope="col" class="num">Requests</th><th scope="col" class="num">API price</th><th scope="col">Replaced by</th><th scope="col" class="num">Open&#8209;weight</th><th scope="col" class="num">Savings</th></tr></thead><tbody>${modelRows}</tbody></table>
+${products.length > 0 ? `<table class="sheet"><thead><tr><th scope="col">Product</th><th scope="col" class="num">API price</th><th scope="col" class="bar"><span class="sr">Share of the bill</span></th><th scope="col" class="num">Open&#8209;weight cost</th><th scope="col" class="num">Open&#8209;weight savings</th></tr></thead><tbody>${productRows}</tbody></table>` : ""}
+<table class="sheet"><thead><tr><th scope="col">Model</th><th scope="col" class="num">Requests</th><th scope="col" class="num">API price</th><th scope="col">Replaced by</th><th scope="col" class="num">Open&#8209;weight cost</th><th scope="col" class="num">Open&#8209;weight savings</th></tr></thead><tbody>${modelRows}</tbody></table>
 </section>`;
 }
 
 function providers(report: Report): string {
   const priced = report.providers.flatMap((c) => (c.kind === "priced" ? [c] : []));
   const best = priced[0];
-  const most = Math.max(1, ...priced.map((c) => c.savings));
   const rows = report.providers
-    .map((c) =>
-      c.kind === "priced"
-        ? `<tr><td class="name">${esc(c.name)}</td><td class="bar">${bar(c.savings / most)}</td><td class="num">${usd(c.savings)}</td><td class="num">${percent(c.percent)}</td></tr>`
-        : `<tr><td class="name">${esc(c.name)}</td><td colspan="3">${esc(comparisonText(c))}</td></tr>`,
-    )
+    .map((c) => {
+      const name = `<td class="name">${c.url ? `<a href="${esc(c.url)}" target="_blank">${esc(c.name)}</a>` : esc(c.name)}</td>`;
+      return c.kind === "priced"
+        ? `<tr>${name}<td class="num">${usd(c.savings)}</td><td class="num">${percent(c.percent)}</td></tr>`
+        : `<tr>${name}<td colspan="2">${esc(comparisonText(c))}</td></tr>`;
+    })
     .join("");
   return `<section class="section" aria-labelledby="providers-title">
 <h2 id="providers-title">Providers</h2>
 <p>${best ? `The same plan at each provider. ${esc(best.name)} saves the most, ${usd(best.savings)} over ${report.days} days.` : "No provider lists these models."}</p>
-<table class="sheet"><thead><tr><th scope="col">Provider</th><th scope="col" class="bar"><span class="sr">Savings</span></th><th scope="col" class="num">Savings</th><th scope="col" class="num">Saved</th></tr></thead><tbody>${rows}</tbody></table>
+<table class="sheet"><thead><tr><th scope="col">Provider</th><th scope="col" class="num">Open&#8209;weight savings</th><th scope="col" class="num">Saved</th></tr></thead><tbody>${rows}</tbody></table>
 </section>`;
 }
 
@@ -194,7 +218,7 @@ function forecastAndMethod(report: Report): string {
   const notes = [
     `The open&#8209;weight plan: ${esc(report.hero.detail ?? report.hero.name)}.`,
     "Both sides price the same tokens: uncached input, output, cache reads, and cache writes.",
-    "Prices come from models.dev and each provider's public rates.",
+    'Prices come from <a href="https://models.dev" target="_blank">models.dev</a> and each provider\'s public rates.',
     report.seats?.kind === "seats" && report.seats.estimated ? "Seats are estimated: anyone who used Fable counts as Premium, everyone else as Standard." : "",
     report.unpriced.length > 0
       ? `No price for ${esc(report.unpriced.map((u) => `${u.model} (${count(u.requests)} requests)`).join(", "))}, so it's left out of both sides.`
@@ -203,7 +227,7 @@ function forecastAndMethod(report: Report): string {
   return `<section class="section" aria-labelledby="forecast-title">
 <h2 id="forecast-title">Forecast and method</h2>
 <p>At the pace of the last ${report.days} days.</p>
-<table class="sheet"><thead><tr><th scope="col"><span class="sr">Period</span></th><th scope="col" class="num">API price</th><th scope="col" class="num">Open&#8209;weight</th><th scope="col" class="num">Savings</th></tr></thead><tbody>
+<table class="sheet"><thead><tr><th scope="col"><span class="sr">Period</span></th><th scope="col" class="num">API price</th><th scope="col" class="num">Open&#8209;weight cost</th><th scope="col" class="num">Open&#8209;weight savings</th></tr></thead><tbody>
 ${periods.map(([label, cost]) => `<tr><td class="name">${label}</td><td class="num">${usd(cost.price)}</td><td class="num">${usd(cost.alt)}</td><td class="num">${usd(cost.price - cost.alt)}</td></tr>`).join("")}
 </tbody></table>
 <ul class="notes">${notes.map((note) => `<li>${note}</li>`).join("")}</ul>
@@ -223,11 +247,11 @@ function infos(report: Report): string {
       ["Usage", `${count(report.users ?? 0)} people, ${count(report.requests)} requests, ${count(report.tokens)} tokens.`],
       ["Math", "Each token type times its API rate per million tokens."],
     ]),
-    info("info-alt", "Open-weight price", [
+    info("info-alt", "Open-weight cost", [
       ["Amount", `${exactUsd(hero.alt)} for the same tokens.`],
       ["Plan", esc(hero.detail ?? hero.name)],
     ]),
-    info("info-year", "Savings", [
+    info("info-year", "Open-weight savings", [
       ["Period", `${exactUsd(hero.price - hero.alt)} over ${report.days} days, ${percent(hero.percent)} of the API price.`],
       ["Month", `${exactUsd(hero.month)}, at the same pace.`],
       ["Year", `${exactUsd(hero.year)}, at the same pace.`],
@@ -266,7 +290,7 @@ ${productsAndModels(report)}
 ${providers(report)}
 ${forecastAndMethod(report)}
 <section class="closing" aria-labelledby="closing-title"><h2 id="closing-title">What will you do when the subsidies end?</h2>
-<div class="actions"><a class="button" href="${SITE}" target="_blank">costmaxxing.dev</a>${download(csv, true)}</div></section>
+<div class="actions">${download(csv, true)}</div></section>
 </div>
 </article>${infos(report)}`;
 }

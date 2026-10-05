@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { usd } from "@costmaxxing/core";
+import { buildReport, parseModelsDev, parseSpendReport, priceBook, usd } from "@costmaxxing/core";
 import snapshot from "@costmaxxing/core/snapshot" with { type: "json" };
 import { MEMBERS_CSV, SPEND_CSV } from "../../core/test/fixtures.ts";
 import { type Step, teamReport } from "../src/team.ts";
@@ -42,4 +42,15 @@ test("the memo shows core's numbers, escapes the org, and every figure opens an 
     for (const id of targets) assert.ok(html.includes(`id="${id}"`), id);
     assert.equal(html.includes("What will you do when the subsidies end?"), full);
   }
+});
+
+test("models of one family share a row, newest version first", () => {
+  const opus = SPEND_CSV.split("\n").find((line) => line.includes("claude-opus-5-5")) ?? "";
+  const rows = parseSpendReport(`${SPEND_CSV}\n${opus.replace("claude-opus-5-5", "claude-opus-5")}`);
+  const report = buildReport({
+    dataset: { kind: "spend", rows, from: "2026-09-03", to: "2026-10-02", org: "Acme", recent: true },
+    book: priceBook(parseModelsDev(snapshot)),
+  });
+  const html = memoView(report, { href: "blob:x", filename: "x.csv" }, true);
+  assert.equal(html.match(/<td class="name">Claude Opus[^<]*</g)?.join(), '<td class="name">Claude Opus 5.5, 5<');
 });

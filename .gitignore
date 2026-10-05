@@ -7,3 +7,4 @@ cli/README.md
 cli/LICENSE
 site/.impeccable/review/
 .impeccable/questions/
+mod/plugin/tsconfig.json

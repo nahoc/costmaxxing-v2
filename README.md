@@ -57,6 +57,34 @@ Try next
 - **Your claude.ai Team or Enterprise org.** Install the costmaxxing browser extension while signed in to claude.ai as an Owner. The report opens in a tab as soon as the extension installs, and the toolbar button shows it again later. Members who aren't Owners see a message that the team view needs an Owner.
 - **A spend report you already have.** Run `npx costmaxxing import spend-report.csv`. The extension's **Download CSV** button saves this file.
 - **A session as it happens.** Run `npx costmaxxing claude` or `npx costmaxxing codex`. The agent runs as usual through a local counting proxy, and costmaxxing prints a one-line summary when it exits.
+- **Live, under the Claude Code prompt.** Install the costmaxxing mod (below). No Owner role needed.
+
+## The Claude Code mod
+
+The mod adds the open-weight savings to the hint line under the Claude Code prompt and updates it after every request:
+
+```
+costmaxxing · open-weight savings: session $3.74 · 30 days $612 · team $9.4k (12 people)
+```
+
+It needs Claude Code v2.1.287 or later. Install it from this repository:
+
+```
+claude plugin marketplace add nahoc/costmaxxing-v2
+claude plugin install costmaxxing@costmaxxing
+```
+
+On its own, the mod keeps everything on your machine: it prices each request with the bundled models.dev snapshot and adds it to a 30-day total that every Claude Code session on the machine shares. Your organization can turn off mods that users install, in which case the mod doesn't load.
+
+For the team figure, someone runs `costmaxxing serve` and everyone sets the mod's three options, which `costmaxxing connect` prints as one install command:
+
+```
+claude plugin install costmaxxing@costmaxxing --config server=http://gateway.local:8787 --config token=T --config user=ada
+```
+
+The mod then sends the server each request's model, token counts, time, and request and session IDs, and nothing else. The team figure counts only people who installed the mod or route Claude Code through the gateway. Use one or the other: with both, the gateway counts a request twice.
+
+The API reports cache writes without saying whether they're 5-minute or 1-hour writes, so the mod prices them all at the 5-minute rate. A 1-hour write costs more at API prices, so the savings can only be understated.
 
 ## Commands
 
@@ -82,7 +110,7 @@ costmaxxing connect <url> --token T [--user NAME]
 | `claude`, `codex` | Runs the agent through a local proxy on 127.0.0.1 that counts each request. All other arguments pass through to the agent. |
 | `web` | Serves the report on 127.0.0.1 and opens it in your browser. |
 | `serve` | Runs a shared gateway that a team points its agents at. It counts usage per person. The dashboard at `/` asks for the token as a password. |
-| `connect` | Prints the Claude Code and Codex settings for a gateway. |
+| `connect` | Prints the Claude Code and Codex settings for a gateway, and the command that installs the Claude Code mod for it. |
 
 Runs that aren't interactive, such as runs with `--json`, in CI, or with output piped to a file, never prompt and never open a browser.
 
@@ -158,7 +186,7 @@ cache_read = 0.23
 
 - costmaxxing never reads browser cookie stores, the OS keychain, or another app's credentials.
 - It stores usage counts only: model, token counts, time, and request and session IDs. It never stores prompts, responses, code, keys, or auth headers.
-- It has no telemetry. The CLI talks only to models.dev. The extension talks only to claude.ai and models.dev, through your browser's existing session, and only when you install it or click it.
+- It has no telemetry. The CLI talks only to models.dev. The extension talks only to claude.ai and models.dev, through your browser's existing session, and only when you install it or click it. The Claude Code mod makes no network calls unless you give it a team server, and then sends that server usage counts only.
 - The proxy forwards each request unchanged to the same API the agent would call without it.
 
 ## Develop
@@ -170,7 +198,7 @@ npm run typecheck
 npm run build
 ```
 
-`core/` is pure TypeScript with no Node or browser APIs. It parses usage, prices it, builds the report, and renders it as terminal text or HTML. `cli/` reads files and runs the servers. `extension/` fetches from claude.ai. Both bundle `core` with esbuild, so every number is computed in one place.
+`core/` is pure TypeScript with no Node or browser APIs. It parses usage, prices it, builds the report, and renders it as terminal text or HTML. `cli/` reads files and runs the servers. `extension/` fetches from claude.ai. `mod/` is the Claude Code mod: `mod/src` builds into `mod/plugin/hooks/register.js`, which is committed because plugin installs read it straight from git, and a test fails when it's out of date. All of them bundle `core` with esbuild, so every number is computed in one place. With Claude Code v2.1.287 or later, `claude plugin test` in `mod/plugin` runs the mod against Claude Code's own test harness.
 
 `site/` is the landing page, deployed by Vercel with `site/vercel.json`. `npm run build` writes it to `site/dist/`, a static folder you can host anywhere. Its button downloads the extension zip. To point it at the Chrome Web Store listing instead, build with `STORE_URL=https://chromewebstore.google.com/detail/... npm run build`.
 

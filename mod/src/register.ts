@@ -21,6 +21,7 @@ type Element = unknown;
 interface Elements {
   Box: (props: Record<string, unknown>) => Element;
   Text: (props: Record<string, unknown>) => Element;
+  Link: (props: Record<string, unknown>) => Element;
 }
 
 interface StepInput {
@@ -204,10 +205,14 @@ export function register(on: On, options: Record<string, unknown>): void {
   });
 
   on("ui.render", { component: "PromptHint" }, async ($, e, next) => {
-    const { Box, Text } = $.ui.resolve(e);
+    const { Box, Text, Link } = $.ui.resolve(e);
     const theirs = await next(e);
     const parts = statusParts(session, month, totals, Date.now() < gain.until ? gain.amount : 0);
-    const ours = Text({ wrap: "truncate-start", children: parts.map(([text, tone]) => Text({ ...TONES[tone], children: [text] })) });
+    const page = team.name ? `${team.server || HOSTED}/${team.name}` : team.server && team.token ? `${team.server}/` : "";
+    const link = page
+      ? [Text({ ...TONES.divider, children: [" │ "] }), Link({ href: page, children: [Text({ color: "#8d71d6", underline: true, children: ["team page ↗"] })] })]
+      : [];
+    const ours = Text({ wrap: "truncate-start", children: [...parts.map(([text, tone]) => Text({ ...TONES[tone], children: [text] })), ...link] });
     return Box({ flexDirection: "row", justifyContent: "space-between", columnGap: 2, children: [theirs, ours] });
   });
 }

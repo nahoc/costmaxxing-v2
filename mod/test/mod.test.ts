@@ -62,7 +62,11 @@ test("with a team, steps reach costmaxxing.dev at most once a minute, a failed s
     },
     ui: {
       invalidate: () => {},
-      resolve: () => ({ Box: (p: object) => ({ type: "Box", ...p }), Text: (p: object) => ({ type: "Text", ...p }) }),
+      resolve: () => ({
+        Box: (p: object) => ({ type: "Box", ...p }),
+        Text: (p: object) => ({ type: "Text", ...p }),
+        Link: (p: object) => ({ type: "Link", ...p }),
+      }),
     },
   };
   const advance = async (ms: number) => {
@@ -97,7 +101,7 @@ test("with a team, steps reach costmaxxing.dev at most once a minute, a failed s
   await (hooks.get("session.start") as unknown as (...a: unknown[]) => Promise<unknown>)($, {}, async (e: unknown) => e);
   await advance(0);
   assert.deepEqual(posts, [{ url: "https://costmaxxing.dev/api/teams/acme-7kq3x-m9pz2/usage", user: "u1u1u1u1u1u1", ids: [] }]);
-  assert.match(await hint(), /– \$1\.8k \(team\) │ 3 people$/);
+  assert.match(await hint(), /– \$1\.8k \(team\) │ 3 people │ team page ↗$/);
 
   await step({ turnId: "t1", index: 0 });
   await advance(1000);
@@ -109,12 +113,15 @@ test("with a team, steps reach costmaxxing.dev at most once a minute, a failed s
   down = true;
   await step({ turnId: "t2", index: 0 });
   await advance(60_000);
-  assert.match(await hint(), /team server unreachable$/);
+  assert.match(await hint(), /team server unreachable │ team page ↗$/);
   down = false;
   await step({ turnId: "t3", index: 0 });
   await advance(60_000);
   assert.deepEqual(posts.at(-1)?.ids, ["s9/t2/main/0", "s9/t3/main/0"]);
-  assert.match(await hint(), /^costmaxxing {2}Current session: \$[\d.]+( ▲ \+\$[\d.]+)? │ Last 30 days: \$[\d.]+ \(you\) – \$1\.8k \(team\) │ 3 people$/);
+  assert.match(await hint(), /^costmaxxing {2}Current session: \$[\d.]+( ▲ \+\$[\d.]+)? │ Last 30 days: \$[\d.]+ \(you\) – \$1\.8k \(team\) │ 3 people │ team page ↗$/);
+  const render = hooks.get("ui.render") as unknown as (...a: unknown[]) => Promise<{ children: { children: { type: string; href?: string }[] }[] }>;
+  const tree = await render($, { props: { hint: "" } }, async () => "");
+  assert.equal(tree.children[1]?.children.find((c) => c.type === "Link")?.href, "https://costmaxxing.dev/acme-7kq3x-m9pz2");
 });
 
 test("the committed hooks module is the build of mod/src (run npm run build -w mod)", async () => {

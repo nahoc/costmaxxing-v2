@@ -489,7 +489,7 @@ var pending = [];
 var queue = Promise.resolve();
 var gain = { amount: 0, until: 0 };
 var TONES = {
-  brand: { bold: true, color: "#8d71d6" },
+  brand: { color: "#8d71d6" },
   amount: { bold: true, color: "success" },
   label: { dimColor: true },
   divider: { color: "#8d71d6" },

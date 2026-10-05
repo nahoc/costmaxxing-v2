@@ -70,9 +70,9 @@ function tools(report: Report): string {
 
 function models(report: Report): string {
   const rows = byFamily(report.models)
-    .map((row) => `<tr><td>${esc(row.label)}</td><td class="num">${count(row.requests)}</td><td class="num">${usd(row.price)}</td><td>${esc(row.replacement ?? "")}</td><td class="num">${usd(row.alt)}</td></tr>`)
+    .map((row) => `<tr><td>${esc(row.label)}</td><td class="num">${count(row.requests)}</td><td class="num">${usd(row.price)}</td><td>${esc(row.replacement ?? "")}</td><td class="num"><strong>${usd(row.price - row.alt)}</strong></td></tr>`)
     .join("");
-  return `<table class="sheet"><thead><tr><th>Model</th><th class="num">Requests</th><th class="num">API price</th><th>Replaced by</th><th class="num">Open&#8209;weight cost</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return `<table class="sheet"><thead><tr><th>Model</th><th class="num">Requests</th><th class="num">At API price</th><th>If replaced by</th><th class="num">Would save you</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function frame(title: string, body: string, css: string): string {

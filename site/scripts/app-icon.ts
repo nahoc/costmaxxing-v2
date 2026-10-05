@@ -1,6 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { crc32, deflateSync } from "node:zlib";
-import { APP_ICON, type Grid } from "../src/app-icon.ts";
+import { APP_ICON, type Grid } from "../../world/app-icon.ts";
 
 const INK = [0x2e, 0x10, 0x65, 0xff];
 const PAPER = [0xff, 0xff, 0xff, 0xff];

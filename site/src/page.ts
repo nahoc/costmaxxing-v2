@@ -2,7 +2,7 @@ import { comparisonText, count, escapeHtml as esc, exactUsd, percent, usd } from
 import type { Example } from "./example.ts";
 import { PRICE_LADDER, SWE_BENCH } from "./claims.ts";
 import { SEAT } from "./example.ts";
-import { icon, SPRITE, type IconName } from "./icons.ts";
+import { icon, SPRITE, type IconName } from "../../world/icons.ts";
 
 export interface Install {
   href: string;

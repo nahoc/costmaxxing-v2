@@ -1,7 +1,7 @@
 import { copyFile, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { build } from "esbuild";
 import { example } from "./src/example.ts";
-import { cursor } from "./src/icons.ts";
+import { cursor } from "../world/icons.ts";
 import { renderPage, type Install } from "./src/page.ts";
 
 const here = (path: string) => new URL(path, import.meta.url).pathname;
@@ -23,11 +23,12 @@ const script = await build({
   minify: true,
   write: false,
 });
-const css = `${await readFile(here("src/site.css"), "utf8")}\nbody { --cursor: ${cursor()}; }`;
+const css = `${await readFile(here("../world/world.css"), "utf8")}\n${await readFile(here("src/site.css"), "utf8")}\nbody { --cursor: ${cursor()}; }`;
 
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 await cp(here("static/"), dist, { recursive: true });
+await cp(here("../world/fonts/"), `${dist}fonts/`, { recursive: true });
 if (!store) await copyFile(zip, `${dist}costmaxxing-extension.zip`);
 await writeFile(
   `${dist}index.html`,

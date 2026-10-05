@@ -15,6 +15,7 @@ import pkg from "../package.json" with { type: "json" };
 import { loadConfig } from "./config.ts";
 import { connectSettings, serve } from "./gateway.ts";
 import { createInterface } from "node:readline/promises";
+import { ask, dim } from "./ui.ts";
 import { adminTeam, codexHook, currentTeam, describeTeam, joinTeam, leaveTeam, startTeam } from "./join.ts";
 import { launch } from "./launch.ts";
 import { personalReport } from "./personal.ts";
@@ -209,15 +210,15 @@ async function main(argv: string[]): Promise<void> {
         const team = await currentTeam();
         if (team && team !== "gone") {
           process.stdout.write(`${describeTeam(team)}\n\n`);
-          const answer = (await rl.question("Press Enter to open the team page, type another team ID to switch, or leave to leave the team: ")).trim();
+          const answer = (await rl.question(ask("Open the team page?") + dim("(Enter to open · another team ID to switch · leave to leave) "))).trim();
           rl.close();
           if (answer === "leave") return void process.stdout.write(`${await leaveTeam()}\n`);
           if (answer) return joinTeam(answer, true);
           return openBrowser(team.url);
         }
         if (team === "gone") process.stdout.write("Your saved team no longer exists.\n");
-        const id = (await rl.question("Your team ID (press Enter to start a new team): ")).trim();
-        const name = id ? "" : (await rl.question("Name your team, like Acme (press Enter for just your own report): ")).trim();
+        const id = (await rl.question(ask("Team ID?") + dim("(Enter to start a new team) "))).trim();
+        const name = id ? "" : (await rl.question(ask("Team name?") + dim("(like Acme · Enter for just your own report) "))).trim();
         rl.close();
         if (id) return joinTeam(id, true);
         if (name) {

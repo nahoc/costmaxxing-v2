@@ -4,8 +4,9 @@ import { copyFile, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises
 import { homedir, hostname, userInfo } from "node:os";
 import { join as joinPath } from "node:path";
 import { createInterface } from "node:readline/promises";
-import { addTokens, codexParser, exactUsd, ZERO, type RequestRecord, type TeamPricing, type TeamTotals } from "@costmaxxing/core";
+import { addTokens, codexParser, count, exactUsd, ZERO, type RequestRecord, type TeamPricing, type TeamTotals } from "@costmaxxing/core";
 import { loadConfig } from "./config.ts";
+import { box, bold, dim, green, purple, say, step } from "./ui.ts";
 import { HOME, readLogs } from "./usage.ts";
 
 const CODEX_HOME = () => process.env.CODEX_HOME ?? joinPath(homedir(), ".codex");
@@ -103,7 +104,6 @@ export async function joinTeam(raw: string, interactive: boolean, admin?: string
   const started = admin !== undefined;
   const team = teamId(raw);
   if (!team) throw new Error(`${raw} isn't a team ID. Team IDs look like acme-7kq3x-m9pz2. Run npx costmaxxing to start a team.`);
-  const say = (line: string) => process.stdout.write(`${line}\n`);
   const base = BASE();
   const found = await fetch(`${base}/api/teams/${team}`).catch(() => undefined);
   if (found?.status === 404) throw new Error(`no team has the ID ${team}. Check it, or run npx costmaxxing to start a team.`);
@@ -120,43 +120,58 @@ export async function joinTeam(raw: string, interactive: boolean, admin?: string
     if (!interactive || !(await confirm(`costmaxxing needs Claude Code 2.1.287 or later, and you have ${version}. Update it now?`))) {
       throw new Error(`costmaxxing needs Claude Code 2.1.287 or later, and you have ${version}. Run claude update, then this again.`);
     }
-    say("Updating Claude Code…");
-    claude(["update"]);
+    await step("Claude Code updated", () => claude(["update"]));
   }
 
   const user = await whoAmI(team);
-  say("Installing the costmaxxing mod for Claude Code…");
-  claude(["plugin", "marketplace", "add", "nahoc/costmaxxing-v2"]);
-  claude(["plugin", "marketplace", "update", "costmaxxing"]);
-  claude(["plugin", "install", "costmaxxing@costmaxxing"]);
-  claude(["plugin", "update", "costmaxxing@costmaxxing"]);
-  claude(["plugin", "configure", "costmaxxing@costmaxxing", "--values-stdin"], JSON.stringify({ team, user }));
-
-  const now = Date.now();
-  const history = await readLogs(now - 366 * DAY);
-  const sums = dailySums(history);
-  const codex = await installCodexHook(team, user, now, admin);
-  say(`Adding your Claude Code history to ${name}…`);
-  const response = await fetch(`${base}/api/teams/${team}/backfill`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ user, records: sums, sessions: daySessions(history) }),
-  });
-  if (!response.ok) throw new Error(`${base} answered ${response.status} to the history upload. The mod is installed and will count new usage.`);
-  const totals = (await response.json()) as TeamTotals & { counted: number };
-  const oldest = Math.min(...sums.map((s) => s.time));
-  const days = sums.length > 0 ? Math.round((now - oldest) / DAY) + 1 : 0;
-  say("");
-  say(`costmaxxing is on for ${name}.`);
-  say(
-    totals.counted > 0
-      ? `Your logs covered ${days} days and ${totals.counted.toLocaleString("en-US")} requests. The team's last 30 days: ${exactUsd(totals.price)} at API prices, ${exactUsd(totals.alt)} on open-weight models.`
-      : "Your Claude Code logs had no history to add. New usage counts from now on.",
+  say();
+  say(`  ${purple("costmaxxing")}  ${dim("·")}  ${bold(name)}`);
+  say();
+  await step(
+    "Mod installed in Claude Code",
+    () => {
+      claude(["plugin", "marketplace", "add", "nahoc/costmaxxing-v2"]);
+      claude(["plugin", "marketplace", "update", "costmaxxing"]);
+      claude(["plugin", "install", "costmaxxing@costmaxxing"]);
+      claude(["plugin", "update", "costmaxxing@costmaxxing"]);
+      claude(["plugin", "configure", "costmaxxing@costmaxxing", "--values-stdin"], JSON.stringify({ team, user }));
+    },
+    () => "restart Claude Code to see it",
   );
-  say("Restart Claude Code to see the savings under the prompt. They keep counting in every session from now on.");
-  if (codex) say("Codex counts too: it will ask you once to trust the costmaxxing hook.");
-  say(`Team page: ${base}/${team}`);
-  say(started ? `Share this with your team: npx costmaxxing ${team}` : `Teammates join with: npx costmaxxing ${team}`);
+  const now = Date.now();
+  const codex = await installCodexHook(team, user, now, admin);
+  if (codex) await step("Codex hook added", () => undefined, () => "Codex asks once to trust it");
+  const { totals, days } = await step(
+    "History added",
+    async () => {
+      const history = await readLogs(now - 366 * DAY);
+      const sums = dailySums(history);
+      const response = await fetch(`${base}/api/teams/${team}/backfill`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ user, records: sums, sessions: daySessions(history) }),
+      });
+      if (!response.ok) throw new Error(`${base} answered ${response.status} to the history upload. The mod is installed and will count new usage.`);
+      const oldest = Math.min(...sums.map((s) => s.time));
+      return { totals: (await response.json()) as TeamTotals & { counted: number }, days: sums.length > 0 ? Math.round((now - oldest) / DAY) + 1 : 0 };
+    },
+    (r) => (r.totals.counted > 0 ? `${count(r.days)} days · ${r.totals.counted.toLocaleString("en-US")} requests` : "no earlier usage in your logs"),
+  );
+  say();
+  if (totals.requests > 0) {
+    const saved = totals.price - totals.alt;
+    say(
+      box("Team, last 30 days", [
+        `${bold(exactUsd(totals.price))} at API prices`,
+        `${bold(exactUsd(totals.alt))} on open-weight models`,
+        green(bold(`${exactUsd(saved)} potential savings (${totals.price > 0 ? Math.round((saved / totals.price) * 100) : 0}%)`)),
+      ]),
+    );
+    say();
+  }
+  say(`  ${dim("Team page".padEnd(12))}${base}/${team}`);
+  say(`  ${dim((started ? "Share" : "Invite").padEnd(12))}${bold(`npx costmaxxing ${team}`)}`);
+  say();
 }
 
 async function exists(path: string): Promise<boolean> {
@@ -299,12 +314,22 @@ export async function adminTeam(action: "rotate" | "delete" | "pricing"): Promis
 
 export function describeTeam(team: CurrentTeam): string {
   const { totals } = team;
+  const saved = totals.price - totals.alt;
   return [
-    `You're on ${team.name}. Team page: ${team.url}`,
+    "",
+    `  ${purple("costmaxxing")}  ${dim("·")}  ${bold(team.name)}`,
+    "",
     totals.requests > 0
-      ? `Last 30 days: ${totals.people} ${totals.people === 1 ? "person" : "people"}, ${exactUsd(totals.price)} at API prices, ${exactUsd(totals.alt)} on open-weight models.`
-      : "No usage on the team page yet.",
-    `Teammates join with: npx costmaxxing ${team.id}`,
+      ? box(`Team, last 30 days · ${totals.people} ${totals.people === 1 ? "person" : "people"}`, [
+          `${bold(exactUsd(totals.price))} at API prices`,
+          `${bold(exactUsd(totals.alt))} on open-weight models`,
+          green(bold(`${exactUsd(saved)} potential savings (${totals.price > 0 ? Math.round((saved / totals.price) * 100) : 0}%)`)),
+        ])
+      : `  ${dim("No usage on the team page yet.")}`,
+    "",
+    `  ${dim("Team page".padEnd(12))}${team.url}`,
+    `  ${dim("Invite".padEnd(12))}${bold(`npx costmaxxing ${team.id}`)}`,
+    "",
   ].join("\n");
 }
 

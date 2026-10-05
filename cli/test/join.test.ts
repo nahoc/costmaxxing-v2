@@ -132,9 +132,12 @@ test("npx costmaxxing <team>: installs and configures the mod, then uploads a ye
   assert.equal(upload?.url, `/api/teams/${ID}/backfill`);
   assert.equal(upload?.body.user, options.user);
   assert.deepEqual(upload?.body.records.map((r) => r.requests).sort(), [1, 1, 2]);
-  assert.match(result.stdout, /costmaxxing is on for Acme\./);
+  assert.match(result.stdout, /costmaxxing {2}· {2}Acme/);
+  assert.match(result.stdout, /✓ Mod installed in Claude Code +restart Claude Code to see it/);
+  assert.match(result.stdout, /✓ History added +\d+ days · 4 requests/);
+  assert.match(result.stdout, /\$1\.30 potential savings \(87%\)/);
   assert.ok(result.stdout.includes(`/${ID}\n`));
-  assert.ok(result.stdout.includes(`Teammates join with: npx costmaxxing ${ID}`));
+  assert.match(result.stdout, new RegExp(`Invite +npx costmaxxing ${ID}`));
 });
 
 test("npx costmaxxing <team>: an old Claude Code stops before touching anything when there's no one to ask", async () => {
@@ -199,8 +202,9 @@ test("costmaxxing team shows the joined team's page link and totals, and says wh
   assert.equal((await s.run()).code, 0);
   const shown = await s.run(["team"]);
   s.close();
-  assert.match(shown.stdout, /You're on Acme\. Team page: http:\/\/127\.0\.0\.1:\d+\/acme-7kq3x-m9pz2/);
-  assert.match(shown.stdout, /Teammates join with: npx costmaxxing acme-7kq3x-m9pz2/);
+  assert.match(shown.stdout, /costmaxxing {2}· {2}Acme/);
+  assert.match(shown.stdout, /Team page +http:\/\/127\.0\.0\.1:\d+\/acme-7kq3x-m9pz2/);
+  assert.match(shown.stdout, /Invite +npx costmaxxing acme-7kq3x-m9pz2/);
 });
 
 test("costmaxxing team rotate, pricing, and delete use the saved admin key; members without it are refused", async () => {

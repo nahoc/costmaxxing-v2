@@ -65,7 +65,15 @@ async function setup(version: string) {
   );
   await writeFile(join(root, "claude-home", ".claude.json"), JSON.stringify({ oauthAccount: { emailAddress: "Ada@Acme.example" } }));
   const bodies: { url?: string; body: { user: string; records: RequestRecord[] } }[] = [];
+  const admins: { url?: string; auth?: string }[] = [];
   const server = createServer((req, res) => {
+    if (req.method === "POST" && /\/(rotate|delete|pricing)$/.test(req.url ?? "")) {
+      admins.push({ url: req.url, auth: req.headers.authorization });
+      const ok = req.headers.authorization === "Bearer secret-admin";
+      const action = req.url?.split("/").at(-1);
+      res.writeHead(ok ? 200 : 401, { "content-type": "application/json" }).end(JSON.stringify(action === "rotate" ? { id: "acme-22222-33333" } : action === "pricing" ? { pricing: null } : { deleted: ID }));
+      return;
+    }
     if (req.method === "GET") {
       if (req.url === `/api/teams/${ID}`) res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ name: "Acme", days: 30, people: 0, requests: 0, price: 0, alt: 0 }));
       else res.writeHead(404).end("{}");
@@ -100,7 +108,7 @@ async function setup(version: string) {
       const child = execFile(process.execPath, [MAIN, "codex-hook"], { env }, () => resolve());
       child.stdin?.end(input);
     });
-  return { run, hook: runWithInput, bodies, codexHome, root, calls: () => readFile(calls, "utf8"), close: () => server.close() };
+  return { run, hook: runWithInput, bodies, admins, home: env.COSTMAXXING_HOME, codexHome, root, calls: () => readFile(calls, "utf8"), close: () => server.close() };
 }
 
 test("npx costmaxxing <team>: installs and configures the mod, then uploads a year of daily sums", async () => {
@@ -193,4 +201,25 @@ test("costmaxxing team shows the joined team's page link and totals, and says wh
   s.close();
   assert.match(shown.stdout, /You're on Acme\. Team page: http:\/\/127\.0\.0\.1:\d+\/acme-7kq3x-m9pz2/);
   assert.match(shown.stdout, /Teammates join with: npx costmaxxing acme-7kq3x-m9pz2/);
+});
+
+test("costmaxxing team rotate, pricing, and delete use the saved admin key; members without it are refused", async () => {
+  const s = await setup("2.1.289 (Claude Code)");
+  assert.equal((await s.run()).code, 0);
+  const noKey = await s.run(["team", "rotate"]);
+  assert.equal(noKey.code, 1);
+  assert.match(noKey.stderr, /only the person who started the team/);
+  const saved = JSON.parse(await readFile(join(s.home, "team.json"), "utf8"));
+  await writeFile(join(s.home, "team.json"), JSON.stringify({ ...saved, admin: "secret-admin" }));
+  assert.equal((await s.run()).code, 0);
+  assert.equal(JSON.parse(await readFile(join(s.home, "team.json"), "utf8")).admin, "secret-admin");
+  const rotated = await s.run(["team", "rotate"]);
+  assert.match(rotated.stdout, /New team ID: acme-22222-33333/);
+  assert.equal(JSON.parse(await readFile(join(s.home, "team.json"), "utf8")).id, "acme-22222-33333");
+  assert.match((await s.run(["team", "pricing"])).stdout, /default open-weight plan/);
+  const deleted = await s.run(["team", "delete"]);
+  s.close();
+  assert.match(deleted.stdout, /Deleted acme-22222-33333/);
+  assert.deepEqual(JSON.parse(await readFile(join(s.home, "team.json"), "utf8")), {});
+  assert.deepEqual(s.admins.map((a) => [a.url?.split("/").at(-1), a.auth]), [["rotate", "Bearer secret-admin"], ["pricing", "Bearer secret-admin"], ["delete", "Bearer secret-admin"]]);
 });

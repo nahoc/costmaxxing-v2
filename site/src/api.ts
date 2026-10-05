@@ -1,6 +1,25 @@
 import { byFamily, count, escapeHtml as esc, exactUsd, percent, plural, usd, type Report } from "@costmaxxing/core";
 import { icon, SPRITE } from "../../world/icons.ts";
-import { addBackfill, addLive, createTeam, monthTotals, overLimit, parsePricing, parseUpload, readRecords, sessionCount, teamMeta, teamReport, teamSlug, type Redis } from "./teams.ts";
+import {
+  addBackfill,
+  addLive,
+  createTeam,
+  deleteTeam,
+  isAdmin,
+  monthTotals,
+  movedFor,
+  overLimit,
+  parsePricing,
+  parseUpload,
+  readRecords,
+  rotateTeam,
+  sessionCount,
+  setPricing,
+  teamMeta,
+  teamReport,
+  teamSlug,
+  type Redis,
+} from "./teams.ts";
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 
@@ -112,7 +131,28 @@ export async function handle(request: Request, redis: Redis, now: number, css: s
   }
   const team = teamSlug(raw);
   const meta = team ? await teamMeta(redis, team) : undefined;
+  if (team && !meta && (action === "usage" || action === "backfill") && request.method === "POST") {
+    const sent = await upload(request);
+    const moved = sent ? await movedFor(redis, team, sent.user) : undefined;
+    if (moved) return json({ moved }, 410);
+  }
   if (!team || !meta) return notFound();
+  if (action === "rotate" || action === "delete" || action === "pricing") {
+    if (request.method !== "POST") return json({ error: "POST" }, 405);
+    const key = request.headers.get("authorization")?.replace(/^Bearer /, "") ?? null;
+    if (!(await isAdmin(meta, key))) {
+      if (await overLimit(redis, `miss:${ip}`, 30, now)) return json({ error: "slow down" }, 429);
+      return json({ error: "wrong admin key" }, 401);
+    }
+    if (action === "rotate") return json({ id: await rotateTeam(redis, team, meta) });
+    if (action === "delete") return (await deleteTeam(redis, team), json({ deleted: team }));
+    let body: { pricing?: unknown } = {};
+    try {
+      body = (await request.json()) as typeof body;
+    } catch {}
+    const next = await setPricing(redis, team, meta, parsePricing(body.pricing));
+    return json({ pricing: next.pricing ?? null });
+  }
   if (action === "usage" || action === "backfill") {
     if (request.method !== "POST") return json({ error: "POST" }, 405);
     if (await overLimit(redis, `write:${ip}`, 600, now)) return json({ error: "slow down" }, 429);

@@ -51,6 +51,16 @@ export interface TeamMeta {
   name: string;
   created: number;
   pricing?: TeamPricing;
+  adminHash?: string;
+}
+
+async function sha256(text: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export async function isAdmin(meta: TeamMeta, key: string | null): Promise<boolean> {
+  return Boolean(key && meta.adminHash && (await sha256(key)) === meta.adminHash);
 }
 
 const RATE_KEYS = ["input", "output", "cacheRead", "cacheWrite", "cacheWrite1h"] as const;
@@ -87,13 +97,60 @@ function bookFor(pricing: TeamPricing | undefined): PriceBook {
   return pricing?.prices ? priceBook(catalog, pricing.prices) : book;
 }
 
-export async function createTeam(redis: Redis, name: string, pricing: TeamPricing | undefined, now: number): Promise<{ id: string; name: string; pricing?: TeamPricing }> {
+export async function createTeam(
+  redis: Redis,
+  name: string,
+  pricing: TeamPricing | undefined,
+  now: number,
+): Promise<{ id: string; name: string; admin: string; pricing?: TeamPricing }> {
   const clean = name.trim().replace(/\s+/g, " ").slice(0, 60) || "Team";
+  const admin = [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const adminHash = await sha256(admin);
   for (;;) {
     const id = newTeamId(clean);
-    const meta: TeamMeta = { name: clean, created: now, ...(pricing && { pricing }) };
-    if ((await redis.run(["SET", `t:${id}:meta`, JSON.stringify(meta), "NX"])) === "OK") return { id, name: clean, ...(pricing && { pricing }) };
+    const meta: TeamMeta = { name: clean, created: now, adminHash, ...(pricing && { pricing }) };
+    if ((await redis.run(["SET", `t:${id}:meta`, JSON.stringify(meta), "NX"])) === "OK") return { id, name: clean, admin, ...(pricing && { pricing }) };
   }
+}
+
+async function teamKeys(redis: Redis, id: string): Promise<string[]> {
+  const keys: string[] = [];
+  let cursor = "0";
+  do {
+    const [next, batch] = (await redis.run(["SCAN", cursor, "MATCH", `t:${id}:*`, "COUNT", 1000])) as [string, string[]];
+    cursor = next;
+    keys.push(...batch);
+  } while (cursor !== "0");
+  return keys;
+}
+
+export async function rotateTeam(redis: Redis, id: string, meta: TeamMeta): Promise<string> {
+  const keys = await teamKeys(redis, id);
+  for (;;) {
+    const next = newTeamId(meta.name);
+    if ((await redis.run(["EXISTS", `t:${next}:meta`])) === 1) continue;
+    await redis.pipeline(keys.map((key) => ["RENAME", key, `t:${next}:${key.slice(`t:${id}:`.length)}`]));
+    await redis.run(["SET", `moved:${id}`, next, "EX", 90 * 86_400]);
+    return next;
+  }
+}
+
+export async function deleteTeam(redis: Redis, id: string): Promise<void> {
+  const keys = await teamKeys(redis, id);
+  for (let i = 0; i < keys.length; i += 500) await redis.run(["DEL", ...keys.slice(i, i + 500)]);
+}
+
+export async function setPricing(redis: Redis, id: string, meta: TeamMeta, pricing: TeamPricing | undefined): Promise<TeamMeta> {
+  const { pricing: _, ...rest } = meta;
+  const next: TeamMeta = { ...rest, ...(pricing && { pricing }) };
+  await redis.pipeline([["SET", `t:${id}:meta`, JSON.stringify(next)], ["DEL", `t:${id}:totals`]]);
+  return next;
+}
+
+export async function movedFor(redis: Redis, id: string, user: string): Promise<string | undefined> {
+  const next = await redis.run(["GET", `moved:${id}`]);
+  if (typeof next !== "string") return undefined;
+  return (await redis.run(["SISMEMBER", `t:${next}:members`, user])) === 1 ? next : undefined;
 }
 
 export async function teamMeta(redis: Redis, id: string): Promise<TeamMeta | undefined> {
@@ -166,6 +223,7 @@ export async function addLive(redis: Redis, team: string, upload: Upload): Promi
   const args = cells(team, upload.user, "l", upload.records);
   if (args.length > 0) await redis.run(["EVAL", ADD, 0, TTL, "add", ...args]);
   await addSessions(redis, team, upload.sessions, () => true);
+  await redis.run(["SADD", `t:${team}:members`, upload.user]);
   await redis.run(["DEL", `t:${team}:totals`]);
 }
 
@@ -176,6 +234,7 @@ export async function addBackfill(redis: Redis, team: string, upload: Upload, no
   const args = cells(team, upload.user, "b", before);
   for (let i = 0; i < args.length; i += 3 * 4000) await redis.run(["EVAL", ADD, 0, TTL, "max", ...args.slice(i, i + 3 * 4000)]);
   await addSessions(redis, team, upload.sessions, (day) => Date.parse(`${day}T00:00:00Z`) < joined);
+  await redis.run(["SADD", `t:${team}:members`, upload.user]);
   await redis.run(["DEL", `t:${team}:totals`]);
   return before.reduce((n, record) => n + (record.requests ?? 1), 0);
 }

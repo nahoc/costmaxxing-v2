@@ -40,8 +40,29 @@ function memory(): Redis & { keys: () => string[] } {
       sets.set(a[0]!, set);
       return 1;
     }
+    if (op === "SADD") {
+      const set = sets.get(a[0]!) ?? new Set<string>();
+      for (const id of a.slice(1)) set.add(id);
+      sets.set(a[0]!, set);
+      return 1;
+    }
+    if (op === "SISMEMBER") return sets.get(a[0]!)?.has(a[1]!) ? 1 : 0;
+    if (op === "EXISTS") return strings.has(a[0]!) || hashes.has(a[0]!) ? 1 : 0;
+    if (op === "SCAN") {
+      const prefix = (a[2] ?? "").replace(/\*$/, "");
+      return ["0", [...strings.keys(), ...hashes.keys(), ...sets.keys()].filter((k) => k.startsWith(prefix))];
+    }
+    if (op === "RENAME") {
+      for (const map of [strings, hashes, sets] as Map<string, unknown>[]) {
+        if (map.has(a[0]!)) {
+          map.set(a[1]!, map.get(a[0]!));
+          map.delete(a[0]!);
+        }
+      }
+      return "OK";
+    }
     if (op === "PFCOUNT") return new Set(a.flatMap((k) => [...(sets.get(k) ?? [])])).size;
-    if (op === "DEL") return Number(strings.delete(a[0]!));
+    if (op === "DEL") return a.reduce((n, k) => n + Number(strings.delete(k) || hashes.delete(k) || sets.delete(k)), 0);
     if (op === "HGETALL") return [...(hashes.get(a[0]!) ?? [])].flatMap(([k, v]) => [k, String(v)]);
     throw new Error(`unexpected ${op}`);
   };
@@ -161,4 +182,30 @@ test("team pricing from the starter's config decides the comparison everywhere",
   assert.match(await (await get(redis, `${kimi}/page`)).text(), /Compared with Opus on Kimi\./);
   const bogus = await create(redis, "Bogus", { scenario: { name: "x", routes: [["*", "nowhere/model"]] } });
   assert.equal((await (await get(redis, bogus)).json()).pricing, null);
+});
+
+test("the admin key rotates the ID (members follow, strangers get 404), updates pricing, and deletes the team", async () => {
+  const redis = memory();
+  const created = (await (await post(redis, "", { name: "Acme" })).json()) as { id: string; admin: string };
+  assert.match(created.admin, /^[0-9a-f]{48}$/);
+  const admin = (path: string, key: string, body: unknown = {}) =>
+    handle(new Request(`https://x/api/teams?p=${path}`, { method: "POST", body: JSON.stringify(body), headers: { authorization: `Bearer ${key}` } }), redis, NOW, "");
+  await post(redis, `${created.id}/usage`, { user: USER, records: [record("1", NOW)] });
+  assert.equal((await admin(`${created.id}/rotate`, "wrong")).status, 401);
+  const { id } = (await (await admin(`${created.id}/rotate`, created.admin)).json()) as { id: string };
+  assert.notEqual(id, created.id);
+  assert.match(id, /^acme-/);
+  assert.equal(((await (await get(redis, id)).json()) as { requests: number }).requests, 1);
+  assert.equal((await get(redis, created.id)).status, 404);
+  assert.equal((await get(redis, `${created.id}/page`)).status, 404);
+  const member = await post(redis, `${created.id}/usage`, { user: USER, records: [] });
+  assert.equal(member.status, 410);
+  assert.deepEqual(await member.json(), { moved: id });
+  assert.equal((await post(redis, `${created.id}/usage`, { user: "f0e1d2c3b4a59687", records: [] })).status, 404);
+  const priced = await admin(`${id}/pricing`, created.admin, { pricing: { scenario: { name: "All on GLM", routes: [["*", "boundless/glm-5.3"]] } } });
+  assert.equal(((await priced.json()) as { pricing: { scenario: { name: string } } }).pricing.scenario.name, "All on GLM");
+  assert.equal(((await (await get(redis, id)).json()) as { pricing: { scenario: { name: string } } }).pricing.scenario.name, "All on GLM");
+  assert.equal((await admin(`${id}/delete`, created.admin)).status, 200);
+  assert.equal((await get(redis, id)).status, 404);
+  assert.deepEqual(redis.keys().filter((k) => k.includes(id)), []);
 });

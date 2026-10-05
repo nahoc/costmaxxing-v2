@@ -62,7 +62,7 @@ const KEY = /^(\d{4}-\d{2}-\d{2}) (.+)$/;
 const HOSTED = "https://costmaxxing.dev";
 const GAP = 60_000;
 
-const team = { name: "", server: "", token: "", user: "" };
+const team = { name: "", option: "", server: "", token: "", user: "" };
 let lastSent = 0;
 let waiting = false;
 let sessionId = "";
@@ -102,6 +102,8 @@ async function load($: Mods): Promise<void> {
   session = ours;
   month = all;
   usePricing(((await $.store.get("pricing")) ?? undefined) as TeamPricing | undefined);
+  const moved = (await $.store.get("team-moved")) as { from?: string; to?: string } | undefined;
+  if (team.option && moved?.from === team.option && moved.to) team.name = moved.to;
   $.ui.invalidate("ui.render");
 }
 
@@ -144,6 +146,17 @@ async function flush($: Mods, force: boolean): Promise<void> {
           headers: { "content-type": "application/json", "x-costmaxxing-token": team.token, "x-costmaxxing-user": team.user || "unknown" },
           body: JSON.stringify({ records }),
         });
+    if (response.status === 410 && team.name) {
+      const moved = (JSON.parse(response.text) as { moved?: string }).moved;
+      if (moved) {
+        await $.store.set("team-moved", { from: team.option, to: moved });
+        team.name = moved;
+        pending = [...records, ...pending].slice(-5000);
+        lastSent = 0;
+        save($, true);
+        return;
+      }
+    }
     totals = response.status === 404 ? "missing" : (response.ok && asTeam(response.text)) || "unreachable";
     if (response.ok && team.name) {
       const sentPricing = (JSON.parse(response.text) as { pricing?: TeamPricing | null }).pricing ?? undefined;
@@ -167,6 +180,7 @@ function save($: Mods, force: boolean): void {
 export function register(on: On, options: Record<string, unknown>): void {
   const option = (name: string) => (typeof options[name] === "string" ? (options[name] as string).trim() : "");
   team.name = option("team").toLowerCase();
+  team.option = team.name;
   team.server = option("server").replace(/\/+$/, "");
   team.token = option("token");
   team.user = option("user");

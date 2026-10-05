@@ -477,7 +477,7 @@ var DAY2 = 864e5;
 var KEY = /^(\d{4}-\d{2}-\d{2}) (.+)$/;
 var HOSTED = "https://costmaxxing.dev";
 var GAP = 6e4;
-var team = { name: "", server: "", token: "", user: "" };
+var team = { name: "", option: "", server: "", token: "", user: "" };
 var lastSent = 0;
 var waiting = false;
 var sessionId = "";
@@ -515,6 +515,8 @@ async function load($) {
   session = ours;
   month = all;
   usePricing(await $.store.get("pricing") ?? void 0);
+  const moved = await $.store.get("team-moved");
+  if (team.option && moved?.from === team.option && moved.to) team.name = moved.to;
   $.ui.invalidate("ui.render");
 }
 var reporting = () => team.name !== "" || team.server !== "" && team.token !== "";
@@ -553,6 +555,17 @@ async function flush($, force) {
       headers: { "content-type": "application/json", "x-costmaxxing-token": team.token, "x-costmaxxing-user": team.user || "unknown" },
       body: JSON.stringify({ records })
     });
+    if (response.status === 410 && team.name) {
+      const moved = JSON.parse(response.text).moved;
+      if (moved) {
+        await $.store.set("team-moved", { from: team.option, to: moved });
+        team.name = moved;
+        pending = [...records, ...pending].slice(-5e3);
+        lastSent = 0;
+        save($, true);
+        return;
+      }
+    }
     totals2 = response.status === 404 ? "missing" : response.ok && asTeam(response.text) || "unreachable";
     if (response.ok && team.name) {
       const sentPricing = JSON.parse(response.text).pricing ?? void 0;
@@ -574,6 +587,7 @@ function save($, force) {
 function register(on, options) {
   const option = (name) => typeof options[name] === "string" ? options[name].trim() : "";
   team.name = option("team").toLowerCase();
+  team.option = team.name;
   team.server = option("server").replace(/\/+$/, "");
   team.token = option("token");
   team.user = option("user");

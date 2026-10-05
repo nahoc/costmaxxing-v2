@@ -76,6 +76,14 @@ It installs the costmaxxing mod into Claude Code (v2.1.287 or later; it offers t
 
 The team's page is costmaxxing.dev/acme-7kq3x-m9pz2. It shows the savings, people, sessions, requests, and tokens for the last 30 days, a forecast at the 7-day and 30-day pace, a split between Claude Code and Codex, and the models. The ID is the key: it has 50 random bits, unknown IDs get a 404, and guesses are rate limited, so only people you give the ID to can see the page or add to it.
 
+Whoever starts the team also gets an admin key, saved in `~/.costmaxxing/team.json` on that machine. With it:
+
+- `npx costmaxxing team rotate` moves the team to a new ID, if the old one leaked. Everyone who already reported to the team follows automatically; anyone holding only the old ID gets nothing.
+- `npx costmaxxing team pricing` sets the team's comparison from your config file again.
+- `npx costmaxxing team delete` deletes the team and all its usage.
+
+Keep a copy of that file if you change machines: the key can't be recovered.
+
 What leaves the machine: for each request, the model, token counts, time, and request and session IDs, sent to costmaxxing.dev at most once a minute, plus daily sums of the same from the logs. Each person is an anonymous ID made from the team name and their Claude account email; the email itself is never sent. Prompts, responses, code, and keys never leave. Running the command again changes nothing: history is only counted from before the person first joined.
 
 Claude Code deletes conversation logs older than its `cleanupPeriodDays` setting (30 days by default), so most people's history covers about a month. The API reports cache writes without saying whether they're 5-minute or 1-hour writes, so the mod prices them all at the 5-minute rate, which can only understate the savings. An organization can turn off mods that users install; then the mod doesn't load.

@@ -15,7 +15,7 @@ import pkg from "../package.json" with { type: "json" };
 import { loadConfig } from "./config.ts";
 import { connectSettings, serve } from "./gateway.ts";
 import { createInterface } from "node:readline/promises";
-import { codexHook, currentTeam, describeTeam, joinTeam, startTeam } from "./join.ts";
+import { adminTeam, codexHook, currentTeam, describeTeam, joinTeam, startTeam } from "./join.ts";
 import { launch } from "./launch.ts";
 import { personalReport } from "./personal.ts";
 import { prices } from "./prices.ts";
@@ -26,6 +26,9 @@ const HELP = `costmaxxing: what your AI usage costs at API prices, and what it w
   costmaxxing [--days N] [--vs provider/model]... [--json] [--offline] [--config PATH]
   costmaxxing <team-id>          add your Claude Code to a team's savings at costmaxxing.dev/<team-id>
   costmaxxing team               show your team's page link and totals, and open it
+  costmaxxing team rotate        (team starter) move the team to a new ID; members follow
+  costmaxxing team pricing       (team starter) set the team's comparison from your config file
+  costmaxxing team delete        (team starter) delete the team and all its usage
   costmaxxing import <spend-report.csv> [--members members.csv] [--seats premium=N,standard=N]
                      [--billing monthly|annual] [--from YYYY-MM-DD --to YYYY-MM-DD]
   costmaxxing claude [args…]     run Claude Code through a local counting proxy
@@ -150,6 +153,16 @@ async function main(argv: string[]): Promise<void> {
     case "import":
       return importCommand(rest);
     case "team": {
+      const [sub] = rest;
+      if (sub === "rotate" || sub === "delete" || sub === "pricing") {
+        if (sub === "delete" && interactive()) {
+          const rl = createInterface({ input: process.stdin, output: process.stdout });
+          const sure = (await rl.question("Delete the team and all its usage for everyone? Type delete to confirm: ")).trim();
+          rl.close();
+          if (sure !== "delete") return void process.stdout.write("Nothing deleted.\n");
+        }
+        return void process.stdout.write(`${await adminTeam(sub)}\n`);
+      }
       const team = await currentTeam();
       if (team === undefined) return void process.stdout.write("You're not on a team. Run npx costmaxxing to start or join one.\n");
       if (team === "gone") return void process.stdout.write("Your saved team no longer exists. Run npx costmaxxing to start or join one.\n");
@@ -204,7 +217,10 @@ async function main(argv: string[]): Promise<void> {
         const name = id ? "" : (await rl.question("Name your team, like Acme (press Enter for just your own report): ")).trim();
         rl.close();
         if (id) return joinTeam(id, true);
-        if (name) return joinTeam(await startTeam(name), true, true);
+        if (name) {
+          const started = await startTeam(name);
+          return joinTeam(started.id, true, started.admin);
+        }
       }
       return reportCommand(argv);
   }

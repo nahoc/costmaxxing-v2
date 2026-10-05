@@ -48,6 +48,7 @@ test("with a team, steps reach costmaxxing.dev at most once a minute, a failed s
   let timers: { at: number; run: () => Promise<void> }[] = [];
   let time = NOW;
   let down = false;
+  let movedTo = "";
   const $ = {
     session: { id: async () => "s9" },
     clock: { now: async () => time, after: (ms: number, run: () => Promise<void>) => void timers.push({ at: time + ms, run }) },
@@ -55,6 +56,7 @@ test("with a team, steps reach costmaxxing.dev at most once a minute, a failed s
     http: {
       fetch: async (url: string, init: { body: string }) => {
         if (down) throw new TypeError("connection refused");
+        if (movedTo && !url.includes(movedTo)) return { ok: false, status: 410, text: JSON.stringify({ moved: movedTo }) };
         const body = JSON.parse(init.body);
         posts.push({ url, user: body.user, ids: body.records.map((r: { id: string }) => r.id) });
         return { ok: true, status: 200, text: JSON.stringify({ counted: 0, days: 30, people: 3, requests: 40, price: 2000, alt: 250 }) };
@@ -118,10 +120,14 @@ test("with a team, steps reach costmaxxing.dev at most once a minute, a failed s
   await step({ turnId: "t3", index: 0 });
   await advance(60_000);
   assert.deepEqual(posts.at(-1)?.ids, ["s9/t2/main/0", "s9/t3/main/0"]);
+  movedTo = "acme-22222-33333";
+  await step({ turnId: "t4", index: 0 });
+  await advance(60_000);
+  assert.deepEqual(posts.at(-1), { url: "https://costmaxxing.dev/api/teams/acme-22222-33333/usage", user: "u1u1u1u1u1u1", ids: ["s9/t4/main/0"] });
   assert.match(await hint(), /^costmaxxing {2}Current session: \$[\d.]+( ▲ \+\$[\d.]+)? │ Last 30 days: \$[\d.]+ \(you\) – \$1\.8k \(team\) │ 3 people │ team page ↗$/);
   const render = hooks.get("ui.render") as unknown as (...a: unknown[]) => Promise<{ children: { children: { type: string; href?: string }[] }[] }>;
   const tree = await render($, { props: { hint: "" } }, async () => "");
-  assert.equal(tree.children[1]?.children.find((c) => c.type === "Link")?.href, "https://costmaxxing.dev/acme-7kq3x-m9pz2");
+  assert.equal(tree.children[1]?.children.find((c) => c.type === "Link")?.href, "https://costmaxxing.dev/acme-22222-33333");
 });
 
 test("the committed hooks module is the build of mod/src (run npm run build -w mod)", async () => {

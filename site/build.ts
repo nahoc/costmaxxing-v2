@@ -49,7 +49,7 @@ await writeFile(
     routes: [
       { handle: "filesystem" },
       { src: "^/api/teams/([^/]+)/?$", dest: "/api/teams?p=$1" },
-      { src: "^/api/teams/([^/]+)/(usage|backfill)$", dest: "/api/teams?p=$1/$2" },
+      { src: "^/api/teams/([^/]+)/(usage|backfill|rotate|delete|pricing)$", dest: "/api/teams?p=$1/$2" },
       { src: "^/([^/.]+)/?$", dest: "/api/teams?p=$1/page" },
     ],
   }),

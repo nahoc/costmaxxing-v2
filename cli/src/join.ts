@@ -22,20 +22,24 @@ export function teamId(raw: string): string | undefined {
   return /^[a-z0-9](?:[a-z0-9-]{0,22}[a-z0-9])?-[0-9a-hjkmnp-tv-z]{5}-[0-9a-hjkmnp-tv-z]{5}$/.test(id) ? id : undefined;
 }
 
-export async function startTeam(name: string): Promise<string> {
+async function configPricing(): Promise<TeamPricing> {
   const config = await loadConfig(undefined);
   const scenario = config.scenarios[0];
-  const pricing: TeamPricing = {
+  return {
     ...(scenario && { scenario }),
     ...(Object.keys(config.prices).length > 0 && { prices: config.prices }),
   };
+}
+
+export async function startTeam(name: string): Promise<{ id: string; admin: string }> {
+  const pricing = await configPricing();
   const response = await fetch(`${BASE()}/api/teams`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ name, pricing }),
   });
   if (!response.ok) throw new Error(`${BASE()} answered ${response.status} when starting the team. Try again in a minute.`);
-  return ((await response.json()) as { id: string }).id;
+  return (await response.json()) as { id: string; admin: string };
 }
 
 export function tooOld(version: string): boolean {
@@ -95,7 +99,8 @@ async function confirm(question: string): Promise<boolean> {
   return answer === "" || answer === "y" || answer === "yes";
 }
 
-export async function joinTeam(raw: string, interactive: boolean, started = false): Promise<void> {
+export async function joinTeam(raw: string, interactive: boolean, admin?: string): Promise<void> {
+  const started = admin !== undefined;
   const team = teamId(raw);
   if (!team) throw new Error(`${raw} isn't a team ID. Team IDs look like acme-7kq3x-m9pz2. Run npx costmaxxing to start a team.`);
   const say = (line: string) => process.stdout.write(`${line}\n`);
@@ -130,7 +135,7 @@ export async function joinTeam(raw: string, interactive: boolean, started = fals
   const now = Date.now();
   const history = await readLogs(now - 366 * DAY);
   const sums = dailySums(history);
-  const codex = await installCodexHook(team, user, now);
+  const codex = await installCodexHook(team, user, now, admin);
   say(`Adding your Claude Code history to ${name}…`);
   const response = await fetch(`${base}/api/teams/${team}/backfill`, {
     method: "POST",
@@ -168,9 +173,22 @@ async function readJson<T>(path: string, fallback: T): Promise<T> {
 
 type HookGroup = { hooks?: { command?: string }[] };
 
-export async function installCodexHook(team: string, user: string, now: number): Promise<boolean> {
+interface SavedTeam {
+  id?: string;
+  user?: string;
+  joined?: number;
+  admin?: string;
+}
+
+async function saveTeam(team: SavedTeam): Promise<void> {
   await mkdir(HOME, { recursive: true });
-  await writeFile(TEAM_FILE(), `${JSON.stringify({ id: team, user, joined: now })}\n`);
+  await writeFile(TEAM_FILE(), `${JSON.stringify(team)}\n`);
+}
+
+export async function installCodexHook(team: string, user: string, now: number, admin?: string): Promise<boolean> {
+  const before = await readJson<SavedTeam>(TEAM_FILE(), {});
+  const keep = admin ?? (before.id === team ? before.admin : undefined);
+  await saveTeam({ id: team, user, joined: before.id === team ? (before.joined ?? now) : now, ...(keep && { admin: keep }) });
   if (!(await exists(CODEX_HOME()))) return false;
   let script = process.argv[1] ?? "";
   if (script.endsWith(".js")) {
@@ -190,7 +208,7 @@ export async function installCodexHook(team: string, user: string, now: number):
 
 export async function codexHook(input: string): Promise<void> {
   const event = JSON.parse(input || "{}") as { transcript_path?: string | null };
-  const team = await readJson<{ id?: string; user?: string; joined?: number }>(TEAM_FILE(), {});
+  const team = await readJson<SavedTeam>(TEAM_FILE(), {});
   const path = event.transcript_path;
   if (!path || !team.id || !team.user) return;
   const parser = codexParser();
@@ -198,11 +216,18 @@ export async function codexHook(input: string): Promise<void> {
   const sent = await readJson<Record<string, number>>(SENT_FILE(), {});
   const fresh = parser.records.slice(sent[path] ?? 0).filter((r) => r.time >= (team.joined ?? 0));
   if (fresh.length > 0) {
-    const response = await fetch(`${BASE()}/api/teams/${team.id}/usage`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ user: team.user, records: fresh }),
-    });
+    const send = (id: string) =>
+      fetch(`${BASE()}/api/teams/${id}/usage`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ user: team.user, records: fresh }),
+      });
+    let response = await send(team.id);
+    if (response.status === 410) {
+      const { moved } = (await response.json()) as { moved: string };
+      await saveTeam({ ...team, id: moved });
+      response = await send(moved);
+    }
     if (!response.ok) return;
   }
   sent[path] = parser.records.length;
@@ -217,15 +242,59 @@ export interface CurrentTeam {
   totals: TeamTotals;
 }
 
+async function follow(team: SavedTeam): Promise<string> {
+  const id = team.id ?? "";
+  if (!team.user) return id;
+  const response = await fetch(`${BASE()}/api/teams/${id}/usage`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ user: team.user, records: [] }),
+  }).catch(() => undefined);
+  if (response?.status !== 410) return id;
+  const { moved } = (await response.json()) as { moved: string };
+  await saveTeam({ ...team, id: moved });
+  return moved;
+}
+
 export async function currentTeam(): Promise<CurrentTeam | "gone" | undefined> {
-  const saved = await readJson<{ id?: string }>(TEAM_FILE(), {});
+  const saved = await readJson<SavedTeam>(TEAM_FILE(), {});
   if (!saved.id) return undefined;
-  const response = await fetch(`${BASE()}/api/teams/${saved.id}`).catch(() => undefined);
+  const id = await follow(saved);
+  const response = await fetch(`${BASE()}/api/teams/${id}`).catch(() => undefined);
   if (response?.status === 404) return "gone";
-  const url = `${BASE()}/${saved.id}`;
-  if (!response?.ok) return { id: saved.id, name: saved.id, url, totals: { days: 30, people: 0, requests: 0, price: 0, alt: 0 } };
+  const url = `${BASE()}/${id}`;
+  if (!response?.ok) return { id, name: id, url, totals: { days: 30, people: 0, requests: 0, price: 0, alt: 0 } };
   const body = (await response.json()) as TeamTotals & { name: string };
-  return { id: saved.id, name: body.name, url, totals: body };
+  return { id, name: body.name, url, totals: body };
+}
+
+export async function adminTeam(action: "rotate" | "delete" | "pricing"): Promise<string> {
+  const saved = await readJson<SavedTeam>(TEAM_FILE(), {});
+  if (!saved.id) throw new Error("you're not on a team. Run npx costmaxxing to start or join one.");
+  if (!saved.admin) throw new Error("only the person who started the team can do this, from the machine they started it on.");
+  const response = await fetch(`${BASE()}/api/teams/${saved.id}/${action}`, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${saved.admin}` },
+    body: JSON.stringify(action === "pricing" ? { pricing: await configPricing() } : {}),
+  });
+  if (response.status === 401) throw new Error("the saved admin key doesn't match this team.");
+  if (!response.ok) throw new Error(`${BASE()} answered ${response.status}. Try again in a minute.`);
+  const body = (await response.json()) as { id?: string; pricing?: TeamPricing | null };
+  if (action === "rotate" && body.id) {
+    await saveTeam({ ...saved, id: body.id });
+    return [
+      `New team ID: ${body.id}. Team page: ${BASE()}/${body.id}`,
+      "Everyone who already joined follows automatically. Anyone holding only the old ID is locked out.",
+      `New teammates join with: npx costmaxxing ${body.id}`,
+    ].join("\n");
+  }
+  if (action === "delete") {
+    await saveTeam({});
+    return `Deleted ${saved.id} and all its usage. Teammates' Claude Code shows "team ID not found" until they join another team.`;
+  }
+  return body.pricing?.scenario
+    ? `The team now compares against ${body.pricing.scenario.name}, from your config file.`
+    : "The team now uses the default open-weight plan (your config file has no [[scenario]]).";
 }
 
 export function describeTeam(team: CurrentTeam): string {

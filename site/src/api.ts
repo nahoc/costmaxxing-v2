@@ -1,4 +1,4 @@
-import { byFamily, count, escapeHtml as esc, exactUsd, percent, usd, type Report } from "@openmaxxing/core";
+import { byFamily, count, escapeHtml as esc, exactUsd, percent, plural, usd, type Report } from "@openmaxxing/core";
 import { icon, SPRITE } from "../../world/icons.ts";
 import { addBackfill, addLive, monthTotals, parseUpload, readRecords, teamReport, teamSlug, type Redis } from "./teams.ts";
 
@@ -35,7 +35,7 @@ export function teamPage(team: string, month: Report, all: Report, css: string):
       ? `<h1>No usage for ${esc(team)} yet.</h1>
 <p>Everyone on the team runs this once. Their Claude Code then reports token counts here, and the savings show under their prompt.</p>${join}`
       : `<h1>${esc(team)} could save ${usd(month.hero.year)} a&nbsp;year on open&#8209;weight models.</h1>
-<p>${count(month.users ?? 0)} ${month.users === 1 ? "person" : "people"} made ${count(month.requests)} Claude Code requests in the last 30 days. Everything recorded so far, over ${count(all.days)} days: ${exactUsd(all.hero.price)} at API prices, ${exactUsd(all.hero.alt)} on open&#8209;weight models.</p>
+<p>${count(month.users ?? 0)} ${month.users === 1 ? "person" : "people"} made ${plural(month.requests, "Claude Code request")} in the last 30 days. Everything recorded so far, over ${plural(all.days, "day")}: ${exactUsd(all.hero.price)} at API prices, ${exactUsd(all.hero.alt)} on open&#8209;weight models.</p>
 ${figures(month)}
 <h2>Models, last 30 days</h2>
 ${models(month)}
@@ -67,7 +67,7 @@ export async function handle(request: Request, redis: Redis, now: number, css: s
     const first = Math.min(...records.map((r) => r.time));
     const days = records.length > 0 ? Math.round((now - first) / 86_400_000) + 1 : 0;
     return new Response(teamPage(team, month, { ...all, days }, css), {
-      headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, s-maxage=60" },
+      headers: { "content-type": "text/html; charset=utf-8", "cache-control": records.length > 0 ? "public, s-maxage=60" : "no-store" },
     });
   }
   return json({ error: "not found" }, 404);

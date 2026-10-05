@@ -70,6 +70,15 @@ html {
 .sheet .num {
   text-align: right;
 }
+.sheet th:last-child,
+.sheet td:last-child {
+  padding-right: 0;
+}
+.team .titlebar .title {
+  overflow: hidden;
+  max-width: calc(100% - 24px);
+  text-overflow: ellipsis;
+}
 .cmd {
   margin: 16px 0 0;
   padding: 14px 18px;
@@ -97,5 +106,14 @@ html {
   .figures div + div {
     border-left: 0;
     border-top: var(--u) solid var(--ink);
+  }
+  .sheet th:nth-child(2),
+  .sheet td:nth-child(2),
+  .sheet th:nth-child(4),
+  .sheet td:nth-child(4) {
+    display: none;
+  }
+  .cmd {
+    font-size: var(--s);
   }
 }

@@ -1,6 +1,6 @@
 # openmaxxing
 
-openmaxxing shows what your AI coding and chat usage costs at API prices, and what the same usage would cost on open-weight models or at other inference providers. It reads the usage your tools already record. Nothing is uploaded.
+openmaxxing shows what your AI coding and chat usage costs at API prices, and what the same usage would cost on open-weight models or at other inference providers. It reads the usage your tools already record. Nothing is uploaded unless you add yourself to a team.
 
 ```
 npx openmaxxing
@@ -57,39 +57,46 @@ Try next
 - **Your claude.ai Team or Enterprise org.** Install the openmaxxing browser extension while signed in to claude.ai as an Owner. The report opens in a tab as soon as the extension installs, and the toolbar button shows it again later. Members who aren't Owners see a message that the team view needs an Owner.
 - **A spend report you already have.** Run `npx openmaxxing import spend-report.csv`. The extension's **Download CSV** button saves this file.
 - **A session as it happens.** Run `npx openmaxxing claude` or `npx openmaxxing codex`. The agent runs as usual through a local counting proxy, and openmaxxing prints a one-line summary when it exits.
-- **Live, under the Claude Code prompt.** Install the openmaxxing mod (below). No Owner role needed.
+- **Live, under the Claude Code prompt, for the whole team.** Everyone runs `npx openmaxxing <team>` (below). No Owner role needed.
 
-## The Claude Code mod
+## Your team, live in Claude Code
 
-The mod adds the open-weight savings to the hint line under the Claude Code prompt and updates it after every request:
+Everyone on the team runs one command with the team's name:
+
+```
+npx openmaxxing acme
+```
+
+It installs the openmaxxing mod into Claude Code (v2.1.287 or later; it offers to update an older one), sets it to report to the team, and adds the history from the person's Claude Code logs, up to a year. Claude Code keeps the setting, so it works in every session from then on. The savings then show under the prompt and update after every request:
 
 ```
 openmaxxing · open-weight savings: session $3.74 · 30 days $612 · team $9.4k (12 people)
 ```
 
-It needs Claude Code v2.1.287 or later. Install it from this repository:
+The team's page is costmaxxing.dev/acme. Anyone with the name can see it, so pick a name that's hard to guess if that matters.
+
+What leaves the machine: for each request, the model, token counts, time, and request and session IDs, sent to costmaxxing.dev at most once a minute, plus daily sums of the same from the logs. Each person is an anonymous ID made from the team name and their Claude account email; the email itself is never sent. Prompts, responses, code, and keys never leave. Running the command again changes nothing: history is only counted from before the person first joined.
+
+Claude Code deletes conversation logs older than its `cleanupPeriodDays` setting (30 days by default), so most people's history covers about a month. The API reports cache writes without saying whether they're 5-minute or 1-hour writes, so the mod prices them all at the 5-minute rate, which can only understate the savings. An organization can turn off mods that users install; then the mod doesn't load.
+
+### Without a team
 
 ```
 claude plugin marketplace add nahoc/openmaxxing
 claude plugin install openmaxxing@openmaxxing
 ```
 
-Claude Code then lists three options as not set yet: the team server, its token, and your name. Leave them empty for your own numbers. On its own, the mod keeps everything on your machine: it prices each request with the bundled models.dev snapshot and adds it to a 30-day total that every Claude Code session on the machine shares. Your organization can turn off mods that users install, in which case the mod doesn't load.
+Leave the options empty. The mod then keeps everything on your machine: it prices each request with the bundled models.dev snapshot and keeps a 30-day total that every Claude Code session on the machine shares.
 
-For the team figure, someone runs `openmaxxing serve` and everyone sets the mod's three options, which `openmaxxing connect` prints as one install command:
+### With your own server
 
-```
-claude plugin install openmaxxing@openmaxxing --config server=http://gateway.local:8787 --config token=T --config user=ada
-```
-
-The mod then sends the server each request's model, token counts, time, and request and session IDs, and nothing else. The team figure counts only people who installed the mod or route Claude Code through the gateway. Use one or the other: with both, the gateway counts a request twice.
-
-The API reports cache writes without saying whether they're 5-minute or 1-hour writes, so the mod prices them all at the 5-minute rate. A 1-hour write costs more at API prices, so the savings can only be understated.
+`openmaxxing serve` runs a team server on a machine you control instead of costmaxxing.dev. `openmaxxing connect` prints the install command that points the mod at it.
 
 ## Commands
 
 ```
 openmaxxing [--days N] [--vs provider/model]... [--json] [--offline] [--config PATH]
+openmaxxing <team>
 openmaxxing import <spend-report.csv> [--members members.csv] [--seats premium=N,standard=N]
                    [--billing monthly|annual] [--from YYYY-MM-DD --to YYYY-MM-DD]
 openmaxxing claude [args...]
@@ -102,6 +109,7 @@ openmaxxing connect <url> --token T [--user NAME]
 | Command | What it does |
 | --- | --- |
 | `openmaxxing` | Prints the report for your Claude Code and Codex usage. |
+| `openmaxxing <team>` | Adds your Claude Code to the team at costmaxxing.dev/<team>: installs the mod and uploads your history. |
 | `--days N` | Sets the window. The default is 30 days. |
 | `--vs provider/model` | Compares against one models.dev model, such as `--vs togetherai/zai-org/GLM-5.3`. The first `--vs` replaces the open-weight plan in the summary box. Each extra `--vs` adds a row under Scenarios. |
 | `--json` | Prints every number as JSON, including all models, unpriced models, and the rate fallbacks used. |
@@ -186,7 +194,7 @@ cache_read = 0.23
 
 - openmaxxing never reads browser cookie stores, the OS keychain, or another app's credentials.
 - It stores usage counts only: model, token counts, time, and request and session IDs. It never stores prompts, responses, code, keys, or auth headers.
-- It has no telemetry. The CLI talks only to models.dev. The extension talks only to claude.ai and models.dev, through your browser's existing session, and only when you install it or click it. The Claude Code mod makes no network calls unless you give it a team server, and then sends that server usage counts only.
+- It has no telemetry. The CLI talks only to models.dev, and to costmaxxing.dev when you run `openmaxxing <team>`. The extension talks only to claude.ai and models.dev, through your browser's existing session, and only when you install it or click it. The Claude Code mod makes no network calls unless it belongs to a team. Then it sends usage counts only, to costmaxxing.dev or your own server, and `openmaxxing <team>` sends daily sums of the same from your logs.
 - The proxy forwards each request unchanged to the same API the agent would call without it.
 
 ## Develop

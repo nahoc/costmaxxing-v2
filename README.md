@@ -74,7 +74,7 @@ claude plugin marketplace add nahoc/costmaxxing-v2
 claude plugin install costmaxxing@costmaxxing
 ```
 
-On its own, the mod keeps everything on your machine: it prices each request with the bundled models.dev snapshot and adds it to a 30-day total that every Claude Code session on the machine shares. Your organization can turn off mods that users install, in which case the mod doesn't load.
+Claude Code then lists three options as not set yet: the team server, its token, and your name. Leave them empty for your own numbers. On its own, the mod keeps everything on your machine: it prices each request with the bundled models.dev snapshot and adds it to a 30-day total that every Claude Code session on the machine shares. Your organization can turn off mods that users install, in which case the mod doesn't load.
 
 For the team figure, someone runs `costmaxxing serve` and everyone sets the mod's three options, which `costmaxxing connect` prints as one install command:
 

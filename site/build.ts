@@ -10,10 +10,10 @@ const store = process.env.STORE_URL;
 if (store && !store.startsWith("https://chromewebstore.google.com/detail/")) {
   throw new Error("STORE_URL must be the extension's chromewebstore.google.com/detail/ link");
 }
-const zip = here("../extension/costmaxxing-extension.zip");
+const zip = here("../extension/openmaxxing-extension.zip");
 const install: Install = store
   ? { href: store, label: "Add to Chrome", zip: false }
-  : { href: "costmaxxing-extension.zip", label: "Download for Chrome", zip: true };
+  : { href: "openmaxxing-extension.zip", label: "Download for Chrome", zip: true };
 
 const script = await build({
   entryPoints: [here("src/site.ts")],
@@ -29,7 +29,7 @@ await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 await cp(here("static/"), dist, { recursive: true });
 await cp(here("../world/fonts/"), `${dist}fonts/`, { recursive: true });
-if (!store) await copyFile(zip, `${dist}costmaxxing-extension.zip`);
+if (!store) await copyFile(zip, `${dist}openmaxxing-extension.zip`);
 await writeFile(
   `${dist}index.html`,
   renderPage({ example: example(), install, css, js: script.outputFiles[0]?.text ?? "" }),

@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { Harness, Plan, Rates, Scenario } from "@costmaxxing/core";
+import type { Harness, Plan, Rates, Scenario } from "@openmaxxing/core";
 import { parse } from "smol-toml";
 import { HOME } from "./usage.ts";
 

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-10-04T20:01:46.876Z",
-  "title": "Design System: costmaxxing",
+  "title": "Design System: openmaxxing",
   "extensions": {
     "colorMeta": {
       "screen-ink": {
@@ -183,7 +183,7 @@
       }
     ],
     "dos": [
-      "Do compute every number on the page with costmaxxing's own core, and label example data as an example.",
+      "Do compute every number on the page with openmaxxing's own core, and label example data as an example.",
       "Do draw new grays as dither tiles on the 2px pixel unit.",
       "Do keep stepped motion settled for reduced motion, which shows the finished desktop with no boot.",
       "Do convert any new photograph to the two colors with site/scripts/dither.ts and embed its origin.",

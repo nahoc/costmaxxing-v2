@@ -1,13 +1,13 @@
-# costmaxxing
+# openmaxxing
 
-costmaxxing shows what your AI coding and chat usage costs at API prices, and what the same usage would cost on open-weight models or at other inference providers. It reads the usage your tools already record. Nothing is uploaded.
-
-```
-npx costmaxxing
-```
+openmaxxing shows what your AI coding and chat usage costs at API prices, and what the same usage would cost on open-weight models or at other inference providers. It reads the usage your tools already record. Nothing is uploaded.
 
 ```
-costmaxxing · last 30 days · 140 sessions · 15k requests · 1.6B tokens
+npx openmaxxing
+```
+
+```
+openmaxxing · last 30 days · 140 sessions · 15k requests · 1.6B tokens
 
 ╭───────────────────────────────────────────────────────────────────────────────────────╮
 │                                                                                       │
@@ -44,42 +44,42 @@ Together AI   $900 savings · 67%
 Fireworks     $900 savings · 67%
 
 Try next
-  npx costmaxxing --vs togetherai/zai-org/GLM-5.3   price everything on one model
-  npx costmaxxing claude                            count a Claude Code session live
-  npx costmaxxing web                               open this report in your browser
-  npx costmaxxing --json                            every number, every model
-  costmaxxing browser extension                     team report for claude.ai Owners
+  npx openmaxxing --vs togetherai/zai-org/GLM-5.3   price everything on one model
+  npx openmaxxing claude                            count a Claude Code session live
+  npx openmaxxing web                               open this report in your browser
+  npx openmaxxing --json                            every number, every model
+  openmaxxing browser extension                     team report for claude.ai Owners
 ```
 
 ## Get your number
 
-- **Your own usage.** Run `npx costmaxxing`. It reads Claude Code and Codex logs from the last 30 days and prints the report in a few seconds. There is nothing to configure.
-- **Your claude.ai Team or Enterprise org.** Install the costmaxxing browser extension while signed in to claude.ai as an Owner. The report opens in a tab as soon as the extension installs, and the toolbar button shows it again later. Members who aren't Owners see a message that the team view needs an Owner.
-- **A spend report you already have.** Run `npx costmaxxing import spend-report.csv`. The extension's **Download CSV** button saves this file.
-- **A session as it happens.** Run `npx costmaxxing claude` or `npx costmaxxing codex`. The agent runs as usual through a local counting proxy, and costmaxxing prints a one-line summary when it exits.
-- **Live, under the Claude Code prompt.** Install the costmaxxing mod (below). No Owner role needed.
+- **Your own usage.** Run `npx openmaxxing`. It reads Claude Code and Codex logs from the last 30 days and prints the report in a few seconds. There is nothing to configure.
+- **Your claude.ai Team or Enterprise org.** Install the openmaxxing browser extension while signed in to claude.ai as an Owner. The report opens in a tab as soon as the extension installs, and the toolbar button shows it again later. Members who aren't Owners see a message that the team view needs an Owner.
+- **A spend report you already have.** Run `npx openmaxxing import spend-report.csv`. The extension's **Download CSV** button saves this file.
+- **A session as it happens.** Run `npx openmaxxing claude` or `npx openmaxxing codex`. The agent runs as usual through a local counting proxy, and openmaxxing prints a one-line summary when it exits.
+- **Live, under the Claude Code prompt.** Install the openmaxxing mod (below). No Owner role needed.
 
 ## The Claude Code mod
 
 The mod adds the open-weight savings to the hint line under the Claude Code prompt and updates it after every request:
 
 ```
-costmaxxing · open-weight savings: session $3.74 · 30 days $612 · team $9.4k (12 people)
+openmaxxing · open-weight savings: session $3.74 · 30 days $612 · team $9.4k (12 people)
 ```
 
 It needs Claude Code v2.1.287 or later. Install it from this repository:
 
 ```
-claude plugin marketplace add nahoc/costmaxxing-v2
-claude plugin install costmaxxing@costmaxxing
+claude plugin marketplace add nahoc/openmaxxing
+claude plugin install openmaxxing@openmaxxing
 ```
 
 Claude Code then lists three options as not set yet: the team server, its token, and your name. Leave them empty for your own numbers. On its own, the mod keeps everything on your machine: it prices each request with the bundled models.dev snapshot and adds it to a 30-day total that every Claude Code session on the machine shares. Your organization can turn off mods that users install, in which case the mod doesn't load.
 
-For the team figure, someone runs `costmaxxing serve` and everyone sets the mod's three options, which `costmaxxing connect` prints as one install command:
+For the team figure, someone runs `openmaxxing serve` and everyone sets the mod's three options, which `openmaxxing connect` prints as one install command:
 
 ```
-claude plugin install costmaxxing@costmaxxing --config server=http://gateway.local:8787 --config token=T --config user=ada
+claude plugin install openmaxxing@openmaxxing --config server=http://gateway.local:8787 --config token=T --config user=ada
 ```
 
 The mod then sends the server each request's model, token counts, time, and request and session IDs, and nothing else. The team figure counts only people who installed the mod or route Claude Code through the gateway. Use one or the other: with both, the gateway counts a request twice.
@@ -89,23 +89,23 @@ The API reports cache writes without saying whether they're 5-minute or 1-hour w
 ## Commands
 
 ```
-costmaxxing [--days N] [--vs provider/model]... [--json] [--offline] [--config PATH]
-costmaxxing import <spend-report.csv> [--members members.csv] [--seats premium=N,standard=N]
+openmaxxing [--days N] [--vs provider/model]... [--json] [--offline] [--config PATH]
+openmaxxing import <spend-report.csv> [--members members.csv] [--seats premium=N,standard=N]
                    [--billing monthly|annual] [--from YYYY-MM-DD --to YYYY-MM-DD]
-costmaxxing claude [args...]
-costmaxxing codex [args...]
-costmaxxing web [--port N]
-costmaxxing serve --token T [--port 8787] [--host 0.0.0.0]
-costmaxxing connect <url> --token T [--user NAME]
+openmaxxing claude [args...]
+openmaxxing codex [args...]
+openmaxxing web [--port N]
+openmaxxing serve --token T [--port 8787] [--host 0.0.0.0]
+openmaxxing connect <url> --token T [--user NAME]
 ```
 
 | Command | What it does |
 | --- | --- |
-| `costmaxxing` | Prints the report for your Claude Code and Codex usage. |
+| `openmaxxing` | Prints the report for your Claude Code and Codex usage. |
 | `--days N` | Sets the window. The default is 30 days. |
 | `--vs provider/model` | Compares against one models.dev model, such as `--vs togetherai/zai-org/GLM-5.3`. The first `--vs` replaces the open-weight plan in the summary box. Each extra `--vs` adds a row under Scenarios. |
 | `--json` | Prints every number as JSON, including all models, unpriced models, and the rate fallbacks used. |
-| `--offline` | Uses the cached models.dev prices, or the snapshot bundled with costmaxxing, and makes no network calls. |
+| `--offline` | Uses the cached models.dev prices, or the snapshot bundled with openmaxxing, and makes no network calls. |
 | `import` | Prices a claude.ai spend report CSV. It reads the period from the file name (`...-2026-09-01-to-2026-09-30.csv`), or from `--from` and `--to`. |
 | `claude`, `codex` | Runs the agent through a local proxy on 127.0.0.1 that counts each request. All other arguments pass through to the agent. |
 | `web` | Serves the report on 127.0.0.1 and opens it in your browser. |
@@ -118,14 +118,14 @@ Runs that aren't interactive, such as runs with `--json`, in CI, or with output 
 
 ## Where the numbers come from
 
-costmaxxing reads these sources:
+openmaxxing reads these sources:
 
-- **Claude Code** writes one JSON line per response to `~/.claude/projects/**/*.jsonl` (or `$CLAUDE_CONFIG_DIR/projects`). costmaxxing counts each `requestId` once and treats files under `subagents/` as subagent traffic.
-- **Codex** writes sessions to `~/.codex/sessions` and `~/.codex/archived_sessions` (or `$CODEX_HOME`). costmaxxing reads `token_usage_record` lines, and `token_count` events in older files.
+- **Claude Code** writes one JSON line per response to `~/.claude/projects/**/*.jsonl` (or `$CLAUDE_CONFIG_DIR/projects`). openmaxxing counts each `requestId` once and treats files under `subagents/` as subagent traffic.
+- **Codex** writes sessions to `~/.codex/sessions` and `~/.codex/archived_sessions` (or `$CODEX_HOME`). openmaxxing reads `token_usage_record` lines, and `token_count` events in older files.
 - **claude.ai** has no usage API for Teams. Owners can download a spend report, one row per person, product, and model. The extension fetches the same report with your browser's own claude.ai session.
-- **Prices** come from [models.dev](https://models.dev), cached for 24 hours in `~/.costmaxxing/` (or `$COSTMAXXING_HOME`).
+- **Prices** come from [models.dev](https://models.dev), cached for 24 hours in `~/.openmaxxing/` (or `$OPENMAXXING_HOME`).
 
-The proxy and the logs often see the same request. costmaxxing merges them by request ID, so the request counts once.
+The proxy and the logs often see the same request. openmaxxing merges them by request ID, so the request counts once.
 
 ## How costs are calculated
 
@@ -138,7 +138,7 @@ cost = (uncached input × input + output × output + cache reads × cache_read
 
 - **Missing rates.** A missing cache-read or cache-write rate falls back to the input rate. A missing Anthropic 1-hour write rate is 2 × input. Other providers' 1-hour writes fall back to their cache-write rate. `--json` lists every fallback that priced at least one token.
 - **Long context.** A long-context tier applies when one request's prompt (uncached input, cache reads, and cache writes) is larger than the tier's size.
-- **Spend report rows.** Each row covers many requests. costmaxxing prices the average request in the row, then multiplies by the request count. The spend columns are ignored, because usage that seats cover shows as $0 there.
+- **Spend report rows.** Each row covers many requests. openmaxxing prices the average request in the row, then multiplies by the request count. The spend columns are ignored, because usage that seats cover shows as $0 there.
 - **Unpriced models.** A model with no price is listed by name with its request count. It is left out of both sides of every comparison, never counted as $0.
 - **Same token counts.** Every comparison assumes the other model uses the same number of tokens for the same work. Real token counts differ between models and tokenizers.
 - **Forecast.** The 7-day average is the cost of the last 7 days divided by 7. The 30-day average is the cost of the last 30 days divided by 30. A month is 30 days and a year is 365.
@@ -155,11 +155,11 @@ The default comparison is a tiered open-weight plan:
 
 The default rates are Boundless's public rates (inference.boundless.network/models.md, checked 2026-10-03). The maintainer works at Boundless. Cache writes bill at the input rate because that page lists no cache-write price. The Providers section prices the same plan at Together AI, Baseten, and Fireworks from models.dev, and shows the savings at each, largest first. A provider that doesn't list one of the three models says so. Use `--vs` or a `[[scenario]]` to compare against anything on models.dev.
 
-claude.ai seats cost $25 a month (Standard) or $125 (Premium), or $20 and $100 with annual billing. Fable models need a Premium seat. Without a members export or `--seats`, costmaxxing estimates that everyone with Fable usage has a Premium seat and everyone else a Standard one.
+claude.ai seats cost $25 a month (Standard) or $125 (Premium), or $20 and $100 with annual billing. Fable models need a Premium seat. Without a members export or `--seats`, openmaxxing estimates that everyone with Fable usage has a Premium seat and everyone else a Standard one.
 
 ## Configuration
 
-costmaxxing reads `~/.costmaxxing/config.toml` if it exists, or the file given with `--config`.
+openmaxxing reads `~/.openmaxxing/config.toml` if it exists, or the file given with `--config`.
 
 ```toml
 window_days = 30
@@ -184,7 +184,7 @@ cache_read = 0.23
 
 ## Privacy
 
-- costmaxxing never reads browser cookie stores, the OS keychain, or another app's credentials.
+- openmaxxing never reads browser cookie stores, the OS keychain, or another app's credentials.
 - It stores usage counts only: model, token counts, time, and request and session IDs. It never stores prompts, responses, code, keys, or auth headers.
 - It has no telemetry. The CLI talks only to models.dev. The extension talks only to claude.ai and models.dev, through your browser's existing session, and only when you install it or click it. The Claude Code mod makes no network calls unless you give it a team server, and then sends that server usage counts only.
 - The proxy forwards each request unchanged to the same API the agent would call without it.

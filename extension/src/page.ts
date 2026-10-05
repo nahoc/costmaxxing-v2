@@ -86,7 +86,7 @@ async function show(): Promise<void> {
     return;
   }
   const csv = { href: URL.createObjectURL(new Blob([result.csv], { type: "text/csv" })), filename: result.filename };
-  if (result.report.org) document.title = `${result.report.org} · costmaxxing`;
+  if (result.report.org) document.title = `${result.report.org} · openmaxxing`;
   render(memoView(result.report, csv, full), csv);
 }
 

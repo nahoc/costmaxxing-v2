@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "costmaxxing",
+  "name": "openmaxxing",
   "version": "1.1.0",
   "description": "How much can your claude.ai team save by moving from Anthropic to open-weight models? One click for Owners, all in your browser.",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "costmaxxing",
+    "default_title": "openmaxxing",
     "default_icon": {
       "16": "icons/16.png",
       "32": "icons/32.png",

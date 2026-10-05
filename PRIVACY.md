@@ -1,8 +1,8 @@
-# costmaxxing privacy policy
+# openmaxxing privacy policy
 
 Last updated: 2026-10-04
 
-costmaxxing is an open-source Chrome extension and command-line tool that prices AI usage at API rates. This policy covers the Chrome extension. Nothing the extension reads leaves your browser.
+openmaxxing is an open-source Chrome extension and command-line tool that prices AI usage at API rates. This policy covers the Chrome extension. Nothing the extension reads leaves your browser.
 
 ## What the extension reads
 
@@ -31,4 +31,4 @@ The extension asks for access to two sites only: `claude.ai`, to read the report
 
 ## Changes and contact
 
-Changes to this policy are published in this file, with a new date at the top. Questions and reports go to the issue tracker at https://github.com/nahoc/costmaxxing-v2/issues.
+Changes to this policy are published in this file, with a new date at the top. Questions and reports go to the issue tracker at https://github.com/nahoc/openmaxxing/issues.

@@ -2,7 +2,7 @@ import { build } from "esbuild";
 
 await build({
   entryPoints: [new URL("src/main.ts", import.meta.url).pathname],
-  outfile: new URL("dist/costmaxxing.js", import.meta.url).pathname,
+  outfile: new URL("dist/openmaxxing.js", import.meta.url).pathname,
   bundle: true,
   platform: "node",
   format: "esm",

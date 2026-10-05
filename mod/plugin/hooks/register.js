@@ -455,7 +455,7 @@ function statusText(session2, month2, team2) {
   const parts = [`session ${savings(session2)}`, `30 days ${savings(month2)}`];
   if (team2 === "unreachable") parts.push("team server unreachable");
   else if (team2) parts.push(`team ${savings(team2)} (${count(team2.people)} ${team2.people === 1 ? "person" : "people"})`);
-  return `costmaxxing \xB7 open-weight savings: ${parts.join(" \xB7 ")}`;
+  return `openmaxxing \xB7 open-weight savings: ${parts.join(" \xB7 ")}`;
 }
 
 // src/register.ts
@@ -497,9 +497,9 @@ async function flush($) {
   if (!team.server || !team.token) return;
   const records = pending.splice(0);
   try {
-    const response = await $.http.fetch(`${team.server}/costmaxxing/usage`, {
+    const response = await $.http.fetch(`${team.server}/openmaxxing/usage`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-costmaxxing-token": team.token, "x-costmaxxing-user": team.user || "unknown" },
+      headers: { "content-type": "application/json", "x-openmaxxing-token": team.token, "x-openmaxxing-user": team.user || "unknown" },
       body: JSON.stringify({ records })
     });
     totals2 = response.ok && asTeam(response.text) || "unreachable";

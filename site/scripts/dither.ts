@@ -10,7 +10,7 @@ const out = new URL("../static/wall-street-1915.png", import.meta.url).pathname;
 
 const dir = mkdtempSync(join(tmpdir(), "dither-"));
 const photo = join(dir, "source.jpg");
-const response = await fetch(SOURCE, { headers: { "user-agent": "costmaxxing-site-build/1.0" } });
+const response = await fetch(SOURCE, { headers: { "user-agent": "openmaxxing-site-build/1.0" } });
 if (!response.ok) throw new Error(`Commons ${response.status}`);
 writeFileSync(photo, Buffer.from(await response.arrayBuffer()));
 

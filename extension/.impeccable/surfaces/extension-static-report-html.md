@@ -7,7 +7,7 @@ related_targets: ["extension/static/popup.html"]
 
 # Extension report
 
-Scope: the extension's full report tab (`extension/static/report.html`) and its toolbar popup (`popup.html`), visitor mode Operate. Audience: a claude.ai Team or Enterprise Owner who just installed costmaxxing or clicked its button. Task: understand what the team's usage is worth at Anthropic's API prices, what it would cost on open-weight models, and how much the seats subsidize it; then keep the CSV. Sections: savings and subsidy first, then People, Products and models, Providers, Forecast and method. States: loading with real progress steps, signed out, not an Owner, failed request, and the report. Constraints: MV3 CSP (no inline scripts), host permissions for claude.ai and models.dev only, fonts bundled in the extension, every number from core.
+Scope: the extension's full report tab (`extension/static/report.html`) and its toolbar popup (`popup.html`), visitor mode Operate. Audience: a claude.ai Team or Enterprise Owner who just installed openmaxxing or clicked its button. Task: understand what the team's usage is worth at Anthropic's API prices, what it would cost on open-weight models, and how much the seats subsidize it; then keep the CSV. Sections: savings and subsidy first, then People, Products and models, Providers, Forecast and method. States: loading with real progress steps, signed out, not an Owner, failed request, and the report. Constraints: MV3 CSP (no inline scripts), host permissions for claude.ai and models.dev only, fonts bundled in the extension, every number from core.
 
 ## Direction contract
 

@@ -46,6 +46,6 @@ const outputs: [string, Grid, number][] = [
 ];
 for (const [path, grid, scale] of outputs) {
   const size = grid.length * scale;
-  writeFileSync(at(path), png(grid, scale, `costmaxxing app icon, ${size}x${size}, drawn by site/scripts/app-icon.ts in #2e1065 and white.`));
+  writeFileSync(at(path), png(grid, scale, `openmaxxing app icon, ${size}x${size}, drawn by site/scripts/app-icon.ts in #2e1065 and white.`));
   console.log(path.replace(/^(\.\.\/)+/, ""));
 }

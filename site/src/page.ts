@@ -1,4 +1,4 @@
-import { comparisonText, count, escapeHtml as esc, exactUsd, percent, usd } from "@costmaxxing/core";
+import { comparisonText, count, escapeHtml as esc, exactUsd, percent, usd } from "@openmaxxing/core";
 import type { Example } from "./example.ts";
 import { PRICE_LADDER, SWE_BENCH } from "./claims.ts";
 import { SEAT } from "./example.ts";
@@ -166,10 +166,10 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
 
   const about = win({
     id: "about",
-    title: "costmaxxing Info",
+    title: "openmaxxing Info",
     className: "about",
-    body: `<div class="about-head">${icon("computer")}<div><p class="about-name">costmaxxing</p><p>Chrome extension, open source (MIT)</p></div></div>
-<dl class="facts"><dt>Permissions</dt><dd>claude.ai, models.dev</dd><dt>Uploads</dt><dd>None</dd><dt>Telemetry</dt><dd>None</dd><dt>Source</dt><dd><a href="https://github.com/nahoc/costmaxxing-v2">GitHub</a></dd></dl>`,
+    body: `<div class="about-head">${icon("computer")}<div><p class="about-name">openmaxxing</p><p>Chrome extension, open source (MIT)</p></div></div>
+<dl class="facts"><dt>Permissions</dt><dd>claude.ai, models.dev</dd><dt>Uploads</dt><dd>None</dd><dt>Telemetry</dt><dd>None</dd><dt>Source</dt><dd><a href="https://github.com/nahoc/openmaxxing">GitHub</a></dd></dl>`,
   });
 
   const infos = [
@@ -205,7 +205,7 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
   const zipNote = install.zip
     ? `<section class="window info" id="info-zip" role="dialog" aria-label="Installing from the zip" hidden>
 <div class="titlebar"><button class="close" type="button" aria-label="Close"></button><span class="title">Installing</span></div>
-<div class="body"><p>costmaxxing-extension.zip is downloading. Unzip it, open <code>chrome://extensions</code>, turn on Developer mode, and choose Load unpacked.</p><p>Your bill opens as soon as it loads.</p></div>
+<div class="body"><p>openmaxxing-extension.zip is downloading. Unzip it, open <code>chrome://extensions</code>, turn on Developer mode, and choose Load unpacked.</p><p>Your bill opens as soon as it loads.</p></div>
 </section>`
     : "";
 
@@ -214,12 +214,12 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>costmaxxing · how much your team saves on open-weight models</title>
+<title>openmaxxing · how much your team saves on open-weight models</title>
 <meta name="description" content="How much can your team save by moving from Anthropic to open-weight models? One click prices your claude.ai team's real usage, in your browser." />
 <meta name="theme-color" content="#2e1065" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://costmaxxing.dev/" />
-<meta property="og:title" content="costmaxxing" />
+<meta property="og:title" content="openmaxxing" />
 <meta property="og:description" content="How much can your team save by moving from Anthropic to open-weight models? One click prices your claude.ai team's real usage, in your browser." />
 <meta property="og:image" content="https://costmaxxing.dev/og.png" />
 <meta property="og:image:width" content="1200" />
@@ -233,16 +233,16 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
 </head>
 <body>
 ${SPRITE}
-<div class="boot" aria-hidden="true"><div class="boot-icon">${icon("computer")}</div><div class="welcome">Welcome to costmaxxing.</div></div>
+<div class="boot" aria-hidden="true"><div class="boot-icon">${icon("computer")}</div><div class="welcome">Welcome to openmaxxing.</div></div>
 <div class="screen">
 <header class="menubar">
 <nav aria-label="Menu">
-<div class="menu-group"><button class="menu-title logo" type="button" aria-expanded="false" aria-label="costmaxxing">${icon("logo")}</button>
-<div class="menu" hidden><a href="#about">About costmaxxing…</a></div></div>
+<div class="menu-group"><button class="menu-title logo" type="button" aria-expanded="false" aria-label="openmaxxing">${icon("logo")}</button>
+<div class="menu" hidden><a href="#about">About openmaxxing…</a></div></div>
 <div class="menu-group"><button class="menu-title" type="button" aria-expanded="false">File</button>
 <div class="menu" hidden><a href="${esc(install.href)}"${zipAttrs}>${esc(install.label)}…</a><button type="button" data-open="bill">Open Team Bill</button></div></div>
 </nav>
-<div class="menubar-right"><a class="menubar-cta" href="${esc(install.href)}"${zipAttrs}>${install.zip ? "Download" : "Add to Chrome"}</a><a href="https://github.com/nahoc/costmaxxing-v2">GitHub</a></div>
+<div class="menubar-right"><a class="menubar-cta" href="${esc(install.href)}"${zipAttrs}>${install.zip ? "Download" : "Add to Chrome"}</a><a href="https://github.com/nahoc/openmaxxing">GitHub</a></div>
 </header>
 <main>
 <div class="desktop desktop-1">

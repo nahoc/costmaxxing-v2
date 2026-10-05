@@ -7,7 +7,7 @@ related_targets: []
 
 # Landing page
 
-Scope: the costmaxxing landing page (`site/`), visitor mode Persuade. Audience: claude.ai Team and Enterprise Owners. Takeaway: how much a team can save by moving from Anthropic to open-weight models. Action: install the Chrome extension; the CLI is not featured. Proof: the Team Bill, computed by core from a synthetic example team and labeled as an example. Credit: "Made with <3 by Cohan Carpentier". Constraints: static HTML/CSS/JS, self-hosted fonts, no third-party requests, store link or zip by STORE_URL.
+Scope: the openmaxxing landing page (`site/`), visitor mode Persuade. Audience: claude.ai Team and Enterprise Owners. Takeaway: how much a team can save by moving from Anthropic to open-weight models. Action: install the Chrome extension; the CLI is not featured. Proof: the Team Bill, computed by core from a synthetic example team and labeled as an example. Credit: "Made with <3 by Cohan Carpentier". Constraints: static HTML/CSS/JS, self-hosted fonts, no third-party requests, store link or zip by STORE_URL.
 
 ## Direction contract
 

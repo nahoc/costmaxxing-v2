@@ -10,7 +10,7 @@ import { Agent, request as httpsRequest } from "node:https";
 import type { AddressInfo } from "node:net";
 import { StringDecoder } from "node:string_decoder";
 import * as zlib from "node:zlib";
-import { sseData, wireMeter, type Harness, type RequestRecord, type WireUsage } from "@costmaxxing/core";
+import { sseData, wireMeter, type Harness, type RequestRecord, type WireUsage } from "@openmaxxing/core";
 
 const DECODERS: Record<string, (() => NodeJS.ReadWriteStream) | undefined> = {
   gzip: zlib.createGunzip,
@@ -141,7 +141,7 @@ export function createProxy(options: { session: string; onRecord: (record: Reque
       upstream.on("error", (error) => {
         if (!res.headersSent) {
           res.writeHead(502, { "content-type": "application/json" });
-          res.end(JSON.stringify({ type: "error", error: { type: "api_error", message: `costmaxxing proxy: ${error.message}` } }));
+          res.end(JSON.stringify({ type: "error", error: { type: "api_error", message: `openmaxxing proxy: ${error.message}` } }));
         } else res.destroy();
         done();
       });

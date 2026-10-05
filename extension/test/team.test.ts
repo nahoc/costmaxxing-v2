@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { promisify } from "node:util";
-import snapshot from "@costmaxxing/core/snapshot" with { type: "json" };
+import snapshot from "@openmaxxing/core/snapshot" with { type: "json" };
 import { MEMBERS_CSV, SPEND_CSV } from "../../core/test/fixtures.ts";
 import { lastThirtyDays, teamReport } from "../src/team.ts";
 
@@ -95,7 +95,7 @@ test("models.dev down and a members export that isn't CSV: snapshot prices and e
   assert.ok(result.report.hero.price > 0);
 });
 
-test("the extension's numbers match costmaxxing import on the same CSV", async () => {
+test("the extension's numbers match openmaxxing import on the same CSV", async () => {
   const result = await teamReport(
     fakeFetch({
       [`${ORGS}/team-1/analytics/spend-report-export`]: { status: 200, body: SPEND_CSV },
@@ -108,12 +108,12 @@ test("the extension's numbers match costmaxxing import on the same CSV", async (
   );
   assert.equal(result.kind, "report");
   if (result.kind !== "report") return;
-  const dir = await mkdtemp(join(tmpdir(), "costmaxxing-ext-"));
+  const dir = await mkdtemp(join(tmpdir(), "openmaxxing-ext-"));
   const file = join(dir, result.filename);
   await writeFile(file, result.csv);
   const main = new URL("../../cli/src/main.ts", import.meta.url).pathname;
   const { stdout } = await promisify(execFile)(process.execPath, [main, "import", file, "--offline", "--json"], {
-    env: { PATH: process.env.PATH ?? "", COSTMAXXING_HOME: join(dir, "home") },
+    env: { PATH: process.env.PATH ?? "", OPENMAXXING_HOME: join(dir, "home") },
   });
   const imported = JSON.parse(stdout);
   assert.deepEqual({ ...imported, org: "Acme" }, JSON.parse(JSON.stringify(result.report)));

@@ -11,14 +11,14 @@ Everything the Chrome Web Store developer dashboard asks for, in the order it as
 
 ## 2. Upload
 
-1. Run `npm run build -w extension`. It writes `extension/costmaxxing-extension.zip`.
+1. Run `npm run build -w extension`. It writes `extension/openmaxxing-extension.zip`.
 2. Click **Add new item**, choose the zip, and click **Upload**.
 
 ## 3. Store listing tab
 
 - **Description:**
 
-  > costmaxxing shows how much your claude.ai team can save by moving from Anthropic to open-weight models.
+  > openmaxxing shows how much your claude.ai team can save by moving from Anthropic to open-weight models.
   >
   > Install it while signed in to claude.ai as an Owner of a Team or Enterprise organization. Your team's report opens in a new tab right away: the last 30 days of usage priced at Anthropic's API rates, next to the same usage on a tiered open-weight plan (GLM-5.3, GLM-5.3 Flash, and DeepSeek V4.1 Flash).
   >
@@ -32,7 +32,7 @@ Everything the Chrome Web Store developer dashboard asks for, in the order it as
   >
   > Members who aren't Owners can't read the spend report, so the extension tells them the team view needs an Owner.
   >
-  > Everything runs in your browser. The extension reads your organization's spend report from claude.ai with your own session and public prices from models.dev. It sends nothing anywhere else and has no analytics. It is open source under the MIT license: https://github.com/nahoc/costmaxxing-v2
+  > Everything runs in your browser. The extension reads your organization's spend report from claude.ai with your own session and public prices from models.dev. It sends nothing anywhere else and has no analytics. It is open source under the MIT license: https://github.com/nahoc/openmaxxing
 
 - **Category:** Developer Tools
 - **Language:** English
@@ -42,7 +42,7 @@ Everything the Chrome Web Store developer dashboard asks for, in the order it as
 - **Marquee promo tile:** leave empty (optional).
 - **Video:** leave empty. If the dashboard insists, record a 30-second screen capture of the install opening the report.
 - **Homepage URL:** https://costmaxxing.dev
-- **Support URL:** https://github.com/nahoc/costmaxxing-v2/issues
+- **Support URL:** https://github.com/nahoc/openmaxxing/issues
 - **Official URL:** optional. It needs costmaxxing.dev verified in Google Search Console first, and then shows a verified-publisher badge.
 - **Mature content:** off.
 
@@ -64,7 +64,7 @@ Everything the Chrome Web Store developer dashboard asks for, in the order it as
 
   The extension handles these in the browser only. The Chrome Web Store user data FAQ says data handled locally still has to be disclosed.
 - **Certifications:** tick all three: no selling or transferring user data outside the approved use cases, no use unrelated to the single purpose, and no use for creditworthiness or lending.
-- **Privacy policy URL:** https://github.com/nahoc/costmaxxing-v2/blob/main/PRIVACY.md
+- **Privacy policy URL:** https://github.com/nahoc/openmaxxing/blob/main/PRIVACY.md
 
 ## 5. Distribution tab
 
@@ -85,8 +85,8 @@ Click **Submit for Review**. Review time varies. After approval you have 30 days
 Version 1.1.0 adds the purple pixel icon at every size and redraws the report and popup in the landing page's 1-bit style: a loading dialog with each real step, a one-page memo with per-person seat usage and the open-weight model that replaces each Claude model, and system dialogs for signed-out, non-Owner, and failed states. To ship it:
 
 1. Run `npm run build -w extension`.
-2. Open the item in the developer dashboard, choose **Package**, and upload the new `extension/costmaxxing-extension.zip`.
-3. On the **Store listing** tab, replace both screenshots with `extension/store/store-popup.png` and `extension/store/store-report.png`, and the small promo tile with `extension/store/promo-small-440x280.png`.
+2. Open the item in the developer dashboard, choose **Package**, and upload the new `extension/openmaxxing-extension.zip`.
+3. The extension is renamed to openmaxxing in 1.1.0, and the store takes the new name from the zip. On the **Store listing** tab, paste the description from section 3 again (it now says openmaxxing), replace both screenshots with `extension/store/store-popup.png` and `extension/store/store-report.png`, and the small promo tile with `extension/store/promo-small-440x280.png`.
 4. Click **Submit for Review**. The store icon comes from the zip.
 
 ## After approval

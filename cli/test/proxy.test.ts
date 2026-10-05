@@ -4,7 +4,7 @@ import { createServer, request, type IncomingMessage, type ServerResponse } from
 import type { AddressInfo } from "node:net";
 import { test } from "node:test";
 import { gzipSync } from "node:zlib";
-import type { RequestRecord } from "@costmaxxing/core";
+import type { RequestRecord } from "@openmaxxing/core";
 import { joinUrl, startProxy } from "../src/proxy.ts";
 
 const ANTHROPIC_SSE = [
@@ -65,7 +65,7 @@ test("forwards requests and gzip SSE responses unchanged and records usage by re
     const response = await call(`${url}/v1/messages?beta=true`, '{"stream":true}', {
       authorization: "Bearer secret",
       "x-claude-code-session-id": "cc-session",
-      "x-costmaxxing-token": "gateway-token",
+      "x-openmaxxing-token": "gateway-token",
     });
     assert.equal(response.status, 200);
     assert.deepEqual(response.body, compressed);
@@ -75,7 +75,7 @@ test("forwards requests and gzip SSE responses unchanged and records usage by re
   assert.equal(upstream.seen[0]?.url, "/base/v1/messages?beta=true");
   assert.equal(upstream.seen[0]?.body, '{"stream":true}');
   assert.equal(upstream.seen[0]?.headers.authorization, "Bearer secret");
-  assert.equal(upstream.seen[0]?.headers["x-costmaxxing-token"], "gateway-token", "a chained gateway still gets its token");
+  assert.equal(upstream.seen[0]?.headers["x-openmaxxing-token"], "gateway-token", "a chained gateway still gets its token");
   assert.equal(records.length, 1);
   const [record] = records;
   assert.equal(record?.id, "req_abc");
@@ -132,7 +132,7 @@ test("records JSON responses, skips errors and count_tokens, and answers 502 whe
   const down = await withProxy("http://127.0.0.1:9/nowhere", async (url) => {
     const response = await call(`${url}/v1/messages`);
     assert.equal(response.status, 502);
-    assert.match(response.body.toString(), /costmaxxing proxy/);
+    assert.match(response.body.toString(), /openmaxxing proxy/);
   });
   assert.equal(down.length, 0);
 });

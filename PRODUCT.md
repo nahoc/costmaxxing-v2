@@ -12,21 +12,21 @@ Static HTML, CSS, and JS in `site/`, no framework, built by `site/build.ts` into
 
 ## Users
 
-The primary visitor is the Owner of a claude.ai Team or Enterprise organization: an engineering lead, a CTO, or whoever pays for the seats. They want to know what their team's Claude usage is really worth at API prices and what it would cost on open-weight models. Individual developers who use Claude Code or Codex on their own are a secondary audience, served by `npx costmaxxing`.
+The primary visitor is the Owner of a claude.ai Team or Enterprise organization: an engineering lead, a CTO, or whoever pays for the seats. They want to know what their team's Claude usage is really worth at API prices and what it would cost on open-weight models. Individual developers who use Claude Code or Codex on their own are a secondary audience, served by `npx openmaxxing`.
 
 ## Product Purpose
 
-costmaxxing is an open-source tool that prices AI coding and chat usage at API list rates and shows what the same usage would cost on open-weight models or at other inference providers. The landing page exists to get Team Owners to install the Chrome extension, and its one takeaway is "How much can your team save by moving from Anthropic to open-weight models?". Success is an install followed by the team report opening and rendering in the same minute. The landing page promotes the extension only; the CLI is not featured there.
+openmaxxing is an open-source tool that prices AI coding and chat usage at API list rates and shows what the same usage would cost on open-weight models or at other inference providers. The landing page exists to get Team Owners to install the Chrome extension, and its one takeaway is "How much can your team save by moving from Anthropic to open-weight models?". Success is an install followed by the team report opening and rendering in the same minute. The landing page promotes the extension only; the CLI is not featured there.
 
 ## Positioning
 
-It reads a claude.ai organization's own spend report through the Owner's browser session, so the numbers are the team's real usage, not an estimate from a survey or a calculator. Seats flat-rate the usage today. costmaxxing shows the gap between what the team pays for seats and what the usage is worth at API prices ("What will you do when the subsidies end?").
+It reads a claude.ai organization's own spend report through the Owner's browser session, so the numbers are the team's real usage, not an estimate from a survey or a calculator. Seats flat-rate the usage today. openmaxxing shows the gap between what the team pays for seats and what the usage is worth at API prices ("What will you do when the subsidies end?").
 
 ## Operating Context
 
 - The extension installs from the Chrome Web Store (until a listing exists, a zip loaded unpacked). On install it opens the full report in a tab and fetches immediately. Later the toolbar popup shows the same report.
 - Data comes from claude.ai's Owner spend report export and public prices from models.dev. Nothing is uploaded and there is no telemetry.
-- Non-Owners see a message that the team view needs an Owner. Developers run `npx costmaxxing` for their own Claude Code and Codex logs.
+- Non-Owners see a message that the team view needs an Owner. Developers run `npx openmaxxing` for their own Claude Code and Codex logs.
 
 ## Capabilities and Constraints
 
@@ -36,14 +36,14 @@ It reads a claude.ai organization's own spend report through the Owner's browser
 
 ## Brand Commitments
 
-- Name: costmaxxing, always lowercase.
+- Name: openmaxxing, always lowercase.
 - Voice: plain and specific. Terminal-report wording rules carry over: "savings" (never "you save"), "price" (never "list price"), compact numbers, no cents.
 - The closing line "What will you do when the subsidies end?" is Cohan's settled line.
 - The landing page credit reads "Made with <3 by Cohan Carpentier". The page never says the tool is made by Boundless. Boundless appears only as one provider in the price comparison.
 
 ## Evidence on Hand
 
-- The product itself: the landing page's Team Bill window is computed by costmaxxing's core from a synthetic team (`site/src/example.ts`). Any page demonstration uses synthetic data and is labeled as an example.
+- The product itself: the landing page's Team Bill window is computed by openmaxxing's core from a synthetic team (`site/src/example.ts`). Any page demonstration uses synthetic data and is labeled as an example.
 - Benchmark scores come from Vals AI's SWE-bench Verified leaderboard (https://www.vals.ai/benchmarks/swebench, updated 2026-09-01, archived): Claude Opus 5 97.0%, GLM-5.3 95.4%, Claude Fable 5 95.0%, GLM-5.3 Flash 92.0%. Pages that cite them name the source and date and note that Claude still leads on the hardest long-horizon agent benchmarks. Recorded in `site/src/claims.ts`.
 - No customers, testimonials, press, or install counts exist. Do not invent them.
 

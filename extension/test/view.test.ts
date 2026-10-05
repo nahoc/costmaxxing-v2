@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildReport, parseModelsDev, parseSpendReport, priceBook, usd } from "@costmaxxing/core";
-import snapshot from "@costmaxxing/core/snapshot" with { type: "json" };
+import { buildReport, parseModelsDev, parseSpendReport, priceBook, usd } from "@openmaxxing/core";
+import snapshot from "@openmaxxing/core/snapshot" with { type: "json" };
 import { MEMBERS_CSV, SPEND_CSV } from "../../core/test/fixtures.ts";
 import { type Step, teamReport } from "../src/team.ts";
 import { memoView } from "../src/view.ts";

@@ -162,7 +162,7 @@ export function renderTerminal(report: Report, options: TerminalOptions): string
           [`${cmd} claude`, "count a Claude Code session live"],
           [`${cmd} web`, "open this report in your browser"],
           [`${cmd} --json`, "every number, every model"],
-          ["costmaxxing browser extension", "team report for claude.ai Owners"],
+          ["openmaxxing browser extension", "team report for claude.ai Owners"],
         ]
       : [
           [`${cmd} import <csv> --seats premium=N,standard=N`, "exact seats instead of the estimate"],

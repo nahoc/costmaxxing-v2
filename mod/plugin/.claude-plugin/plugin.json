@@ -1,18 +1,18 @@
 {
-  "name": "costmaxxing",
-  "displayName": "costmaxxing",
+  "name": "openmaxxing",
+  "displayName": "openmaxxing",
   "version": "1.0.0",
   "description": "Shows what your Claude Code usage would save on open-weight models, live under the prompt",
   "author": { "name": "Cohan Carpentier" },
   "homepage": "https://costmaxxing.dev",
-  "repository": "https://github.com/nahoc/costmaxxing-v2",
+  "repository": "https://github.com/nahoc/openmaxxing",
   "license": "MIT",
   "keywords": ["cost", "pricing", "open-weight"],
   "userConfig": {
     "server": {
       "type": "string",
       "title": "Team server",
-      "description": "Optional. The URL of your team's costmaxxing serve, like http://gateway.local:8787. Leave empty to keep everything on this machine.",
+      "description": "Optional. The URL of your team's openmaxxing serve, like http://gateway.local:8787. Leave empty to keep everything on this machine.",
       "default": ""
     },
     "token": {

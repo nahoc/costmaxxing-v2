@@ -1,11 +1,11 @@
 {
-  "name": "@costmaxxing/extension",
+  "name": "@openmaxxing/extension",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node build.ts"
   },
   "dependencies": {
-    "@costmaxxing/core": "*"
+    "@openmaxxing/core": "*"
   }
 }

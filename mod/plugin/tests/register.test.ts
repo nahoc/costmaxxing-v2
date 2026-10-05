@@ -1,7 +1,7 @@
 import { expect, mock, test } from "claude-code/testing";
 
 const HINT = {
-  plugin: "costmaxxing",
+  plugin: "openmaxxing",
   component: "PromptHint",
   requestId: "hint",
   viewport: { columns: 200, rows: 40 },
@@ -43,7 +43,7 @@ test("each request adds its open-weight savings to the hint line, and the day is
   for (let i = 0; i < 5; i++) await clock.settle();
 
   const ui = await $.ui.mount({ ...HINT, surface: "terminal" });
-  const line = await ui.find({ type: "Text", text: /^\? for shortcuts · costmaxxing · open-weight savings: session \$[\d.]+ · 30 days \$[\d.]+$/ });
+  const line = await ui.find({ type: "Text", text: /^\? for shortcuts · openmaxxing · open-weight savings: session \$[\d.]+ · 30 days \$[\d.]+$/ });
   expect(line).toBeDefined();
   const [sessionSavings, monthSavings] = [...String(line?.children[0]).matchAll(/\$([\d.]+)/g)].map((m) => Number(m[1]));
   expect((sessionSavings ?? 0) > 0).toBe(true);

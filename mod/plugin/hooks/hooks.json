@@ -1,4 +1,4 @@
 {
-  "description": "costmaxxing: prices each Claude Code request at API rates and on open-weight models",
+  "description": "openmaxxing: prices each Claude Code request at API rates and on open-weight models",
   "modules": ["./register.js"]
 }

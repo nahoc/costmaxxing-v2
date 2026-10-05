@@ -1,7 +1,7 @@
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { parseModelsDev, type ModelPrice } from "@costmaxxing/core";
-import snapshot from "@costmaxxing/core/snapshot" with { type: "json" };
+import { parseModelsDev, type ModelPrice } from "@openmaxxing/core";
+import snapshot from "@openmaxxing/core/snapshot" with { type: "json" };
 import { HOME } from "./usage.ts";
 
 const CACHE = join(HOME, "models.dev.json");

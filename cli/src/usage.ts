@@ -3,9 +3,9 @@ import { appendFile, mkdir, readdir, readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join, sep } from "node:path";
 import { createInterface } from "node:readline";
-import { claudeCodeParser, codexParser, parseRecord, type RequestRecord } from "@costmaxxing/core";
+import { claudeCodeParser, codexParser, parseRecord, type RequestRecord } from "@openmaxxing/core";
 
-export const HOME = process.env.COSTMAXXING_HOME ?? join(homedir(), ".costmaxxing");
+export const HOME = process.env.OPENMAXXING_HOME ?? join(homedir(), ".openmaxxing");
 export const RECORDS_FILE = join(HOME, "usage.jsonl");
 const CLAUDE_PROJECTS = join(process.env.CLAUDE_CONFIG_DIR ?? join(homedir(), ".claude"), "projects");
 const CODEX_HOME = process.env.CODEX_HOME ?? join(homedir(), ".codex");

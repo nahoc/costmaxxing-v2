@@ -1,4 +1,4 @@
-import { comparisonText, count, escapeHtml as esc, exactUsd, percent, usd, type Report, type Row } from "@costmaxxing/core";
+import { comparisonText, count, escapeHtml as esc, exactUsd, percent, usd, type Report, type Row } from "@openmaxxing/core";
 import { icon } from "../../world/icons.ts";
 import type { Step, TeamResult } from "./team.ts";
 
@@ -69,12 +69,12 @@ function retry(isDefault: boolean): string {
 export function menubar(csv?: Csv): string {
   return `<header class="menubar">
 <nav aria-label="Menu">
-<div class="menu-group"><button class="menu-title logo" type="button" aria-expanded="false" aria-label="costmaxxing">${icon("logo")}</button>
-<div class="menu" hidden><a href="${SITE}" target="_blank">About costmaxxing…</a></div></div>
+<div class="menu-group"><button class="menu-title logo" type="button" aria-expanded="false" aria-label="openmaxxing">${icon("logo")}</button>
+<div class="menu" hidden><a href="${SITE}" target="_blank">About openmaxxing…</a></div></div>
 <div class="menu-group"><button class="menu-title" type="button" aria-expanded="false">File</button>
 <div class="menu" hidden>${csv ? `<a href="${csv.href}" download="${esc(csv.filename)}">Download CSV</a>` : ""}<button type="button" data-action="retry">Reload Report</button></div></div>
 </nav>
-<div class="menubar-right"><a href="https://github.com/nahoc/costmaxxing-v2" target="_blank">GitHub</a></div>
+<div class="menubar-right"><a href="https://github.com/nahoc/openmaxxing" target="_blank">GitHub</a></div>
 </header>`;
 }
 
@@ -101,13 +101,13 @@ export function messageView(result: Exclude<TeamResult, { kind: "report" }>): st
     case "signed-out":
       return dialog(
         "Sign in to claude.ai first.",
-        "<p>costmaxxing reads your team's spend report through your own claude.ai session in this browser.</p>",
+        "<p>openmaxxing reads your team's spend report through your own claude.ai session in this browser.</p>",
         `${retry(false)}<a class="button default" href="https://claude.ai/login" target="_blank">Open claude.ai</a>`,
       );
     case "not-owner":
       return dialog(
         "Only Owners can see the team bill.",
-        `<p>claude.ai lets only Owners export the spend report. Ask an Owner of your organization to install costmaxxing from <a href="${SITE}" target="_blank">costmaxxing.dev</a>.</p>`,
+        `<p>claude.ai lets only Owners export the spend report. Ask an Owner of your organization to install openmaxxing from <a href="${SITE}" target="_blank">costmaxxing.dev</a>.</p>`,
         retry(true),
       );
     case "failed":

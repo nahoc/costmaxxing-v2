@@ -1,5 +1,5 @@
 ---
-name: costmaxxing
+name: openmaxxing
 description: The landing page as a 1984 two-color desktop, where a team's Claude bill is a window and the savings question is a system dialog.
 colors:
   screen-ink: "#2e1065"
@@ -47,7 +47,7 @@ components:
     textColor: "{colors.screen-paper}"
 ---
 
-# Design System: costmaxxing
+# Design System: openmaxxing
 
 ## Overview
 
@@ -138,7 +138,7 @@ Square everywhere except buttons, which carry gently rounded corners (12px), and
 - **Menu bar:** 44px, paper, sticky. The left side holds the logo menu (About) and File only. The right side holds a GitHub link to the repository, plus an install link on phones. Titles and links invert while open or hovered. Menus are paper boxes with the window shadow, and items invert on hover and focus.
 
 ### Savings dialog (signature component)
-The system dialog carries the page's one question and its one action: the costmaxxing computer icon, the display-size question "How much can your team save by moving from Anthropic to open-weight models?", body copy, and the install button, right-aligned with the default ring. It has no secondary button.
+The system dialog carries the page's one question and its one action: the openmaxxing computer icon, the display-size question "How much can your team save by moving from Anthropic to open-weight models?", body copy, and the install button, right-aligned with the default ring. It has no secondary button.
 
 ### App icon
 A compact computer whose screen charts the API price as a zebra-striped bar against two shorter solid bars for the open-weight prices. `world/app-icon.ts` draws it on three grids: 16 for the toolbar and favicon, 24 for the extension page and the site's dialog, and 64 (at 2×, 96px of artwork inside 128) for the store. `site/scripts/app-icon.ts` writes every PNG.
@@ -158,7 +158,7 @@ Every non-report state is a system alert. Loading names each real step of the fe
 ## Do's and Don'ts
 
 ### Do:
-- **Do** compute every number on the page with costmaxxing's own core, and label example data as an example.
+- **Do** compute every number on the page with openmaxxing's own core, and label example data as an example.
 - **Do** draw new grays as dither tiles on the 2px pixel unit.
 - **Do** keep stepped motion settled for reduced motion, which shows the finished desktop with no boot.
 - **Do** convert any new photograph to the two colors with `site/scripts/dither.ts` and embed its origin.

@@ -69,4 +69,4 @@ const files = (await readdir(dist, { recursive: true, withFileTypes: true }))
   .map((entry) => relative(dist, join(entry.parentPath, entry.name)))
   .sort();
 const entries = await Promise.all(files.map(async (name) => ({ name, data: await readFile(join(dist, name)) })));
-await writeFile(here("costmaxxing-extension.zip"), zip(entries));
+await writeFile(here("openmaxxing-extension.zip"), zip(entries));

@@ -32,7 +32,7 @@ export function plural(n: number, word: string): string {
 
 export function titleText(report: Report): string {
   return [
-    "openmaxxing",
+    "costmaxxing",
     report.org,
     report.scope,
     report.sessions === undefined ? undefined : plural(report.sessions, "session"),

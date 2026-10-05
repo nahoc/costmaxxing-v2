@@ -1,4 +1,4 @@
-import { priceBook, type PriceBook } from "@openmaxxing/core";
+import { priceBook, type PriceBook } from "@costmaxxing/core";
 import { loadCatalog } from "./catalog.ts";
 import type { Config } from "./config.ts";
 

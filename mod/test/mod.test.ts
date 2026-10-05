@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { parseModelsDev, priceBook } from "@openmaxxing/core";
-import snapshot from "@openmaxxing/core/snapshot" with { type: "json" };
+import { parseModelsDev, priceBook } from "@costmaxxing/core";
+import snapshot from "@costmaxxing/core/snapshot" with { type: "json" };
 import { bundle, OUTFILE } from "../bundle.ts";
 import { priceRecord, statusText, stepRecord } from "../src/meter.ts";
 import { register } from "../src/register.ts";
@@ -24,9 +24,9 @@ test("a step's cache writes are priced at the 5-minute rate, and a subagent's st
 
 test("the line shows cents under $100, and says when the team server can't be reached", () => {
   const tally = { requests: 2, price: 4.5, alt: 0.25 };
-  assert.equal(statusText(tally, { requests: 9, price: 2500, alt: 300 }, undefined), "openmaxxing · open-weight savings: session $4.25 · 30 days $2.2k");
-  assert.equal(statusText(tally, tally, "unreachable"), "openmaxxing · open-weight savings: session $4.25 · 30 days $4.25 · team server unreachable");
-  assert.equal(statusText(tally, tally, { days: 30, people: 1, requests: 5, price: 900, alt: 100 }), "openmaxxing · open-weight savings: session $4.25 · 30 days $4.25 · team $800 (1 person)");
+  assert.equal(statusText(tally, { requests: 9, price: 2500, alt: 300 }, undefined), "costmaxxing · open-weight savings: session $4.25 · 30 days $2.2k");
+  assert.equal(statusText(tally, tally, "unreachable"), "costmaxxing · open-weight savings: session $4.25 · 30 days $4.25 · team server unreachable");
+  assert.equal(statusText(tally, tally, { days: 30, people: 1, requests: 5, price: 900, alt: 100 }), "costmaxxing · open-weight savings: session $4.25 · 30 days $4.25 · team $800 (1 person)");
 });
 
 type Hook = (...args: never[]) => unknown;
@@ -98,7 +98,7 @@ test("with a team, steps reach costmaxxing.dev at most once a minute, a failed s
   await step({ turnId: "t3", index: 0 });
   await advance(60_000);
   assert.deepEqual(posts.at(-1)?.ids, ["s9/t2/main/0", "s9/t3/main/0"]);
-  assert.match(await hint(), /^openmaxxing · open-weight savings: session \$[\d.]+ · 30 days \$[\d.]+ · team \$1\.8k \(3 people\)$/);
+  assert.match(await hint(), /^costmaxxing · open-weight savings: session \$[\d.]+ · 30 days \$[\d.]+ · team \$1\.8k \(3 people\)$/);
 });
 
 test("the committed hooks module is the build of mod/src (run npm run build -w mod)", async () => {

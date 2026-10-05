@@ -37,15 +37,10 @@ function png(grid: Grid, scale: number, origin: string): Buffer {
 
 const at = (path: string) => new URL(path, import.meta.url).pathname;
 const outputs: [string, Grid, number][] = [
-  ["../../extension/static/icons/16.png", APP_ICON.small(), 1],
-  ["../../extension/static/icons/32.png", APP_ICON.small(), 2],
-  ["../../extension/static/icons/48.png", APP_ICON.medium(), 2],
-  ["../../extension/static/icons/128.png", APP_ICON.large(), 2],
-  ["../../extension/store/icon-128.png", APP_ICON.large(), 2],
   ["../static/favicon.png", APP_ICON.small(), 2],
 ];
 for (const [path, grid, scale] of outputs) {
   const size = grid.length * scale;
-  writeFileSync(at(path), png(grid, scale, `openmaxxing app icon, ${size}x${size}, drawn by site/scripts/app-icon.ts in #2e1065 and white.`));
+  writeFileSync(at(path), png(grid, scale, `costmaxxing app icon, ${size}x${size}, drawn by site/scripts/app-icon.ts in #2e1065 and white.`));
   console.log(path.replace(/^(\.\.\/)+/, ""));
 }

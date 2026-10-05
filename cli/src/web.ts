@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { renderPage } from "@openmaxxing/core";
+import { renderPage } from "@costmaxxing/core";
 import { personalReport, type PersonalOptions } from "./personal.ts";
 import { listen } from "./proxy.ts";
 
@@ -32,6 +32,6 @@ export async function web(options: PersonalOptions & { port?: string; open: bool
     },
     options.port ? Number(options.port) : 0,
   );
-  process.stdout.write(`openmaxxing web: ${server.url} (Ctrl-C to stop)\n`);
+  process.stdout.write(`costmaxxing web: ${server.url} (Ctrl-C to stop)\n`);
   if (options.open) openBrowser(server.url);
 }

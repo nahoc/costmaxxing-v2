@@ -11,8 +11,8 @@ import {
   parseSpendReport,
   priceBook,
   type RequestRecord,
-} from "@openmaxxing/core";
-import snapshot from "@openmaxxing/core/snapshot" with { type: "json" };
+} from "@costmaxxing/core";
+import snapshot from "@costmaxxing/core/snapshot" with { type: "json" };
 import { claudeLine, codexLine, codexUsage, SPEND_CSV } from "../../core/test/fixtures.ts";
 import { parseConfig } from "../src/config.ts";
 
@@ -24,12 +24,12 @@ function at(line: string, daysAgo: number): string {
 }
 
 async function homes() {
-  const root = await mkdtemp(join(tmpdir(), "openmaxxing-"));
+  const root = await mkdtemp(join(tmpdir(), "costmaxxing-"));
   const env = {
     PATH: process.env.PATH ?? "",
     CLAUDE_CONFIG_DIR: join(root, "claude"),
     CODEX_HOME: join(root, "codex"),
-    OPENMAXXING_HOME: join(root, "cmx"),
+    COSTMAXXING_HOME: join(root, "cmx"),
   };
   return { root, env };
 }
@@ -86,8 +86,8 @@ test("report: reads Claude Code and Codex logs, skips stale files, merges proxy 
     tokens: { uncached: 5000, output: 5000, cacheRead: 0, write5m: 0, write1h: 0 },
   };
   const proxyOnly = { ...proxied, id: "req_title", tokens: { ...proxied.tokens, uncached: 10 } };
-  await mkdir(env.OPENMAXXING_HOME, { recursive: true });
-  await writeFile(join(env.OPENMAXXING_HOME, "usage.jsonl"), `${JSON.stringify(proxied)}\n{"broken\n${JSON.stringify(proxyOnly)}\n`);
+  await mkdir(env.COSTMAXXING_HOME, { recursive: true });
+  await writeFile(join(env.COSTMAXXING_HOME, "usage.jsonl"), `${JSON.stringify(proxied)}\n{"broken\n${JSON.stringify(proxyOnly)}\n`);
 
   const { stdout } = await run(["--json", "--offline"], env);
   const report = JSON.parse(stdout);
@@ -102,7 +102,7 @@ test("report: reads Claude Code and Codex logs, skips stale files, merges proxy 
   assert.ok(Math.abs(report.hero.alt - alt) < 1e-12, `subagent request priced as grunt work: ${report.hero.alt} vs ${alt}`);
 
   const text = await run(["--offline"], env);
-  assert.match(text.stdout, /^openmaxxing · last 30 days · 3 sessions · 5 requests · /);
+  assert.match(text.stdout, /^costmaxxing · last 30 days · 3 sessions · 5 requests · /);
   assert.ok(!text.stdout.includes("\x1b["), "no color when stdout is not a terminal");
 });
 
@@ -142,13 +142,13 @@ test("import: prices the CSV exactly like core and reads the period from the fil
 
 test("import: explains how to get the CSV and when dates are missing", async () => {
   const { root, env } = await homes();
-  assert.match((await run(["import"], env)).stderr, /browser extension \(Download CSV\)/);
+  assert.match((await run(["import"], env)).stderr, /import takes one spend report CSV/);
   const undated = join(root, "export.csv");
   await writeFile(undated, SPEND_CSV);
   assert.match((await run(["import", undated, "--offline"], env)).stderr, /--from YYYY-MM-DD --to YYYY-MM-DD/);
   const text = (await run(["import", undated, "--offline", "--from", "2026-09-01", "--to", "2026-09-30"], env)).stdout;
-  assert.match(text, /^openmaxxing · 2026-09-01 to 2026-09-30 · 3 users · 20 requests/);
-  assert.match(text, /\n {2}openmaxxing import <csv> --seats premium=N,standard=N/);
+  assert.match(text, /^costmaxxing · 2026-09-01 to 2026-09-30 · 3 users · 20 requests/);
+  assert.match(text, /\n {2}costmaxxing import <csv> --seats premium=N,standard=N/);
   assert.match((await run(["import", undated, "--offline", "--from", "2026-13-45", "--to", "2026-13-46"], env)).stderr, /--from and --to take real dates/);
   assert.match((await run(["import", undated, "--seats", "gold=1", "--from", "2026-09-01", "--to", "2026-09-30"], env)).stderr, /--seats takes premium=N,standard=N/);
 });

@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 import type { IncomingMessage } from "node:http";
 import { constants, homedir } from "node:os";
 import { join } from "node:path";
-import { buildReport, plural, savingsText, usd, type PriceBook, type RequestRecord } from "@openmaxxing/core";
+import { buildReport, plural, savingsText, usd, type PriceBook, type RequestRecord } from "@costmaxxing/core";
 import { parse } from "smol-toml";
 import { loadConfig } from "./config.ts";
 import { prices } from "./prices.ts";
@@ -46,15 +46,15 @@ async function codexSetup(): Promise<{ provider?: string; upstream?: string }> {
 }
 
 function summary(records: RequestRecord[], book: PriceBook): string {
-  if (records.length === 0) return "openmaxxing · no requests counted";
+  if (records.length === 0) return "costmaxxing · no requests counted";
   const now = Date.now();
   const report = buildReport({ dataset: { kind: "logs", records, days: 3650, now }, book });
   const { hero } = report;
-  return `openmaxxing · ${plural(report.requests, "request")} · ${plural(report.tokens, "token")} · ${usd(hero.price)} at API prices, ${usd(hero.alt)} on ${hero.name} (${savingsText(hero.price, hero.alt)})`;
+  return `costmaxxing · ${plural(report.requests, "request")} · ${plural(report.tokens, "token")} · ${usd(hero.price)} at API prices, ${usd(hero.alt)} on ${hero.name} (${savingsText(hero.price, hero.alt)})`;
 }
 
 export async function launch(agent: "claude" | "codex", args: string[]): Promise<void> {
-  const session = `openmaxxing-${randomUUID()}`;
+  const session = `costmaxxing-${randomUUID()}`;
   const counted: RequestRecord[] = [];
   const writes: Promise<void>[] = [];
   const book = loadConfig(undefined).then((config) => prices(config, false));
@@ -74,7 +74,7 @@ export async function launch(agent: "claude" | "codex", args: string[]): Promise
     const { provider, upstream } = await codexSetup();
     if (provider) {
       process.stderr.write(
-        `openmaxxing: Codex uses the ${provider} provider, so this session is counted from its logs, not live\n`,
+        `costmaxxing: Codex uses the ${provider} provider, so this session is counted from its logs, not live\n`,
       );
     } else {
       proxy = await startProxy({
@@ -85,15 +85,15 @@ export async function launch(agent: "claude" | "codex", args: string[]): Promise
       });
       childArgs = [
         "-c",
-        'model_provider="openmaxxing"',
+        'model_provider="costmaxxing"',
         "-c",
-        'model_providers.openmaxxing.name="OpenAI via openmaxxing"',
+        'model_providers.costmaxxing.name="OpenAI via costmaxxing"',
         "-c",
-        `model_providers.openmaxxing.base_url="${proxy.url}"`,
+        `model_providers.costmaxxing.base_url="${proxy.url}"`,
         "-c",
-        "model_providers.openmaxxing.requires_openai_auth=true",
+        "model_providers.costmaxxing.requires_openai_auth=true",
         "-c",
-        'model_providers.openmaxxing.wire_api="responses"',
+        'model_providers.costmaxxing.wire_api="responses"',
         ...args,
       ];
     }
@@ -114,7 +114,7 @@ export async function launch(agent: "claude" | "codex", args: string[]): Promise
   await proxy?.close();
   await Promise.all(writes);
   if (proxy) {
-    const line = await book.then((b) => summary(counted, b)).catch(() => `openmaxxing · ${counted.length} requests counted`);
+    const line = await book.then((b) => summary(counted, b)).catch(() => `costmaxxing · ${counted.length} requests counted`);
     process.stderr.write(`\n${line}\n`);
   }
   const [code, signal] = exit;

@@ -1,4 +1,4 @@
-import { buildReport, type Report } from "@openmaxxing/core";
+import { buildReport, type Report } from "@costmaxxing/core";
 import { loadConfig } from "./config.ts";
 import { prices } from "./prices.ts";
 import { readUsage } from "./usage.ts";

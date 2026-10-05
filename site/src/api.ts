@@ -1,4 +1,4 @@
-import { byFamily, count, escapeHtml as esc, exactUsd, percent, plural, usd, type Report } from "@openmaxxing/core";
+import { byFamily, count, escapeHtml as esc, exactUsd, percent, plural, usd, type Report } from "@costmaxxing/core";
 import { icon, SPRITE } from "../../world/icons.ts";
 import { addBackfill, addLive, monthTotals, parseUpload, readRecords, teamReport, teamSlug, type Redis } from "./teams.ts";
 
@@ -29,7 +29,7 @@ function models(report: Report): string {
 }
 
 export function teamPage(team: string, month: Report, all: Report, css: string): string {
-  const join = `<pre class="cmd"><code>npx openmaxxing ${esc(team)}</code></pre>`;
+  const join = `<pre class="cmd"><code>npx costmaxxing ${esc(team)}</code></pre>`;
   const body =
     all.requests === 0
       ? `<h1>No usage for ${esc(team)} yet.</h1>
@@ -42,8 +42,8 @@ ${models(month)}
 <h2>Add your Claude Code</h2>${join}
 <p class="fine">Only model names and token counts reach this page. Anyone with the link can see it.</p>`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(team)} · openmaxxing</title><link rel="icon" href="/favicon.png"><style>${css}</style><script defer src="/_vercel/insights/script.js"></script></head>
-<body>${SPRITE}<header class="menubar"><nav><a class="menu-title logo" href="/" aria-label="openmaxxing">${icon("logo")}</a></nav><div class="menubar-right"><a href="https://github.com/nahoc/openmaxxing">GitHub</a></div></header>
+<title>${esc(team)} · costmaxxing</title><link rel="icon" href="/favicon.png"><style>${css}</style><script defer src="/_vercel/insights/script.js"></script></head>
+<body>${SPRITE}<header class="menubar"><nav><a class="menu-title logo" href="/" aria-label="costmaxxing">${icon("logo")}</a></nav><div class="menubar-right"><a href="https://github.com/nahoc/costmaxxing-v2">GitHub</a></div></header>
 <main class="desk"><article class="window team active"><div class="titlebar"><span class="title">${esc(team)} · open&#8209;weight savings</span></div><div class="body">${body}</div></article></main></body></html>`;
 }
 

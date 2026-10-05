@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { homedir, hostname, userInfo } from "node:os";
 import { join as joinPath } from "node:path";
 import { createInterface } from "node:readline/promises";
-import { addTokens, exactUsd, ZERO, type RequestRecord, type TeamTotals } from "@openmaxxing/core";
+import { addTokens, exactUsd, ZERO, type RequestRecord, type TeamTotals } from "@costmaxxing/core";
 import { readLogs } from "./usage.ts";
 
 const MOD_VERSION = [2, 1, 287];
@@ -53,7 +53,7 @@ async function whoAmI(team: string): Promise<string> {
 }
 
 function claude(args: string[], input?: string): string {
-  return execFileSync(process.env.OPENMAXXING_CLAUDE ?? "claude", args, { encoding: "utf8", input, stdio: ["pipe", "pipe", "pipe"] });
+  return execFileSync(process.env.COSTMAXXING_CLAUDE ?? "claude", args, { encoding: "utf8", input, stdio: ["pipe", "pipe", "pipe"] });
 }
 
 async function confirm(question: string): Promise<boolean> {
@@ -65,7 +65,7 @@ async function confirm(question: string): Promise<boolean> {
 
 export async function joinTeam(raw: string, interactive: boolean): Promise<void> {
   const team = teamName(raw);
-  if (!team) throw new Error(`${raw} isn't a team name. Use 3 to 40 lowercase letters, digits, or dashes, like npx openmaxxing acme`);
+  if (!team) throw new Error(`${raw} isn't a team name. Use 3 to 40 lowercase letters, digits, or dashes, like npx costmaxxing acme`);
   const say = (line: string) => process.stdout.write(`${line}\n`);
 
   let version: string;
@@ -75,22 +75,22 @@ export async function joinTeam(raw: string, interactive: boolean): Promise<void>
     throw new Error("Claude Code isn't installed, or `claude` isn't on your PATH. Install it from https://claude.com/claude-code, then run this again.");
   }
   if (tooOld(version)) {
-    if (!interactive || !(await confirm(`openmaxxing needs Claude Code 2.1.287 or later, and you have ${version}. Update it now?`))) {
-      throw new Error(`openmaxxing needs Claude Code 2.1.287 or later, and you have ${version}. Run claude update, then this again.`);
+    if (!interactive || !(await confirm(`costmaxxing needs Claude Code 2.1.287 or later, and you have ${version}. Update it now?`))) {
+      throw new Error(`costmaxxing needs Claude Code 2.1.287 or later, and you have ${version}. Run claude update, then this again.`);
     }
     say("Updating Claude Code…");
     claude(["update"]);
   }
 
   const user = await whoAmI(team);
-  say("Installing the openmaxxing mod for Claude Code…");
-  claude(["plugin", "marketplace", "add", "nahoc/openmaxxing"]);
-  claude(["plugin", "marketplace", "update", "openmaxxing"]);
-  claude(["plugin", "install", "openmaxxing@openmaxxing"]);
-  claude(["plugin", "update", "openmaxxing@openmaxxing"]);
-  claude(["plugin", "configure", "openmaxxing@openmaxxing", "--values-stdin"], JSON.stringify({ team, user }));
+  say("Installing the costmaxxing mod for Claude Code…");
+  claude(["plugin", "marketplace", "add", "nahoc/costmaxxing-v2"]);
+  claude(["plugin", "marketplace", "update", "costmaxxing"]);
+  claude(["plugin", "install", "costmaxxing@costmaxxing"]);
+  claude(["plugin", "update", "costmaxxing@costmaxxing"]);
+  claude(["plugin", "configure", "costmaxxing@costmaxxing", "--values-stdin"], JSON.stringify({ team, user }));
 
-  const base = process.env.OPENMAXXING_URL ?? "https://costmaxxing.dev";
+  const base = process.env.COSTMAXXING_URL ?? "https://costmaxxing.dev";
   const now = Date.now();
   const sums = dailySums(await readLogs(now - 366 * DAY));
   say(`Adding your Claude Code history to ${team}…`);
@@ -104,7 +104,7 @@ export async function joinTeam(raw: string, interactive: boolean): Promise<void>
   const oldest = Math.min(...sums.map((s) => s.time));
   const days = sums.length > 0 ? Math.round((now - oldest) / DAY) + 1 : 0;
   say("");
-  say(`openmaxxing is on for ${team}.`);
+  say(`costmaxxing is on for ${team}.`);
   say(
     totals.counted > 0
       ? `Your logs covered ${days} days and ${totals.counted.toLocaleString("en-US")} requests. The team's last 30 days: ${exactUsd(totals.price)} at API prices, ${exactUsd(totals.alt)} on open-weight models.`

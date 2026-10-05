@@ -7,7 +7,7 @@ import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import type { RequestRecord } from "@openmaxxing/core";
+import type { RequestRecord } from "@costmaxxing/core";
 import { connectSettings, gatewayHandler } from "../src/gateway.ts";
 import { createProxy, listen } from "../src/proxy.ts";
 
@@ -59,14 +59,14 @@ async function gateway() {
   };
 }
 
-const auth = { "x-openmaxxing-token": TOKEN, "x-openmaxxing-user": "ada" };
+const auth = { "x-costmaxxing-token": TOKEN, "x-costmaxxing-user": "ada" };
 
-test("gateway: rejects a missing token and forwards authorized requests without the openmaxxing headers", async () => {
+test("gateway: rejects a missing token and forwards authorized requests without the costmaxxing headers", async () => {
   const g = await gateway();
   const denied = await fetch(`${g.url}/anthropic/v1/messages`, { method: "POST", body: "{}" });
   assert.equal(denied.status, 401);
   assert.equal(g.anthropic.seen.length, 0);
-  const wrong = await fetch(`${g.url}/anthropic/v1/messages`, { method: "POST", body: "{}", headers: { "x-openmaxxing-token": "nope" } });
+  const wrong = await fetch(`${g.url}/anthropic/v1/messages`, { method: "POST", body: "{}", headers: { "x-costmaxxing-token": "nope" } });
   assert.equal(wrong.status, 401);
 
   const ok = await fetch(`${g.url}/anthropic/v1/messages?beta=true`, {
@@ -79,8 +79,8 @@ test("gateway: rejects a missing token and forwards authorized requests without 
   const [forwarded] = g.anthropic.seen;
   assert.equal(forwarded?.url, "/v1/messages?beta=true");
   assert.equal(forwarded?.headers.authorization, "Bearer user-key");
-  assert.equal(forwarded?.headers["x-openmaxxing-token"], undefined);
-  assert.equal(forwarded?.headers["x-openmaxxing-user"], undefined);
+  assert.equal(forwarded?.headers["x-costmaxxing-token"], undefined);
+  assert.equal(forwarded?.headers["x-costmaxxing-user"], undefined);
   await g.close();
   assert.deepEqual(
     g.records.map((r) => [r.id, r.user, r.harness]),
@@ -118,7 +118,7 @@ test("gateway: dashboard asks for the token with Basic auth; unknown paths are 4
   const g = await gateway();
   const challenge = await fetch(`${g.url}/`);
   assert.equal(challenge.status, 401);
-  assert.match(challenge.headers.get("www-authenticate") ?? "", /Basic realm="openmaxxing"/);
+  assert.match(challenge.headers.get("www-authenticate") ?? "", /Basic realm="costmaxxing"/);
   const page = await fetch(`${g.url}/`, { headers: { authorization: `Basic ${Buffer.from(`anyone:${TOKEN}`).toString("base64")}` } });
   assert.equal(page.status, 200);
   assert.equal(await page.text(), "<html>team dashboard</html>");
@@ -139,11 +139,11 @@ test("gateway: the mod posts token counts, stamped with the sender, and gets the
     tokens: { uncached: 10, output: 5, cacheRead: 100, write5m: 20, write1h: 0 },
   };
   const post = (body: string, headers: Record<string, string> = auth) =>
-    fetch(`${g.url}/openmaxxing/usage`, { method: "POST", headers: { ...headers, "content-type": "application/json" }, body });
+    fetch(`${g.url}/costmaxxing/usage`, { method: "POST", headers: { ...headers, "content-type": "application/json" }, body });
   assert.equal((await post(JSON.stringify({ records: [record] }), {})).status, 401);
   assert.equal((await post("not json")).status, 400);
   assert.equal((await post(JSON.stringify({ records: "x".repeat(1_100_000) }))).status, 400);
-  assert.equal((await fetch(`${g.url}/openmaxxing/usage`)).status, 405);
+  assert.equal((await fetch(`${g.url}/costmaxxing/usage`)).status, 405);
   const ok = await post(JSON.stringify({ records: [record, { id: "missing fields" }] }));
   assert.equal(ok.status, 200);
   assert.deepEqual(await ok.json(), { days: 30, people: 1, requests: 1, price: 12, alt: 2 });
@@ -155,17 +155,17 @@ test("gateway: the mod posts token counts, stamped with the sender, and gets the
 test("connect: prints Claude Code and Codex settings for the gateway", () => {
   const text = connectSettings("http://gateway.local:8787/", TOKEN, "ada");
   assert.ok(text.includes('"ANTHROPIC_BASE_URL": "http://gateway.local:8787/anthropic"'));
-  assert.ok(text.includes(`"ANTHROPIC_CUSTOM_HEADERS": "x-openmaxxing-token: ${TOKEN}\\nx-openmaxxing-user: ada"`));
+  assert.ok(text.includes(`"ANTHROPIC_CUSTOM_HEADERS": "x-costmaxxing-token: ${TOKEN}\\nx-costmaxxing-user: ada"`));
   assert.ok(text.includes('base_url = "http://gateway.local:8787/openai"'));
-  assert.ok(text.includes(`http_headers = { "x-openmaxxing-token" = "${TOKEN}", "x-openmaxxing-user" = "ada" }`));
-  assert.ok(text.includes(`claude plugin install openmaxxing@openmaxxing --config server=http://gateway.local:8787 --config token=${TOKEN} --config user=ada`));
+  assert.ok(text.includes(`http_headers = { "x-costmaxxing-token" = "${TOKEN}", "x-costmaxxing-user" = "ada" }`));
+  assert.ok(text.includes(`claude plugin install costmaxxing@costmaxxing --config server=http://gateway.local:8787 --config token=${TOKEN} --config user=ada`));
   assert.throws(() => connectSettings("gateway.local", TOKEN), /gateway URL/);
   assert.throws(() => connectSettings("ftp://gateway.local", TOKEN), /http:\/\/ or https:\/\//);
 });
 
 test("web and serve: start on a free port, print the URL, and serve the report", async () => {
-  const home = await mkdtemp(join(tmpdir(), "openmaxxing-web-"));
-  const env = { PATH: process.env.PATH ?? "", OPENMAXXING_HOME: home, CLAUDE_CONFIG_DIR: home, CODEX_HOME: home };
+  const home = await mkdtemp(join(tmpdir(), "costmaxxing-web-"));
+  const env = { PATH: process.env.PATH ?? "", COSTMAXXING_HOME: home, CLAUDE_CONFIG_DIR: home, CODEX_HOME: home };
   const main = new URL("../src/main.ts", import.meta.url).pathname;
   const start = async (args: string[]) => {
     const child = spawn(process.execPath, [main, ...args], { env });
@@ -177,8 +177,8 @@ test("web and serve: start on a free port, print the URL, and serve the report",
   const site = await start(["web", "--offline"]);
   const html = await (await fetch(`${site.url}/`)).text();
   site.child.kill();
-  assert.match(html, /<title>openmaxxing<\/title>/);
-  assert.match(html, /openmaxxing · last 30 days/);
+  assert.match(html, /<title>costmaxxing<\/title>/);
+  assert.match(html, /costmaxxing · last 30 days/);
 
   const short = spawn(process.execPath, [main, "serve", "--token", "short"], { env });
   let error = "";

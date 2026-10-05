@@ -1,14 +1,14 @@
 {
-  "name": "openmaxxing",
+  "name": "costmaxxing",
   "owner": {
     "name": "Cohan Carpentier"
   },
   "metadata": {
-    "description": "openmaxxing: what your AI usage would cost on open-weight models"
+    "description": "costmaxxing: what your AI usage would cost on open-weight models"
   },
   "plugins": [
     {
-      "name": "openmaxxing",
+      "name": "costmaxxing",
       "source": "./mod/plugin",
       "description": "Shows what your Claude Code usage would save on open-weight models, live under the prompt"
     }

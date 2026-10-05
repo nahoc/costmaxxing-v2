@@ -50,9 +50,9 @@ const records: RequestRecord[] = Array.from({ length: 12 }, (_, i) => ({
 
 test("terminal report: title, hero box, sections in order, and the wording rules", () => {
   const report = buildReport({ dataset: { kind: "logs", records, days: 30, now: NOW }, book });
-  const text = renderTerminal(report, { color: false, width: 120, command: "npx openmaxxing" });
+  const text = renderTerminal(report, { color: false, width: 120, command: "npx costmaxxing" });
   const lines = text.split("\n");
-  assert.match(lines[0] ?? "", /^openmaxxing · last 30 days · 4 sessions · 12 requests · \d+(\.\d)?[kMB]? tokens$/);
+  assert.match(lines[0] ?? "", /^costmaxxing · last 30 days · 4 sessions · 12 requests · \d+(\.\d)?[kMB]? tokens$/);
   for (const phrase of [
     "Switch to open-weight models and potentially save:",
     "GLM-5.3 for hard tasks · GLM-5.3 Flash for mid · DeepSeek V4.1 Flash for grunt work",
@@ -74,19 +74,19 @@ test("terminal report: title, hero box, sections in order, and the wording rules
 
 test("terminal report: color is off unless asked, box lines line up", () => {
   const report = buildReport({ dataset: { kind: "logs", records, days: 30, now: NOW }, book });
-  const plain = renderTerminal(report, { color: false, width: 120, command: "npx openmaxxing" });
+  const plain = renderTerminal(report, { color: false, width: 120, command: "npx costmaxxing" });
   assert.ok(!plain.includes("\x1b["));
   const box = plain.split("\n").filter((line) => /^[╭│╰]/.test(line));
   assert.ok(box.length > 5);
   assert.equal(new Set(box.map((line) => [...line].length)).size, 1);
-  const colored = renderTerminal(report, { color: true, width: 120, command: "npx openmaxxing" });
+  const colored = renderTerminal(report, { color: true, width: 120, command: "npx costmaxxing" });
   assert.ok(colored.includes("\x1b[38;5;114m█"));
 });
 
 test("terminal report: top models stop at 8 rows", () => {
   const report = buildReport({ dataset: { kind: "logs", records, days: 30, now: NOW }, book });
   const models = Array.from({ length: 9 }, (_, i) => ({ label: `model-${i}`, requests: 1, tokens: 1, price: 9 - i, alt: 0 }));
-  const text = renderTerminal({ ...report, models }, { color: false, width: 120, command: "openmaxxing" });
+  const text = renderTerminal({ ...report, models }, { color: false, width: 120, command: "costmaxxing" });
   assert.ok(text.includes("model-7") && !text.includes("model-8"));
   assert.match(text, /\+ 1 more \(--json for all\)/);
 });
@@ -96,8 +96,8 @@ test("team report renders by user and by product, and HTML escapes user data", (
     row.user === "ada@example.com" ? { ...row, user: "<b>ada</b>@example.com" } : row,
   );
   const report = buildReport({ dataset: { kind: "spend", rows, from: "2026-09-02", to: "2026-10-01", org: "Acme" }, book });
-  const text = renderTerminal(report, { color: false, width: 120, command: "npx openmaxxing" });
-  assert.ok(text.startsWith("openmaxxing · Acme · 2026-09-02 to 2026-10-01 · 3 users · 20 requests"));
+  const text = renderTerminal(report, { color: false, width: 120, command: "npx costmaxxing" });
+  assert.ok(text.startsWith("costmaxxing · Acme · 2026-09-02 to 2026-10-01 · 3 users · 20 requests"));
   assert.ok(text.indexOf("\nBy user") < text.indexOf("\nBy product"));
   assert.ok(!text.includes("\nBy harness"));
   assert.ok(text.includes("(estimated): $175/month"));
@@ -114,7 +114,7 @@ test("a comparison that costs more says so instead of showing negative savings",
     book,
     vs: ["anthropic/claude-fable-5-1"],
   });
-  const text = renderTerminal(report, { color: false, width: 120, command: "openmaxxing" });
+  const text = renderTerminal(report, { color: false, width: 120, command: "costmaxxing" });
   assert.ok(text.includes("Switching to Claude Fable 5.1 would cost more:"));
   assert.match(text, /\$\S+ \/ year more {5}\$\S+ \/ month more {5}\d+% more/);
   assert.ok(!/-\$|-<\$|-\d+%/.test(text));

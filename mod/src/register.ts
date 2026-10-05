@@ -1,5 +1,5 @@
-import { parseModelsDev, priceBook, type RequestRecord, type TeamTotals } from "@openmaxxing/core";
-import snapshot from "@openmaxxing/core/snapshot" with { type: "json" };
+import { parseModelsDev, priceBook, type RequestRecord, type TeamTotals } from "@costmaxxing/core";
+import snapshot from "@costmaxxing/core/snapshot" with { type: "json" };
 import { add, asTally, asTeam, localDay, NONE, priceRecord, statusText, stepRecord, type StepUsage, type Tally } from "./meter.ts";
 
 interface Mods {
@@ -114,9 +114,9 @@ async function flush($: Mods, force: boolean): Promise<void> {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ user: team.user, records }),
         })
-      : await $.http.fetch(`${team.server}/openmaxxing/usage`, {
+      : await $.http.fetch(`${team.server}/costmaxxing/usage`, {
           method: "POST",
-          headers: { "content-type": "application/json", "x-openmaxxing-token": team.token, "x-openmaxxing-user": team.user || "unknown" },
+          headers: { "content-type": "application/json", "x-costmaxxing-token": team.token, "x-costmaxxing-user": team.user || "unknown" },
           body: JSON.stringify({ records }),
         });
     totals = (response.ok && asTeam(response.text)) || "unreachable";

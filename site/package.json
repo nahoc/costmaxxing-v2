@@ -1,12 +1,12 @@
 {
-  "name": "@openmaxxing/site",
+  "name": "@costmaxxing/site",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node build.ts"
   },
   "dependencies": {
-    "@openmaxxing/core": "*",
+    "@costmaxxing/core": "*",
     "@vercel/analytics": "^2.0.1"
   }
 }

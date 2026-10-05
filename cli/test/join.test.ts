@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { promisify } from "node:util";
-import type { RequestRecord } from "@openmaxxing/core";
+import type { RequestRecord } from "@costmaxxing/core";
 import { claudeLine } from "../../core/test/fixtures.ts";
 import { dailySums, teamName, tooOld } from "../src/join.ts";
 
@@ -42,7 +42,7 @@ test("team names, the Claude Code version gate, and daily sums", () => {
 });
 
 async function setup(version: string) {
-  const root = await mkdtemp(join(tmpdir(), "openmaxxing-join-"));
+  const root = await mkdtemp(join(tmpdir(), "costmaxxing-join-"));
   const calls = join(root, "calls.log");
   const fake = join(root, "claude");
   await writeFile(fake, `#!/bin/sh\necho "$*" >> "${calls}"\nif [ "$1" = "--version" ]; then echo "${version}"; fi\nif [ "$2" = "configure" ]; then cat >> "${calls}"; echo; fi\n`);
@@ -70,9 +70,9 @@ async function setup(version: string) {
     PATH: process.env.PATH ?? "",
     CLAUDE_CONFIG_DIR: join(root, "claude-home"),
     CODEX_HOME: join(root, "codex"),
-    OPENMAXXING_HOME: join(root, "home"),
-    OPENMAXXING_CLAUDE: fake,
-    OPENMAXXING_URL: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+    COSTMAXXING_HOME: join(root, "home"),
+    COSTMAXXING_CLAUDE: fake,
+    COSTMAXXING_URL: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
   };
   const run = async () => {
     try {
@@ -84,7 +84,7 @@ async function setup(version: string) {
   return { run, bodies, calls: () => readFile(calls, "utf8"), close: () => server.close() };
 }
 
-test("npx openmaxxing <team>: installs and configures the mod, then uploads a year of daily sums", async () => {
+test("npx costmaxxing <team>: installs and configures the mod, then uploads a year of daily sums", async () => {
   const s = await setup("2.1.289 (Claude Code)");
   const result = await s.run();
   s.close();
@@ -92,11 +92,11 @@ test("npx openmaxxing <team>: installs and configures the mod, then uploads a ye
   const lines = (await s.calls()).trim().split("\n");
   assert.deepEqual(lines.slice(0, 6), [
     "--version",
-    "plugin marketplace add nahoc/openmaxxing",
-    "plugin marketplace update openmaxxing",
-    "plugin install openmaxxing@openmaxxing",
-    "plugin update openmaxxing@openmaxxing",
-    "plugin configure openmaxxing@openmaxxing --values-stdin",
+    "plugin marketplace add nahoc/costmaxxing-v2",
+    "plugin marketplace update costmaxxing",
+    "plugin install costmaxxing@costmaxxing",
+    "plugin update costmaxxing@costmaxxing",
+    "plugin configure costmaxxing@costmaxxing --values-stdin",
   ]);
   const options = JSON.parse(lines[6] ?? "{}");
   assert.equal(options.team, "acme");
@@ -105,11 +105,11 @@ test("npx openmaxxing <team>: installs and configures the mod, then uploads a ye
   assert.equal(upload?.url, "/api/teams/acme/backfill");
   assert.equal(upload?.body.user, options.user);
   assert.deepEqual(upload?.body.records.map((r) => r.requests).sort(), [1, 1, 2]);
-  assert.match(result.stdout, /openmaxxing is on for acme\./);
+  assert.match(result.stdout, /costmaxxing is on for acme\./);
   assert.match(result.stdout, /Team page: http:\/\/127\.0\.0\.1:\d+\/acme/);
 });
 
-test("npx openmaxxing <team>: an old Claude Code stops before touching anything when there's no one to ask", async () => {
+test("npx costmaxxing <team>: an old Claude Code stops before touching anything when there's no one to ask", async () => {
   const s = await setup("2.1.284 (Claude Code)");
   const result = await s.run();
   s.close();

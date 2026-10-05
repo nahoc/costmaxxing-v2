@@ -1,4 +1,4 @@
-import { buildReport, count, exactUsd, usd, type PriceBook, type RequestRecord, type TeamTotals } from "@openmaxxing/core";
+import { buildReport, count, exactUsd, usd, type PriceBook, type RequestRecord, type TeamTotals } from "@costmaxxing/core";
 
 export interface StepUsage {
   model: string;
@@ -72,5 +72,5 @@ export function statusText(session: Tally, month: Tally, team: TeamTotals | "unr
   const parts = [`session ${savings(session)}`, `30 days ${savings(month)}`];
   if (team === "unreachable") parts.push("team server unreachable");
   else if (team) parts.push(`team ${savings(team)} (${count(team.people)} ${team.people === 1 ? "person" : "people"})`);
-  return `openmaxxing · open-weight savings: ${parts.join(" · ")}`;
+  return `costmaxxing · open-weight savings: ${parts.join(" · ")}`;
 }

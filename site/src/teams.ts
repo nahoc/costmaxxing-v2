@@ -1,5 +1,5 @@
-import { buildReport, parseModelsDev, parseRecord, priceBook, teamTotals, type Report, type RequestRecord, type TeamTotals } from "@openmaxxing/core";
-import snapshot from "@openmaxxing/core/snapshot" with { type: "json" };
+import { buildReport, parseModelsDev, parseRecord, priceBook, teamTotals, type Report, type RequestRecord, type TeamTotals } from "@costmaxxing/core";
+import snapshot from "@costmaxxing/core/snapshot" with { type: "json" };
 
 export interface Redis {
   run(command: (string | number)[]): Promise<unknown>;

@@ -5,8 +5,8 @@ import {
   priceBook,
   type Report,
   type SpendRow,
-} from "@openmaxxing/core";
-import snapshot from "@openmaxxing/core/snapshot" with { type: "json" };
+} from "@costmaxxing/core";
+import snapshot from "@costmaxxing/core/snapshot" with { type: "json" };
 
 const PEOPLE = [
   "ada",

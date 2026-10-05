@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildReport, parseModelsDev, priceBook, type RequestRecord } from "@openmaxxing/core";
-import snapshot from "@openmaxxing/core/snapshot" with { type: "json" };
+import { buildReport, parseModelsDev, priceBook, type RequestRecord } from "@costmaxxing/core";
+import snapshot from "@costmaxxing/core/snapshot" with { type: "json" };
 import { handle } from "../src/api.ts";
 import type { Redis } from "../src/teams.ts";
 
@@ -81,7 +81,7 @@ test("the team page shows the savings and how to join, and bad input is refused"
   const redis = memory();
   const empty = await (await get(redis, "acme/page")).text();
   assert.match(empty, /No usage for acme yet\./);
-  assert.match(empty, /npx openmaxxing acme/);
+  assert.match(empty, /npx costmaxxing acme/);
   await post(redis, "acme/usage", { user: USER, records: [record("1", NOW)] });
   const page = await (await get(redis, "acme/page")).text();
   assert.match(page, /acme could save \$[\d.k]+ a&nbsp;year on open&#8209;weight models\./);

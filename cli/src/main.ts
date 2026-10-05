@@ -10,7 +10,7 @@ import {
   type Billing,
   type Report,
   type SeatCount,
-} from "@openmaxxing/core";
+} from "@costmaxxing/core";
 import pkg from "../package.json" with { type: "json" };
 import { loadConfig } from "./config.ts";
 import { connectSettings, serve } from "./gateway.ts";
@@ -20,17 +20,17 @@ import { personalReport } from "./personal.ts";
 import { prices } from "./prices.ts";
 import { web } from "./web.ts";
 
-const HELP = `openmaxxing: what your AI usage costs at API prices, and what it would cost on open-weight models
+const HELP = `costmaxxing: what your AI usage costs at API prices, and what it would cost on open-weight models
 
-  openmaxxing [--days N] [--vs provider/model]... [--json] [--offline] [--config PATH]
-  openmaxxing <team>             add your Claude Code to a team's savings at costmaxxing.dev/<team>
-  openmaxxing import <spend-report.csv> [--members members.csv] [--seats premium=N,standard=N]
+  costmaxxing [--days N] [--vs provider/model]... [--json] [--offline] [--config PATH]
+  costmaxxing <team>             add your Claude Code to a team's savings at costmaxxing.dev/<team>
+  costmaxxing import <spend-report.csv> [--members members.csv] [--seats premium=N,standard=N]
                      [--billing monthly|annual] [--from YYYY-MM-DD --to YYYY-MM-DD]
-  openmaxxing claude [args…]     run Claude Code through a local counting proxy
-  openmaxxing codex [args…]      run Codex through a local counting proxy
-  openmaxxing web [--port N]     open the report on 127.0.0.1
-  openmaxxing serve --token T [--port 8787] [--host 0.0.0.0]   run a shared team gateway
-  openmaxxing connect <url> --token T [--user NAME]   print agent settings for a gateway
+  costmaxxing claude [args…]     run Claude Code through a local counting proxy
+  costmaxxing codex [args…]      run Codex through a local counting proxy
+  costmaxxing web [--port N]     open the report on 127.0.0.1
+  costmaxxing serve --token T [--port 8787] [--host 0.0.0.0]   run a shared team gateway
+  costmaxxing connect <url> --token T [--user NAME]   print agent settings for a gateway
 `;
 
 const COMMON = {
@@ -44,7 +44,7 @@ const COMMON = {
 const interactive = () => Boolean(process.stdout.isTTY) && !process.env.CI;
 
 function command(): string {
-  return process.env.npm_command === "exec" ? "npx openmaxxing" : "openmaxxing";
+  return process.env.npm_command === "exec" ? "npx costmaxxing" : "costmaxxing";
 }
 
 function print(report: Report, json: boolean | undefined): void {
@@ -64,7 +64,7 @@ async function reportCommand(args: string[]): Promise<void> {
   if (report.requests === 0 && !values.json) {
     process.stdout.write(
       `No Claude Code or Codex usage in the ${report.scope}.\n` +
-        "openmaxxing reads ~/.claude/projects and ~/.codex/sessions ($CLAUDE_CONFIG_DIR and $CODEX_HOME move them).\n" +
+        "costmaxxing reads ~/.claude/projects and ~/.codex/sessions ($CLAUDE_CONFIG_DIR and $CODEX_HOME move them).\n" +
         `Run ${command()} claude or ${command()} codex to count a session as it happens.\n`,
     );
     return;
@@ -106,7 +106,7 @@ async function importCommand(args: string[]): Promise<void> {
   const [file, ...extra] = positionals;
   if (!file || extra.length > 0) {
     throw new Error(
-      "import takes one spend report CSV. A claude.ai Owner can save it with the openmaxxing browser extension (Download CSV).",
+      "import takes one spend report CSV, which a claude.ai Owner can download from the organization's usage settings.",
     );
   }
   const period =
@@ -123,7 +123,7 @@ async function importCommand(args: string[]): Promise<void> {
   if (values.seats) seats = parseSeats(values.seats);
   else if (values.members) {
     seats = parseMembers(await readFile(values.members, "utf8"));
-    if (!seats) process.stderr.write(`openmaxxing: ${values.members} has no email and seat columns, so seats are estimated\n`);
+    if (!seats) process.stderr.write(`costmaxxing: ${values.members} has no email and seat columns, so seats are estimated\n`);
   }
   const config = await loadConfig(values.config);
   const [text, book] = await Promise.all([readFile(file, "utf8"), prices(config, values.offline, values.vs)]);
@@ -179,6 +179,6 @@ async function main(argv: string[]): Promise<void> {
 }
 
 main(process.argv.slice(2)).catch((error: unknown) => {
-  process.stderr.write(`openmaxxing: ${error instanceof Error ? error.message : String(error)}\n`);
+  process.stderr.write(`costmaxxing: ${error instanceof Error ? error.message : String(error)}\n`);
   process.exitCode = 1;
 });

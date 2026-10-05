@@ -74,7 +74,7 @@ export type Segment = [text: string, tone: Tone];
 export type TeamState = TeamTotals | "unreachable" | "missing" | undefined;
 
 export function statusParts(session: Tally, month: Tally, team: TeamState, gain = 0): Segment[] {
-  const parts: Segment[] = [["costmaxxing", "brand"], ["  Savings if you used open-weight models: ", "label"], [savings(session), "amount"]];
+  const parts: Segment[] = [["costmaxxing", "brand"], ["  Potential savings via open-weight: ", "label"], [savings(session), "amount"]];
   if (gain > 0) parts.push([` ▲ +${exactUsd(gain)}`, "gain"]);
   parts.push([" this session", "label"], [" │ ", "divider"], [savings(month), "amount"], [" last 30 days (you)", "label"]);
   if (team === "unreachable") parts.push([" │ ", "divider"], ["team server unreachable", "warn"]);

@@ -33,11 +33,11 @@ test("a team's own comparison prices the same request differently, from the team
 
 test("the line shows cents under $100, and says when the team server can't be reached", () => {
   const tally = { requests: 2, price: 4.5, alt: 0.25 };
-  assert.equal(statusText(tally, { requests: 9, price: 2500, alt: 300 }, undefined), "costmaxxing  Savings if you used open-weight models: $4.25 this session │ $2.2k last 30 days (you)");
-  assert.equal(statusText(tally, tally, "unreachable"), "costmaxxing  Savings if you used open-weight models: $4.25 this session │ $4.25 last 30 days (you) │ team server unreachable");
-  assert.equal(statusText(tally, tally, { days: 30, people: 1, requests: 5, price: 900, alt: 100 }), "costmaxxing  Savings if you used open-weight models: $4.25 this session │ $4.25 last 30 days (you) · $800 (team) │ 1 person");
-  assert.equal(statusText(tally, tally, "missing"), "costmaxxing  Savings if you used open-weight models: $4.25 this session │ $4.25 last 30 days (you) │ team ID not found");
-  assert.equal(statusText(tally, tally, undefined, 0.12), "costmaxxing  Savings if you used open-weight models: $4.25 ▲ +$0.12 this session │ $4.25 last 30 days (you)");
+  assert.equal(statusText(tally, { requests: 9, price: 2500, alt: 300 }, undefined), "costmaxxing  Potential savings via open-weight: $4.25 this session │ $2.2k last 30 days (you)");
+  assert.equal(statusText(tally, tally, "unreachable"), "costmaxxing  Potential savings via open-weight: $4.25 this session │ $4.25 last 30 days (you) │ team server unreachable");
+  assert.equal(statusText(tally, tally, { days: 30, people: 1, requests: 5, price: 900, alt: 100 }), "costmaxxing  Potential savings via open-weight: $4.25 this session │ $4.25 last 30 days (you) · $800 (team) │ 1 person");
+  assert.equal(statusText(tally, tally, "missing"), "costmaxxing  Potential savings via open-weight: $4.25 this session │ $4.25 last 30 days (you) │ team ID not found");
+  assert.equal(statusText(tally, tally, undefined, 0.12), "costmaxxing  Potential savings via open-weight: $4.25 ▲ +$0.12 this session │ $4.25 last 30 days (you)");
 });
 
 type Hook = (...args: never[]) => unknown;
@@ -124,7 +124,7 @@ test("with a team, steps reach costmaxxing.dev at most once a minute, a failed s
   await step({ turnId: "t4", index: 0 });
   await advance(60_000);
   assert.deepEqual(posts.at(-1), { url: "https://costmaxxing.dev/api/teams/acme-22222-33333/usage", user: "u1u1u1u1u1u1", ids: ["s9/t4/main/0"] });
-  assert.match(await hint(), /^costmaxxing {2}Savings if you used open-weight models: \$[\d.]+( ▲ \+\$[\d.]+)? this session │ \$[\d.]+ last 30 days \(you\) · \$1\.8k \(team\) │ 3 people │ team page ↗$/);
+  assert.match(await hint(), /^costmaxxing {2}Potential savings via open-weight: \$[\d.]+( ▲ \+\$[\d.]+)? this session │ \$[\d.]+ last 30 days \(you\) · \$1\.8k \(team\) │ 3 people │ team page ↗$/);
   const render = hooks.get("ui.render") as unknown as (...a: unknown[]) => Promise<{ children: { children: { type: string; href?: string }[] }[] }>;
   const tree = await render($, { props: { hint: "" } }, async () => "");
   assert.equal(tree.children[1]?.children.find((c) => c.type === "Link")?.href, "https://costmaxxing.dev/acme-22222-33333");

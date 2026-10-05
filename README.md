@@ -75,7 +75,7 @@ npx costmaxxing acme-7kq3x-m9pz2
 It installs the costmaxxing mod into Claude Code (v2.1.287 or later; it offers to update an older one), sets it to report to the team, adds a background Stop hook to Codex if Codex is installed (Codex asks once to trust it), and adds the history from the person's Claude Code and Codex logs, up to a year. Claude Code keeps the setting, so it works in every session from then on. The savings then show under the prompt and update after every request:
 
 ```
-costmaxxing  Savings if you used open-weight models: $3.74 this session │ $612 last 30 days (you) · $9.4k (team) │ 12 people │ team page ↗
+costmaxxing  Potential savings via open-weight: $3.74 this session │ $612 last 30 days (you) · $9.4k (team) │ 12 people │ team page ↗
 ```
 
 Every amount is savings: what the usage costs at Anthropic's API prices, minus what it would cost on open-weight models.

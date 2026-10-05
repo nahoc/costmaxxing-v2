@@ -178,21 +178,3 @@ export async function listen(handler: RequestListener, port = 0, host = "127.0.0
     },
   };
 }
-
-export async function startProxy(options: {
-  harness: Harness;
-  session: string;
-  route: (req: IncomingMessage) => string;
-  onRecord: (record: RequestRecord) => void;
-}) {
-  const proxy = createProxy(options);
-  const server = await listen((req, res) => proxy.forward(req, res, { target: options.route(req), harness: options.harness }));
-  return {
-    url: server.url,
-    drain: proxy.drain,
-    async close(): Promise<void> {
-      proxy.destroy();
-      await server.close();
-    },
-  };
-}

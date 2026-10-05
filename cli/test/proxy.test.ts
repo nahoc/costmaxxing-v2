@@ -4,8 +4,8 @@ import { createServer, request, type IncomingMessage, type ServerResponse } from
 import type { AddressInfo } from "node:net";
 import { test } from "node:test";
 import { gzipSync } from "node:zlib";
-import type { RequestRecord } from "@costmaxxing/core";
-import { joinUrl, startProxy } from "../src/proxy.ts";
+import type { Harness, RequestRecord } from "@costmaxxing/core";
+import { createProxy, joinUrl, listen } from "../src/proxy.ts";
 
 const ANTHROPIC_SSE = [
   'event: message_start\ndata: {"type":"message_start","message":{"id":"msg_1","model":"claude-opus-5-5","usage":{"input_tokens":10,"cache_creation_input_tokens":300,"cache_read_input_tokens":5,"cache_creation":{"ephemeral_5m_input_tokens":100,"ephemeral_1h_input_tokens":200},"output_tokens":1}}}\n\n',
@@ -41,6 +41,24 @@ function call(url: string, body = '{"model":"x"}', headers: Record<string, strin
     req.on("error", reject);
     req.end(body);
   });
+}
+
+async function startProxy(options: {
+  harness: Harness;
+  session: string;
+  route: (req: IncomingMessage) => string;
+  onRecord: (record: RequestRecord) => void;
+}) {
+  const proxy = createProxy(options);
+  const server = await listen((req, res) => proxy.forward(req, res, { target: options.route(req), harness: options.harness }));
+  return {
+    url: server.url,
+    drain: proxy.drain,
+    async close(): Promise<void> {
+      proxy.destroy();
+      await server.close();
+    },
+  };
 }
 
 async function withProxy(upstream: string, run: (url: string, records: RequestRecord[]) => Promise<void>) {

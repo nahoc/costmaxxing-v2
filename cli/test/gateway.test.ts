@@ -163,7 +163,7 @@ test("connect: prints Claude Code and Codex settings for the gateway", () => {
   assert.throws(() => connectSettings("ftp://gateway.local", TOKEN), /http:\/\/ or https:\/\//);
 });
 
-test("web and serve: start on a free port, print the URL, and serve the report", async () => {
+test("serve: starts on a free port, prints the URL, and serves the dashboard", async () => {
   const home = await mkdtemp(join(tmpdir(), "costmaxxing-web-"));
   const env = { PATH: process.env.PATH ?? "", COSTMAXXING_HOME: home, CLAUDE_CONFIG_DIR: home, CODEX_HOME: home };
   const main = new URL("../src/main.ts", import.meta.url).pathname;
@@ -174,12 +174,6 @@ test("web and serve: start on a free port, print the URL, and serve the report",
     while (!/http:\/\/127\.0\.0\.1:\d+/.test(out)) await new Promise((r) => setTimeout(r, 50));
     return { child, url: /http:\/\/127\.0\.0\.1:\d+/.exec(out)?.[0] ?? "", out: () => out };
   };
-  const site = await start(["web", "--offline"]);
-  const html = await (await fetch(`${site.url}/`)).text();
-  site.child.kill();
-  assert.match(html, /<title>costmaxxing<\/title>/);
-  assert.match(html, /costmaxxing · last 30 days/);
-
   const short = spawn(process.execPath, [main, "serve", "--token", "short"], { env });
   let error = "";
   short.stderr.on("data", (chunk: Buffer) => (error += chunk));

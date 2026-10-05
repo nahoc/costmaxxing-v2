@@ -1,3 +1,5 @@
+import { spawn } from "node:child_process";
+
 const color = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR && !process.env.CI;
 const paint = (code: string) => (text: string) => (color ? `\x1b[${code}m${text}\x1b[0m` : text);
 
@@ -31,4 +33,16 @@ export function box(title: string, lines: string[]): string {
 
 export function ask(question: string): string {
   return `${purple("?")} ${bold(question)} `;
+}
+
+export function openBrowser(url: string): void {
+  const [command, args] =
+    process.platform === "darwin"
+      ? ["open", [url]]
+      : process.platform === "win32"
+        ? ["cmd", ["/c", "start", "", url]]
+        : ["xdg-open", [url]];
+  spawn(command, args, { stdio: "ignore", detached: true })
+    .on("error", () => {})
+    .unref();
 }

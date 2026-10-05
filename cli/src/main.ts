@@ -15,12 +15,10 @@ import pkg from "../package.json" with { type: "json" };
 import { loadConfig } from "./config.ts";
 import { connectSettings, serve } from "./gateway.ts";
 import { createInterface } from "node:readline/promises";
-import { ask, dim } from "./ui.ts";
+import { ask, dim, openBrowser } from "./ui.ts";
 import { adminTeam, codexHook, connections, currentTeam, describeTeam, joinTeam, leaveTeam, startTeam } from "./join.ts";
-import { launch } from "./launch.ts";
 import { personalReport } from "./personal.ts";
 import { prices } from "./prices.ts";
-import { openBrowser, web } from "./web.ts";
 
 const HELP = `costmaxxing: what your AI usage costs at API prices, and what it would cost on open-weight models
 
@@ -33,9 +31,6 @@ const HELP = `costmaxxing: what your AI usage costs at API prices, and what it w
   costmaxxing team delete        (team starter) delete the team and all its usage
   costmaxxing import <spend-report.csv> [--members members.csv] [--seats premium=N,standard=N]
                      [--billing monthly|annual] [--from YYYY-MM-DD --to YYYY-MM-DD]
-  costmaxxing claude [args…]     run Claude Code through a local counting proxy
-  costmaxxing codex [args…]      run Codex through a local counting proxy
-  costmaxxing web [--port N]     open the report on 127.0.0.1
   costmaxxing serve --token T [--port 8787] [--host 0.0.0.0]   run a shared team gateway
   costmaxxing connect <url> --token T [--user NAME]   print agent settings for a gateway
 `;
@@ -71,8 +66,7 @@ async function reportCommand(args: string[]): Promise<void> {
   if (report.requests === 0 && !values.json) {
     process.stdout.write(
       `No Claude Code or Codex usage in the ${report.scope}.\n` +
-        "costmaxxing reads ~/.claude/projects and ~/.codex/sessions ($CLAUDE_CONFIG_DIR and $CODEX_HOME move them).\n" +
-        `Run ${command()} claude or ${command()} codex to count a session as it happens.\n`,
+        "costmaxxing reads ~/.claude/projects and ~/.codex/sessions ($CLAUDE_CONFIG_DIR and $CODEX_HOME move them).\n",
     );
     return;
   }
@@ -177,14 +171,6 @@ async function main(argv: string[]): Promise<void> {
       let input = "";
       for await (const chunk of process.stdin) input += chunk;
       return codexHook(input).catch(() => undefined);
-    }
-    case "claude":
-    case "codex":
-      return launch(first, rest);
-    case "web": {
-      const { values } = parseArgs({ args: rest, options: { ...COMMON, days: { type: "string" }, port: { type: "string" } } });
-      if (values.help) return void process.stdout.write(HELP);
-      return web({ ...values, open: interactive() && !values.json });
     }
     case "serve": {
       const { values } = parseArgs({

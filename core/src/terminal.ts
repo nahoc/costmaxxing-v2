@@ -159,8 +159,6 @@ export function renderTerminal(report: Report, options: TerminalOptions): string
     report.kind === "logs"
       ? [
           [`${cmd} --vs togetherai/zai-org/GLM-5.3`, "price everything on one model"],
-          [`${cmd} claude`, "count a Claude Code session live"],
-          [`${cmd} web`, "open this report in your browser"],
           [`${cmd} --json`, "every number, every model"],
           [`${cmd} <team-id>`, "join your team: savings under every Claude Code prompt"],
         ]

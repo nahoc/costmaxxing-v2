@@ -55,10 +55,6 @@ export function renderPage({ example, css, js }: { example: Example; css: string
   if (!best || !glm || !fable || !flash) throw new Error("SWE_BENCH needs four rows");
   const benchLine = `Not a downgrade: ${glm.name} scores ${glm.score.toFixed(1)}% on SWE-bench Verified. ${fable.name} scores ${fable.score.toFixed(1)}%.`;
   const topOutput = Math.max(...PRICE_LADDER.map((m) => m.output));
-  const me = report.byUser?.[0];
-  const mine = me ? me.price - me.alt : 0;
-  const teamSaved = hero.price - hero.alt;
-  const money = (n: number) => (n < 100 ? exactUsd(n) : usd(n));
 
   const dialog = `<section class="alert hero" id="hero" aria-labelledby="hero-title">
 <div class="alert-icon">${icon("computer")}</div>
@@ -69,21 +65,6 @@ ${command()}
 <div class="buttons">${copy}</div>
 </section>`;
 
-  const term = win({
-    id: "term",
-    title: "Claude Code",
-    className: "term",
-    label: "Claude Code with costmaxxing, an example session",
-    body: `<p class="t-user">&gt; make the rates module read prices from the new API</p>
-<p>● Read(src/billing/rates.ts)</p>
-<p>● Update(src/billing/rates.ts)</p>
-<p class="t-out">⎿&nbsp; Updated with 14 additions and 9 removals</p>
-<p>● Done. Rates now come from /v2/rates, cached for five minutes.</p>
-<div class="t-input">&gt;<span class="caret"></span></div>
-<p class="t-hint"><span>? for shortcuts</span><span><span class="t-chip">costmaxxing</span> <b data-tick="${(mine / 30).toFixed(2)}">${money(mine / 30)}</b> session · <b data-tick="${mine.toFixed(2)}">${money(mine)}</b> 30 days · <b data-tick="${teamSaved.toFixed(2)}">${money(teamSaved)}</b> team · ${count(report.users ?? 0)} people</span></p>`,
-    status: ["example session"],
-  });
-
   const models = byFamily(report.models)
     .map((row) => `<tr><td>${esc(row.label)}</td><td class="num">${usd(row.price)}</td><td class="num">${usd(row.alt)}</td></tr>`)
     .join("");
@@ -91,7 +72,6 @@ ${command()}
     id: "team",
     title: `costmaxxing.dev/${team}`,
     className: "teampage",
-    closed: true,
     label: "An example team page with synthetic data",
     body: `<p class="savings">${team} could save ${figure("info-savings", `<span class="big">${usd(hero.year)}</span>`)} a&nbsp;year on open&#8209;weight models.</p>
 <div class="figures">
@@ -246,7 +226,6 @@ ${SPRITE}
 <div class="desktop desktop-1">
 <ul class="icons" aria-label="Desktop">${icons}</ul>
 ${dialog}
-${term}
 ${teamPage}
 ${paint}
 </div>

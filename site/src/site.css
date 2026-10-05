@@ -157,54 +157,6 @@ dl.body dt {
   color: var(--ink);
 }
 
-.term .body {
-  background: var(--ink);
-  color: var(--paper);
-}
-.term .body p + p {
-  margin-top: 4px;
-}
-.t-user {
-  margin-bottom: 10px;
-}
-.t-out {
-  padding-left: 1.4em;
-}
-.t-input {
-  display: flex;
-  gap: 0.5em;
-  margin-top: 16px;
-  padding: 6px 10px;
-  border: var(--u) solid var(--paper);
-  border-radius: 8px;
-}
-.caret {
-  width: 0.6em;
-  background: var(--paper);
-  animation: blink 1.2s steps(1) infinite;
-}
-.term .t-hint {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 4px 16px;
-  margin-top: 6px;
-}
-.t-chip {
-  padding: 0 4px;
-  background: var(--paper);
-  color: var(--ink);
-}
-.t-hint b {
-  font-weight: 400;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-@keyframes blink {
-  50% {
-    opacity: 0;
-  }
-}
 .paint .body {
   padding: 0;
   line-height: 0;
@@ -346,17 +298,11 @@ dl.body dt {
     width: min(53%, 760px);
     translate: 0 -50%;
   }
-  .term {
-    top: 48px;
-    left: 57%;
-    z-index: 2;
-    width: min(33%, 480px);
-  }
   .teampage {
-    top: 120px;
-    left: 52%;
-    z-index: 4;
-    width: min(40%, 560px);
+    top: 48px;
+    left: 58%;
+    z-index: 2;
+    width: min(32%, 460px);
   }
   .paint {
     top: 90px;
@@ -542,8 +488,7 @@ dl.body dt {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .paint.painting img,
-  .caret {
+  .paint.painting img {
     animation: none;
   }
 }

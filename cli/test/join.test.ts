@@ -74,9 +74,9 @@ async function setup(version: string) {
     COSTMAXXING_CLAUDE: fake,
     COSTMAXXING_URL: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
   };
-  const run = async () => {
+  const run = async (args = ["Acme"]) => {
     try {
-      return { ...(await promisify(execFile)(process.execPath, [MAIN, "Acme"], { env })), code: 0 };
+      return { ...(await promisify(execFile)(process.execPath, [MAIN, ...args], { env })), code: 0 };
     } catch (error) {
       return error as { stdout: string; stderr: string; code: number };
     }
@@ -116,5 +116,14 @@ test("npx costmaxxing <team>: an old Claude Code stops before touching anything 
   assert.equal(result.code, 1);
   assert.match(result.stderr, /needs Claude Code 2\.1\.287 or later, and you have 2\.1\.284/);
   assert.equal((await s.calls()).trim(), "--version");
+  assert.equal(s.bodies.length, 0);
+});
+
+test("plain costmaxxing asks for the team ID in a terminal; piped, it prints the report without asking", async () => {
+  const s = await setup("2.1.289 (Claude Code)");
+  const piped = await s.run([]);
+  s.close();
+  assert.equal(piped.code, 0, piped.stderr);
+  assert.doesNotMatch(piped.stdout, /team ID/);
   assert.equal(s.bodies.length, 0);
 });

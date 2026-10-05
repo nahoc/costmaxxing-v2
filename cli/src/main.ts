@@ -14,6 +14,7 @@ import {
 import pkg from "../package.json" with { type: "json" };
 import { loadConfig } from "./config.ts";
 import { connectSettings, serve } from "./gateway.ts";
+import { createInterface } from "node:readline/promises";
 import { joinTeam } from "./join.ts";
 import { launch } from "./launch.ts";
 import { personalReport } from "./personal.ts";
@@ -174,6 +175,12 @@ async function main(argv: string[]): Promise<void> {
     }
     default:
       if (first && !first.startsWith("-")) return joinTeam(first, interactive());
+      if (argv.length === 0 && interactive()) {
+        const rl = createInterface({ input: process.stdin, output: process.stdout });
+        const team = (await rl.question("What's your team ID? (like acme; press Enter for just your own report) ")).trim();
+        rl.close();
+        if (team) return joinTeam(team, true);
+      }
       return reportCommand(argv);
   }
 }

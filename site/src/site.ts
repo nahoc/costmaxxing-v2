@@ -94,7 +94,7 @@ async function boot(): Promise<void> {
   await step(500);
   screen?.classList.add("welcoming");
   await step(650);
-  const windows = [$<HTMLElement>("#term")].filter((w) => w !== null);
+  const windows = [$<HTMLElement>("#team")].filter((w) => w !== null);
   for (const w of [...windows, $<HTMLElement>("#hero")]) if (w) w.style.visibility = "hidden";
   const icons = $$<HTMLElement>(".icons li");
   for (const li of icons) li.style.visibility = "hidden";
@@ -267,22 +267,8 @@ function teamCommand(): void {
   }
 }
 
-function ticker(): void {
-  if (still.matches) return;
-  const counters = $$<HTMLElement>("[data-tick]").map((el) => ({ el, value: Number(el.dataset.tick) }));
-  const show = (n: number) => (n < 100 ? `$${n.toFixed(2)}` : n < 1000 ? `$${Math.round(n)}` : `$${(n / 1000).toFixed(1)}k`);
-  setInterval(() => {
-    const step = 0.04 + Math.random() * 0.4;
-    for (const counter of counters) {
-      counter.value += step;
-      counter.el.textContent = show(counter.value);
-    }
-  }, 2400);
-}
-
 wire();
 menus();
 teamCommand();
-ticker();
 if (root.classList.contains("booting")) void boot();
 else finishBoot();

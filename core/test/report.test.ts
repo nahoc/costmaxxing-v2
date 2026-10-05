@@ -206,7 +206,11 @@ test("team report: by user, by product, estimated seats with Fable users as Prem
 
 test("seats: members export and --seats are exact, annual billing changes the rate", () => {
   const seats = parseMembers(MEMBERS_CSV);
-  assert.deepEqual(seats, { premium: 1, standard: 3 });
+  assert.deepEqual(seats, {
+    premium: 1,
+    standard: 3,
+    byUser: { "ada@example.com": "premium", "bob@example.com": "standard", "cy@example.com": "standard", "di@example.com": "standard" },
+  });
   assert.equal(parseMembers('{"members": []}'), undefined);
   assert.equal(parseMembers("Name,Role\nAda,Owner"), undefined);
   const report = buildReport({
@@ -233,4 +237,30 @@ test("spend rows without an email don't count as users, and thousands separators
   );
   near(report.byUser?.[1]?.price, 0.06);
   assert.equal(report.seats?.kind === "seats" && report.seats.premium + report.seats.standard, 2);
+});
+
+test("team report: each person carries a seat and how far usage runs past it, and each model its replacement", () => {
+  const rows = parseSpendReport(SPEND_CSV);
+  const dataset = { kind: "spend" as const, rows, from: "2026-09-02", to: "2026-10-01" };
+  const estimated = buildReport({ dataset, book });
+  const ada = estimated.byUser?.find((row) => row.label === "ada@example.com");
+  assert.equal(ada?.seat, "premium");
+  near(ada?.overSeat, 1.73 / 125);
+  const bob = estimated.byUser?.find((row) => row.label === "bob@example.com");
+  assert.equal(bob?.seat, "standard");
+  near(bob?.overSeat, 0.06 / 25);
+  const exact = buildReport({ dataset, book, seats: { premium: 2, standard: 1, byUser: { "bob@example.com": "premium" } }, billing: "annual" });
+  const bobExact = exact.byUser?.find((row) => row.label === "bob@example.com");
+  assert.equal(bobExact?.seat, "premium");
+  near(bobExact?.overSeat, 0.06 / 100);
+  assert.deepEqual(
+    estimated.models.map((row) => [row.label, row.replacement]),
+    [
+      ["Claude Opus 5.5", "GLM-5.3"],
+      ["Claude Fable 5.1", "GLM-5.3"],
+      ["Claude Haiku 4.5", "DeepSeek V4.1 Flash"],
+      ["Claude Sonnet 5", "GLM-5.3 Flash"],
+    ],
+  );
+  assert.equal(JSON.stringify(estimated.seats).includes("byUser"), false);
 });

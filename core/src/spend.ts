@@ -60,9 +60,12 @@ export function parseSpendReport(text: string): SpendRow[] {
   }));
 }
 
+export type Seat = "premium" | "standard";
+
 export interface SeatCount {
   premium: number;
   standard: number;
+  byUser?: Record<string, Seat>;
 }
 
 export function parseMembers(text: string): SeatCount | undefined {
@@ -71,12 +74,15 @@ export function parseMembers(text: string): SeatCount | undefined {
   const email = names.findIndex((h) => h.includes("email"));
   const seat = names.findIndex((h) => h.includes("seat"));
   if (email < 0 || seat < 0) return undefined;
-  const seats: SeatCount = { premium: 0, standard: 0 };
+  const seats: SeatCount = { premium: 0, standard: 0, byUser: {} };
   for (const row of rows) {
-    if (!row[email]?.includes("@")) continue;
+    const address = row[email]?.trim().toLowerCase();
+    if (!address?.includes("@")) continue;
     const type = row[seat]?.toLowerCase() ?? "";
-    if (type.includes("premium")) seats.premium++;
-    else if (type.includes("standard")) seats.standard++;
+    const kind: Seat | undefined = type.includes("premium") ? "premium" : type.includes("standard") ? "standard" : undefined;
+    if (!kind) continue;
+    seats[kind]++;
+    seats.byUser![address] = kind;
   }
   return seats.premium + seats.standard > 0 ? seats : undefined;
 }

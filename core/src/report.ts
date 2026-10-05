@@ -1,6 +1,6 @@
 import { findPrice, Pricer, type Fallback } from "./prices.ts";
 import { modelScenario, PLAN_PROVIDERS, planDetail, planScenario, route, type Scenario } from "./scenarios.ts";
-import type { SeatCount } from "./spend.ts";
+import type { Seat, SeatCount } from "./spend.ts";
 import { totalTokens, type Dataset, type Harness, type PriceBook, type Tokens } from "./types.ts";
 
 const DAY = 86_400_000;
@@ -14,6 +14,9 @@ export interface Row extends Cost {
   label: string;
   requests: number;
   tokens: number;
+  seat?: Seat;
+  overSeat?: number;
+  replacement?: string;
 }
 
 export interface ForecastRow {
@@ -41,7 +44,7 @@ export interface Plan {
 
 export type Billing = "monthly" | "annual";
 
-const SEAT_PRICES: Record<Billing, SeatCount> = {
+const SEAT_PRICES: Record<Billing, Record<Seat, number>> = {
   monthly: { premium: 125, standard: 25 },
   annual: { premium: 100, standard: 20 },
 };
@@ -95,6 +98,7 @@ interface Item {
 interface Priced extends Cost {
   item: Item;
   label: string;
+  target?: string;
 }
 
 const SOURCE_PROVIDERS: Record<Harness | "claude.ai", readonly string[]> = {
@@ -178,7 +182,9 @@ export function buildReport(options: ReportOptions): Report {
       continue;
     }
     const price = pricer.cost(source, item.requests, item.tokens);
-    priced.push({ item, label: source.name, price, alt: costUnder(hero, { item, price }) });
+    const targetRef = route(hero, item.model, item.subagent);
+    const target = targetRef === undefined ? undefined : book.get(targetRef)?.name;
+    priced.push({ item, label: source.name, price, alt: costUnder(hero, { item, price }), target });
   }
 
   const compare = (scenario: Scenario): Comparison => {
@@ -222,7 +228,8 @@ export function buildReport(options: ReportOptions): Report {
     const rate = SEAT_PRICES[options.billing ?? "monthly"];
     seats = {
       kind: "seats",
-      ...count,
+      premium: count.premium,
+      standard: count.standard,
       estimated: !options.seats,
       monthly: count.premium * rate.premium + count.standard * rate.standard,
       worth,
@@ -231,6 +238,22 @@ export function buildReport(options: ReportOptions): Report {
 
   const users = new Set(all.flatMap((item) => item.user || []));
   const sessions = new Set(all.flatMap((item) => item.session || []));
+  const byUser = users.size > 0 ? table(priced, (p) => p.item.user || "(no email)") : undefined;
+  if (byUser && dataset.kind === "spend") {
+    const estimate = estimateSeats(dataset.rows).byUser ?? {};
+    const rate = SEAT_PRICES[options.billing ?? "monthly"];
+    for (const row of byUser) {
+      const seat = options.seats?.byUser?.[row.label.toLowerCase()] ?? estimate[row.label];
+      if (!seat) continue;
+      row.seat = seat;
+      row.overSeat = ((row.price / days) * 30) / rate[seat];
+    }
+  }
+  const models = table(priced, (p) => p.label);
+  for (const row of models) {
+    const targets = [...new Set(priced.flatMap((p) => (p.label === row.label && p.target ? [p.target] : [])))];
+    if (targets.length > 0) row.replacement = targets.join(" / ");
+  }
   return {
     kind: dataset.kind,
     recent: dataset.kind === "logs" || dataset.recent === true,
@@ -251,9 +274,9 @@ export function buildReport(options: ReportOptions): Report {
     },
     seats,
     byHarness: dataset.kind === "logs" ? table(priced, (p) => p.item.harness) : undefined,
-    byUser: users.size > 0 ? table(priced, (p) => p.item.user || "(no email)") : undefined,
+    byUser,
     byProduct: dataset.kind === "spend" ? table(priced, (p) => p.item.product) : undefined,
-    models: table(priced, (p) => p.label),
+    models,
     forecast,
     providers: bySavings(PLAN_PROVIDERS.map((provider) => compare(planScenario(provider)))),
     scenarios: bySavings([...vsRest.map((ref) => modelScenario(ref, book)), ...(options.scenarios ?? [])].map(compare)),
@@ -265,5 +288,6 @@ export function buildReport(options: ReportOptions): Report {
 export function estimateSeats(rows: { user: string; model: string }[]): SeatCount {
   const everyone = new Set(rows.map((row) => row.user).filter((user) => user !== ""));
   const premium = new Set(rows.filter((row) => everyone.has(row.user) && /fable/i.test(row.model)).map((row) => row.user));
-  return { premium: premium.size, standard: everyone.size - premium.size };
+  const byUser = Object.fromEntries([...everyone].map((user): [string, Seat] => [user, premium.has(user) ? "premium" : "standard"]));
+  return { premium: premium.size, standard: everyone.size - premium.size, byUser };
 }

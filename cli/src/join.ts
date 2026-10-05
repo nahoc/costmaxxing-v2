@@ -209,3 +209,32 @@ export async function codexHook(input: string): Promise<void> {
   const recent = Object.fromEntries(Object.entries(sent).slice(-200));
   await writeFile(SENT_FILE(), JSON.stringify(recent));
 }
+
+export interface CurrentTeam {
+  id: string;
+  name: string;
+  url: string;
+  totals: TeamTotals;
+}
+
+export async function currentTeam(): Promise<CurrentTeam | "gone" | undefined> {
+  const saved = await readJson<{ id?: string }>(TEAM_FILE(), {});
+  if (!saved.id) return undefined;
+  const response = await fetch(`${BASE()}/api/teams/${saved.id}`).catch(() => undefined);
+  if (response?.status === 404) return "gone";
+  const url = `${BASE()}/${saved.id}`;
+  if (!response?.ok) return { id: saved.id, name: saved.id, url, totals: { days: 30, people: 0, requests: 0, price: 0, alt: 0 } };
+  const body = (await response.json()) as TeamTotals & { name: string };
+  return { id: saved.id, name: body.name, url, totals: body };
+}
+
+export function describeTeam(team: CurrentTeam): string {
+  const { totals } = team;
+  return [
+    `You're on ${team.name}. Team page: ${team.url}`,
+    totals.requests > 0
+      ? `Last 30 days: ${totals.people} ${totals.people === 1 ? "person" : "people"}, ${exactUsd(totals.price)} at API prices, ${exactUsd(totals.alt)} on open-weight models.`
+      : "No usage on the team page yet.",
+    `Teammates join with: npx costmaxxing ${team.id}`,
+  ].join("\n");
+}

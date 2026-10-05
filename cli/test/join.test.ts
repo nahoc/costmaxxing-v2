@@ -183,3 +183,14 @@ test("joining adds a background Codex Stop hook beside existing ones, and the ho
   const sent = s.bodies.slice(before).filter((b) => b.url?.endsWith("/usage"));
   assert.deepEqual(sent.map((b) => b.body.records.map((r) => [r.harness, r.model])), [[["Codex", "gpt-5.6-sol"]], [["Codex", "gpt-5.6-sol"]]]);
 });
+
+test("costmaxxing team shows the joined team's page link and totals, and says when there's no team", async () => {
+  const s = await setup("2.1.289 (Claude Code)");
+  const none = await s.run(["team"]);
+  assert.match(none.stdout, /You're not on a team/);
+  assert.equal((await s.run()).code, 0);
+  const shown = await s.run(["team"]);
+  s.close();
+  assert.match(shown.stdout, /You're on Acme\. Team page: http:\/\/127\.0\.0\.1:\d+\/acme-7kq3x-m9pz2/);
+  assert.match(shown.stdout, /Teammates join with: npx costmaxxing acme-7kq3x-m9pz2/);
+});

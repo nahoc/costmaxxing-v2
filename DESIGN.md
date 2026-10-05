@@ -65,6 +65,8 @@ The first screen opens only what matters most: the savings question with its ins
 - Public-domain photography converted to two colors with Atkinson dithering
 - Three type sizes for the whole page
 
+The landing page and the extension's report share one world. `world/` holds the fonts, the pixel icons, and `world.css` (tokens, windows, dialogs, buttons, menus, meters); each surface adds only its own stylesheet.
+
 ## Colors
 
 Two values, no exceptions. Tone comes from pattern, not from a third color.
@@ -139,10 +141,19 @@ Square everywhere except buttons, which carry gently rounded corners (12px), and
 The system dialog carries the page's one question and its one action: the costmaxxing computer icon, the display-size question "How much can your team save by moving from Anthropic to open-weight models?", body copy, and the install button, right-aligned with the default ring. It has no secondary button.
 
 ### App icon
-A compact computer whose screen charts the API price as a zebra-striped bar against two shorter solid bars for the open-weight prices. `site/src/app-icon.ts` draws it on three grids: 16 for the toolbar and favicon, 24 for the extension page and the site's dialog, and 64 (at 2×, 96px of artwork inside 128) for the store. `site/scripts/app-icon.ts` writes every PNG.
+A compact computer whose screen charts the API price as a zebra-striped bar against two shorter solid bars for the open-weight prices. `world/app-icon.ts` draws it on three grids: 16 for the toolbar and favicon, 24 for the extension page and the site's dialog, and 64 (at 2×, 96px of artwork inside 128) for the store. `site/scripts/app-icon.ts` writes every PNG.
 
 ### Get Info
-Any figure in the Team Bill opens an Info window beside it that states the exact amount, its source, and its math. Escape or the close box sends it back into the figure.
+Any figure in the Team Bill or the report opens an Info window beside it that states the exact amount, its source, and its math. Escape or the close box sends it back into the figure.
+
+### Report memo (extension)
+The report tab is one document window on the checker desktop, titled with the org name and period, with a word-processor ruler under the title bar. It reads as a memo: the yearly savings as a display-size sentence, the seat subsidy as a sentence, three figures in a ruled row, then People, Products and models, Providers, and Forecast and method. Each section opens with a one-sentence finding and sits below a 4px dithered page-break rule. It closes on "What will you do when the subsidies end?" with Download CSV as the default button. The toolbar popup shows the same opening paragraph and figures, with Open Full Report as the default button.
+
+### Sheet
+Report tables: display-face headers over a 2px rule, dotted 2px rules between rows, numbers right-aligned in tabular figures. Bars are meters; a person's usage bar is solid up to their seat price and zebra past it. Bars drop below 860px.
+
+### Progress dialog
+Every non-report state is a system alert. Loading names each real step of the fetch above a dithered progress bar that advances in four steps, and the cursor becomes a wristwatch. Signed out, not an Owner, and failed requests use the caution icon, name the problem, and offer the recovery as the default button.
 
 ## Do's and Don'ts
 

@@ -80,9 +80,14 @@ Everything the Chrome Web Store developer dashboard asks for, in the order it as
 
 Click **Submit for Review**. Review time varies. After approval you have 30 days to publish if you chose deferred publishing.
 
-## Ship 1.0.1 with the new icon
+## Ship 1.1.0
 
-Version 1.0.0 went to review with the old green icon. Version 1.0.1 adds the purple pixel computer icon at every size. After 1.0.0 is approved, open the item, choose **Package**, upload the new `extension/costmaxxing-extension.zip`, replace the small promo tile with the current `extension/store/promo-small-440x280.png`, and submit again. The store icon comes from the zip.
+Version 1.1.0 adds the purple pixel icon at every size and redraws the report and popup in the landing page's 1-bit style: a loading dialog with each real step, a one-page memo with per-person seat usage and the open-weight model that replaces each Claude model, and system dialogs for signed-out, non-Owner, and failed states. To ship it:
+
+1. Run `npm run build -w extension`.
+2. Open the item in the developer dashboard, choose **Package**, and upload the new `extension/costmaxxing-extension.zip`.
+3. On the **Store listing** tab, replace both screenshots with `extension/store/store-popup.png` and `extension/store/store-report.png`, and the small promo tile with `extension/store/promo-small-440x280.png`.
+4. Click **Submit for Review**. The store icon comes from the zip.
 
 ## After approval
 

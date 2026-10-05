@@ -1,34 +1,36 @@
-# openmaxxing privacy policy
+# costmaxxing privacy policy
 
-Last updated: 2026-10-04
+Last updated: 2026-10-05
 
-openmaxxing is an open-source Chrome extension and command-line tool that prices AI usage at API rates. This policy covers the Chrome extension. Nothing the extension reads leaves your browser.
+costmaxxing is an open-source command-line tool and Claude Code mod that prices AI usage at API rates and on open-weight models. This policy covers the mod, the `costmaxxing <team>` command, and the team pages at costmaxxing.dev.
 
-## What the extension reads
+## On your machine only
 
-When you install the extension, and each time you click its toolbar button, it reads:
+`npx costmaxxing` with no team reads your Claude Code and Codex logs and prints a report. The mod installed without a team prices each Claude Code request and keeps a 30-day total on your machine. Neither sends anything anywhere except a request for public prices to models.dev.
 
-- **Your claude.ai organizations** from `https://claude.ai/api/organizations`, through your existing claude.ai session in this browser.
-- **Your organization's spend report** from claude.ai, which only Owners can export. The report lists each member's email address, the claude.ai products and models they used, request and token counts, and spend.
-- **Your organization's members export** from claude.ai, when claude.ai provides it, to count Premium and Standard seats.
-- **Public model prices** from `https://models.dev/api.json`.
+## When you join a team
 
-## What it does with that data
+`npx costmaxxing <team>` installs the mod with that team's name. From then on, costmaxxing.dev receives:
 
-The extension prices the spend report in your browser and shows the result in its popup and in a report tab. If you click **Download CSV**, it saves the spend report to your computer as a file.
+- for each Claude Code request: the model name, token counts (input, output, cache reads, cache writes), the time, and request and session IDs, sent at most once a minute;
+- once, when you join: daily sums of the same counts from your existing Claude Code logs, up to a year back;
+- an anonymous ID for you, made by hashing the team name with your Claude account email. The email itself is never sent.
 
-## What it does not do
+It never receives prompts, responses, code, file names, keys, or credentials.
 
-- It does not send the spend report, member emails, or any other data to the developer or to any third party.
-- It does not store the data. The report exists only while the popup or report tab is open.
-- It has no analytics, telemetry, tracking, or advertising.
-- It does not read your claude.ai conversations, cookies, or credentials. Requests go to claude.ai with your browser's own session, the same way the claude.ai website makes them.
-- It does not sell or transfer user data, and does not use it for any purpose other than showing you the report.
+## Team pages
 
-## Permissions
+Each team's totals are shown at costmaxxing.dev/<team>. Anyone who knows the team name can see the page, and anyone who knows it can add counts to it. Pick a name that's hard to guess if that matters. Counts are kept for about 400 days.
 
-The extension asks for access to two sites only: `claude.ai`, to read the reports above, and `models.dev`, to read public prices. It asks for no other permissions.
+## What we don't do
+
+- No analytics or tracking inside the CLI or the mod. The costmaxxing.dev website uses Vercel Web Analytics, which counts page views without cookies.
+- No selling or sharing of the counts, and no use beyond showing the savings.
+
+## Leaving a team
+
+Run `claude plugin uninstall costmaxxing@costmaxxing`, or clear the team option with `/plugin configure costmaxxing@costmaxxing`. To have a team's data deleted, open an issue at https://github.com/nahoc/costmaxxing-v2/issues.
 
 ## Changes and contact
 
-Changes to this policy are published in this file, with a new date at the top. Questions and reports go to the issue tracker at https://github.com/nahoc/openmaxxing/issues.
+Changes to this policy are published in this file, with a new date at the top. Questions go to https://github.com/nahoc/costmaxxing-v2/issues.

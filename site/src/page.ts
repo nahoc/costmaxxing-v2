@@ -1,14 +1,8 @@
-import { comparisonText, count, escapeHtml as esc, exactUsd, percent, usd } from "@openmaxxing/core";
+import { byFamily, comparisonText, count, escapeHtml as esc, exactUsd, percent, usd } from "@costmaxxing/core";
 import type { Example } from "./example.ts";
 import { PRICE_LADDER, SWE_BENCH } from "./claims.ts";
 import { SEAT } from "./example.ts";
 import { icon, SPRITE, type IconName } from "../../world/icons.ts";
-
-export interface Install {
-  href: string;
-  label: string;
-  zip: boolean;
-}
 
 interface WindowSpec {
   id: string;
@@ -47,51 +41,66 @@ function meter(share: number, anthropic: boolean): string {
   return `<span class="meter"><span class="${anthropic ? "anthropic" : ""}" style="width:${Math.max(1.5, share * 100).toFixed(1)}%"></span></span>`;
 }
 
-export function renderPage({ example, install, css, js }: { example: Example; install: Install; css: string; js: string }): string {
-  const { report, people, subsidized } = example;
+function command(): string {
+  return `<label class="command"><span>npx costmaxxing</span><input class="team-input" name="team" value="your-team" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Your team's name" /></label>`;
+}
+
+const copy = `<button class="button default" type="button" data-copy="">Copy Command</button>`;
+
+export function renderPage({ example, css, js }: { example: Example; css: string; js: string }): string {
+  const { report } = example;
   const { hero } = report;
-  const top = people.slice(0, 5);
-  const most = Math.max(...top.map((p) => p.price));
-  const zipAttrs = install.zip ? ' download data-zip=""' : "";
+  const team = "acme-robotics";
   const [best, glm, fable, flash] = SWE_BENCH.rows;
   if (!best || !glm || !fable || !flash) throw new Error("SWE_BENCH needs four rows");
   const benchLine = `Not a downgrade: ${glm.name} scores ${glm.score.toFixed(1)}% on SWE-bench Verified. ${fable.name} scores ${fable.score.toFixed(1)}%.`;
   const topOutput = Math.max(...PRICE_LADDER.map((m) => m.output));
-  const cta = `<a class="button default" href="${esc(install.href)}"${zipAttrs}>${esc(install.label)}</a>`;
+  const me = report.byUser?.[0];
+  const mine = me ? me.price - me.alt : 0;
+  const teamSaved = hero.price - hero.alt;
+  const money = (n: number) => (n < 100 ? exactUsd(n) : usd(n));
 
   const dialog = `<section class="alert hero" id="hero" aria-labelledby="hero-title">
 <div class="alert-icon">${icon("computer")}</div>
 <div class="alert-text"><h1 id="hero-title">How much can your team save by moving from Anthropic to open&#8209;weight models?</h1>
-<p>Install it as a claude.ai Owner. Your team's real bill opens right away, priced at Anthropic's API rates and on open&#8209;weight models.</p>
-<p>It runs in your browser and uploads nothing.</p>
+<p>Everyone on your team runs this once with your team's name. Claude Code then shows the open&#8209;weight price of every request under the prompt, and your team page adds it all up.</p>
+${command()}
 <p class="claim">${figure("info-bench", esc(benchLine))}</p></div>
-<div class="buttons">${cta}</div>
+<div class="buttons">${copy}</div>
 </section>`;
 
-  const bill = win({
-    id: "bill",
-    title: "Team Bill (example)",
-    className: "bill",
-    label: "Team Bill, an example team with synthetic data",
-    body: `<p class="meta">${esc(report.org ?? "")} · ${count(report.users ?? 0)} people · last ${report.days} days</p>
-<p class="savings">${figure("info-savings", `<span class="big">${usd(hero.year)}</span> a year in savings`)}</p>
+  const term = win({
+    id: "term",
+    title: "Claude Code",
+    className: "term",
+    label: "Claude Code with costmaxxing, an example session",
+    body: `<p class="t-user">&gt; make the rates module read prices from the new API</p>
+<p>● Read(src/billing/rates.ts)</p>
+<p>● Update(src/billing/rates.ts)</p>
+<p class="t-out">⎿&nbsp; Updated with 14 additions and 9 removals</p>
+<p>● Done. Rates now come from /v2/rates, cached for five minutes.</p>
+<div class="t-input">&gt;<span class="caret"></span></div>
+<p class="t-hint">? for shortcuts · costmaxxing · open&#8209;weight savings: session <b data-tick="${(mine / 30).toFixed(2)}">${money(mine / 30)}</b> · 30 days <b data-tick="${mine.toFixed(2)}">${money(mine)}</b> · team <b data-tick="${teamSaved.toFixed(2)}">${money(teamSaved)}</b> (${count(report.users ?? 0)} people)</p>`,
+    status: ["example session"],
+  });
+
+  const models = byFamily(report.models)
+    .map((row) => `<tr><td>${esc(row.label)}</td><td class="num">${usd(row.price)}</td><td class="num">${usd(row.alt)}</td></tr>`)
+    .join("");
+  const teamPage = win({
+    id: "team",
+    title: `costmaxxing.dev/${team}`,
+    className: "teampage",
+    closed: true,
+    label: "An example team page with synthetic data",
+    body: `<p class="savings">${team} could save ${figure("info-savings", `<span class="big">${usd(hero.year)}</span>`)} a&nbsp;year on open&#8209;weight models.</p>
 <div class="figures">
-${figure("info-price", `<span class="mid">${usd(hero.price)}</span> on Anthropic`)}
+${figure("info-price", `<span class="mid">${usd(hero.price)}</span> at API prices`)}
 ${figure("info-alt", `<span class="mid">${usd(hero.alt)}</span> on open&#8209;weight models`)}
-${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savings`)}
+${figure("info-savings", `<span class="mid">Up to ${percent(hero.percent)}</span> you could save`)}
 </div>
-<p class="seatline">${figure("info-seats", report.seats ? `Seats cost ${usd(report.seats.monthly)} a month for usage worth ${usd(report.seats.worth)}.` : "")}</p>
-<table class="people">
-<caption><span class="zebra-chip" aria-hidden="true"></span> uses more than the seat costs</caption>
-<thead><tr><th scope="col">Person</th><th scope="col">Seat</th><th scope="col" class="num">Price</th><th scope="col"><span class="sr">Share of the bill</span></th></tr></thead>
-<tbody>${top
-      .map(
-        (p) =>
-          `<tr><td>${esc(p.name)}</td><td>${p.seat}</td><td class="num">${usd(p.price)}</td><td><span class="share"><span class="fill${p.subsidized ? " over" : ""}" style="width:${Math.max(4, Math.round((p.price / most) * 100))}%"></span></span>${p.subsidized ? '<span class="sr"> (uses more than the seat costs)</span>' : ""}</td></tr>`,
-      )
-      .join("")}</tbody>
-</table>`,
-    status: ["example data"],
+<table class="models"><thead><tr><th scope="col">Model, last 30 days</th><th scope="col" class="num">API price</th><th scope="col" class="num">Open&#8209;weight</th></tr></thead><tbody>${models}</tbody></table>`,
+    status: ["example data", `${count(report.users ?? 0)} people`],
   });
 
   const paint = win({
@@ -104,7 +113,7 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
   });
 
   const desktopIcons: [string, IconName, string][] = [
-    ["bill", "bill", "Team Bill"],
+    ["team", "bill", "Team Page"],
     ["paint", "paint", "Wall Street"],
     ["install", "floppy", "Install"],
   ];
@@ -143,9 +152,9 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
     title: "How It Works",
     className: "how",
     body: `<table class="list"><tbody>
-<tr><td>${icon("floppy")}Add to Chrome</td><td>Sign in to claude.ai as an Owner first.</td></tr>
-<tr><td>${icon("bill")}Your bill opens</td><td>A new tab prices your org's last 30 days.</td></tr>
-<tr><td>${icon("paint")}Download CSV</td><td>Keep the spend report as a file.</td></tr>
+<tr><td>${icon("floppy")}Run the command</td><td>It installs the costmaxxing mod into Claude Code and adds up to a year of history.</td></tr>
+<tr><td>${icon("computer")}Keep coding</td><td>Every request shows its open&#8209;weight price under the prompt, in every session.</td></tr>
+<tr><td>${icon("bill")}Open the team page</td><td>costmaxxing.dev/your-team adds up everyone who ran it.</td></tr>
 </tbody></table>`,
   });
 
@@ -166,16 +175,16 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
 
   const about = win({
     id: "about",
-    title: "openmaxxing Info",
+    title: "costmaxxing Info",
     className: "about",
-    body: `<div class="about-head">${icon("computer")}<div><p class="about-name">openmaxxing</p><p>Chrome extension, open source (MIT)</p></div></div>
-<dl class="facts"><dt>Permissions</dt><dd>claude.ai, models.dev</dd><dt>Uploads</dt><dd>None</dd><dt>Telemetry</dt><dd>None</dd><dt>Source</dt><dd><a href="https://github.com/nahoc/openmaxxing">GitHub</a></dd></dl>`,
+    body: `<div class="about-head">${icon("computer")}<div><p class="about-name">costmaxxing</p><p>Claude Code mod, open source (MIT)</p></div></div>
+<dl class="facts"><dt>Needs</dt><dd>Claude Code 2.1.287 or later</dd><dt>Sends</dt><dd>Model names and token counts</dd><dt>Never</dt><dd>Prompts, code, or keys</dd><dt>Source</dt><dd><a href="https://github.com/nahoc/costmaxxing-v2">GitHub</a></dd></dl>`,
   });
 
   const infos = [
     info("info-price", "Info: Anthropic price", [
       ["What", `The example team's last ${report.days} days at Anthropic's API rates: ${exactUsd(hero.price)}.`],
-      ["From", `A synthetic spend report: ${count(report.users ?? 0)} people, ${count(report.requests)} requests, ${count(report.tokens)} tokens.`],
+      ["From", `Synthetic usage: ${count(report.users ?? 0)} people, ${count(report.requests)} requests, ${count(report.tokens)} tokens.`],
       ["Rates", "models.dev, per million tokens, for each model the team used."],
       ["Math", "Uncached input, output, cache reads, and cache writes, each times its rate."],
     ]),
@@ -195,32 +204,21 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
       ["Source", `<a href="${SWE_BENCH.url}">${SWE_BENCH.source}</a>, ${SWE_BENCH.harness} harness, updated ${SWE_BENCH.updated}.`],
       ["Caveat", "Claude still leads on the hardest long-horizon agent benchmarks."],
     ]),
-    info("info-seats", "Info: seats", [
-      ["Seats", "Premium $125 and Standard $25 a month on monthly billing."],
-      ["Estimate", "Anyone with Fable usage is counted Premium, everyone else Standard. The members export makes it exact."],
-      ["Subsidy", "What the usage is worth at API prices, divided by what the seats cost."],
-    ]),
   ].join("");
 
-  const zipNote = install.zip
-    ? `<section class="window info" id="info-zip" role="dialog" aria-label="Installing from the zip" hidden>
-<div class="titlebar"><button class="close" type="button" aria-label="Close"></button><span class="title">Installing</span></div>
-<div class="body"><p>openmaxxing-extension.zip is downloading. Unzip it, open <code>chrome://extensions</code>, turn on Developer mode, and choose Load unpacked.</p><p>Your bill opens as soon as it loads.</p></div>
-</section>`
-    : "";
-
+  const description = "How much can your team save by moving from Anthropic to open-weight models? One command adds the savings to every Claude Code prompt and adds them up on your team's page.";
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>openmaxxing · how much your team saves on open-weight models</title>
-<meta name="description" content="How much can your team save by moving from Anthropic to open-weight models? One click prices your claude.ai team's real usage, in your browser." />
+<title>costmaxxing · how much your team saves on open-weight models</title>
+<meta name="description" content="${description}" />
 <meta name="theme-color" content="#2e1065" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://costmaxxing.dev/" />
-<meta property="og:title" content="openmaxxing" />
-<meta property="og:description" content="How much can your team save by moving from Anthropic to open-weight models? One click prices your claude.ai team's real usage, in your browser." />
+<meta property="og:title" content="costmaxxing" />
+<meta property="og:description" content="${description}" />
 <meta property="og:image" content="https://costmaxxing.dev/og.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
@@ -233,22 +231,23 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
 </head>
 <body>
 ${SPRITE}
-<div class="boot" aria-hidden="true"><div class="boot-icon">${icon("computer")}</div><div class="welcome">Welcome to openmaxxing.</div></div>
+<div class="boot" aria-hidden="true"><div class="boot-icon">${icon("computer")}</div><div class="welcome">Welcome to costmaxxing.</div></div>
 <div class="screen">
 <header class="menubar">
 <nav aria-label="Menu">
-<div class="menu-group"><button class="menu-title logo" type="button" aria-expanded="false" aria-label="openmaxxing">${icon("logo")}</button>
-<div class="menu" hidden><a href="#about">About openmaxxing…</a></div></div>
+<div class="menu-group"><button class="menu-title logo" type="button" aria-expanded="false" aria-label="costmaxxing">${icon("logo")}</button>
+<div class="menu" hidden><a href="#about">About costmaxxing…</a></div></div>
 <div class="menu-group"><button class="menu-title" type="button" aria-expanded="false">File</button>
-<div class="menu" hidden><a href="${esc(install.href)}"${zipAttrs}>${esc(install.label)}…</a><button type="button" data-open="bill">Open Team Bill</button></div></div>
+<div class="menu" hidden><button type="button" data-copy="">Copy Install Command</button><button type="button" data-open="team">Open Team Page</button></div></div>
 </nav>
-<div class="menubar-right"><a class="menubar-cta" href="${esc(install.href)}"${zipAttrs}>${install.zip ? "Download" : "Add to Chrome"}</a><a href="https://github.com/nahoc/openmaxxing">GitHub</a></div>
+<div class="menubar-right"><button class="menubar-cta" type="button" data-copy="">Copy command</button><a href="https://github.com/nahoc/costmaxxing-v2">GitHub</a></div>
 </header>
 <main>
 <div class="desktop desktop-1">
 <ul class="icons" aria-label="Desktop">${icons}</ul>
 ${dialog}
-${bill}
+${term}
+${teamPage}
 ${paint}
 </div>
 <div class="desktop desktop-2">
@@ -259,11 +258,11 @@ ${chooser}
 ${about}
 </div>
 <section class="shutdown" id="shutdown" aria-labelledby="shutdown-title">
-<div class="shutdown-box"><h2 id="shutdown-title">What will you do when the subsidies end?</h2>${cta}</div>
+<div class="shutdown-box"><h2 id="shutdown-title">What will you do when the subsidies end?</h2>${command()}${copy}</div>
 <p class="colophon">Made with ♥︎ by Cohan Carpentier. Open source under the MIT license. <span>Wall Street, 1915, by Paul Strand, public domain.</span></p>
 </section>
 </main>
-${infos}${zipNote}
+${infos}
 </div>
 <script>${js}</script>
 </body>

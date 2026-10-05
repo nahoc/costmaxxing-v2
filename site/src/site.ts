@@ -94,7 +94,7 @@ async function boot(): Promise<void> {
   await step(500);
   screen?.classList.add("welcoming");
   await step(650);
-  const windows = [$<HTMLElement>("#bill")].filter((w) => w !== null);
+  const windows = [$<HTMLElement>("#term")].filter((w) => w !== null);
   for (const w of [...windows, $<HTMLElement>("#hero")]) if (w) w.style.visibility = "hidden";
   const icons = $$<HTMLElement>(".icons li");
   for (const li of icons) li.style.visibility = "hidden";
@@ -221,7 +221,7 @@ function wire(): void {
       for (const i of $$(".icon.selected")) i.classList.remove("selected");
       if (opener.classList.contains("icon")) opener.classList.add("selected");
       const id = opener.dataset.open ?? "";
-      if (id === "install") $<HTMLAnchorElement>(".hero .button.default")?.click();
+      if (id === "install") $<HTMLInputElement>(".hero .team-input")?.focus();
       else {
         const win = $<HTMLElement>(`#${id}`);
         if (win) void open(win, iconFor(id) ?? opener);
@@ -232,12 +232,6 @@ function wire(): void {
     link.addEventListener("click", (event) => {
       event.preventDefault();
       void openInfo(link.dataset.info ?? "", link);
-    });
-  }
-  for (const link of $$<HTMLAnchorElement>("[data-zip]")) {
-    link.addEventListener("click", () => {
-      const note = $<HTMLElement>("#info-zip");
-      if (note) setTimeout(() => void openInfo("info-zip", link), 250);
     });
   }
   addEventListener("keydown", (event) => {
@@ -253,7 +247,42 @@ function wire(): void {
 }
 
 inject();
+function teamCommand(): void {
+  const inputs = $$<HTMLInputElement>(".team-input");
+  const value = () => inputs[0]?.value || "your-team";
+  for (const input of inputs) {
+    input.addEventListener("focus", () => input.select());
+    input.addEventListener("input", () => {
+      const clean = input.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40);
+      for (const other of inputs) if (other.value !== clean) other.value = clean;
+    });
+  }
+  for (const button of $$<HTMLButtonElement>("[data-copy]")) {
+    const label = button.textContent ?? "";
+    button.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(`npx costmaxxing ${value()}`).catch(() => undefined);
+      button.textContent = "Copied";
+      setTimeout(() => (button.textContent = label), 1600);
+    });
+  }
+}
+
+function ticker(): void {
+  if (still.matches) return;
+  const counters = $$<HTMLElement>("[data-tick]").map((el) => ({ el, value: Number(el.dataset.tick) }));
+  const show = (n: number) => (n < 100 ? `$${n.toFixed(2)}` : n < 1000 ? `$${Math.round(n)}` : `$${(n / 1000).toFixed(1)}k`);
+  setInterval(() => {
+    const step = 0.04 + Math.random() * 0.4;
+    for (const counter of counters) {
+      counter.value += step;
+      counter.el.textContent = show(counter.value);
+    }
+  }, 2400);
+}
+
 wire();
 menus();
+teamCommand();
+ticker();
 if (root.classList.contains("booting")) void boot();
 else finishBoot();

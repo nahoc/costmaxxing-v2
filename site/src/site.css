@@ -31,15 +31,11 @@
   --icon-paper: var(--ink);
 }
 
-.meta {
-  margin-bottom: 10px;
-}
 .figure {
   text-decoration: none;
 }
 .figure:hover .big,
-.figure:hover .mid,
-.seatline .figure:hover {
+.figure:hover .mid {
   background: var(--ink);
   color: var(--paper);
 }
@@ -64,11 +60,7 @@
 .mid {
   font: var(--m) / 1 var(--display);
 }
-.seatline {
-  margin-bottom: 14px;
-}
-.claim .figure,
-.seatline .figure {
+.claim .figure {
   text-decoration: underline dotted;
   text-underline-offset: 4px;
 }
@@ -106,44 +98,104 @@
   font-family: var(--display);
   text-align: left;
 }
-.people {
-  width: 100%;
-  border-collapse: collapse;
-}
-.people caption {
-  margin-bottom: 6px;
-  caption-side: top;
-  text-align: left;
-}
-.people th,
+.models th,
 .list th,
 .facts dt,
 dl.body dt {
   font-family: var(--display);
   font-weight: 400;
 }
-.people th {
+.models {
+  width: 100%;
+  margin-top: 8px;
+  border-collapse: collapse;
+}
+.models th {
   padding: 4px 8px 4px 0;
   border-bottom: var(--u) solid var(--ink);
   text-align: left;
 }
-.people td {
+.models td {
   padding: 2px 8px 2px 0;
 }
-.share {
-  display: block;
-  width: 110px;
-  height: 14px;
-  border: var(--u) solid var(--ink);
-  background: var(--paper) var(--light);
-}
-.share .fill {
-  display: block;
-  height: 100%;
+
+.command {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  margin: 18px 0 14px;
+  padding: 10px 14px;
   background: var(--ink);
+  color: var(--paper);
+  font: var(--m) / 1 var(--text);
 }
-.share .fill.over {
-  background: var(--paper) var(--zebra);
+.command span {
+  white-space: nowrap;
+}
+.alert-text {
+  min-width: 0;
+}
+.team-input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  padding: 2px 4px;
+  border: 0;
+  border-bottom: var(--u) dashed var(--paper);
+  background: none;
+  color: var(--paper);
+  font: inherit;
+  caret-color: var(--paper);
+}
+.team-input:focus {
+  outline: none;
+  background: var(--paper);
+  color: var(--ink);
+}
+.team-input::selection {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.term .body {
+  background: var(--ink);
+  color: var(--paper);
+}
+.term .body p + p {
+  margin-top: 4px;
+}
+.t-user {
+  margin-bottom: 10px;
+}
+.t-out {
+  padding-left: 1.4em;
+}
+.t-input {
+  display: flex;
+  gap: 0.5em;
+  margin-top: 16px;
+  padding: 6px 10px;
+  border: var(--u) solid var(--paper);
+  border-radius: 8px;
+}
+.caret {
+  width: 0.6em;
+  background: var(--paper);
+  animation: blink 1.2s steps(1) infinite;
+}
+.term .t-hint {
+  margin-top: 6px;
+}
+.t-hint b {
+  font-weight: 400;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0 3px;
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
 }
 .paint .body {
   padding: 0;
@@ -286,11 +338,17 @@ dl.body dt {
     width: min(53%, 760px);
     translate: 0 -50%;
   }
-  .bill {
+  .term {
     top: 48px;
-    left: 59%;
+    left: 57%;
     z-index: 2;
-    width: min(30%, 440px);
+    width: min(33%, 480px);
+  }
+  .teampage {
+    top: 120px;
+    left: 52%;
+    z-index: 4;
+    width: min(40%, 560px);
   }
   .paint {
     top: 90px;
@@ -440,8 +498,8 @@ dl.body dt {
   .figures {
     flex-direction: column;
   }
-  .share {
-    width: 64px;
+  .command {
+    font-size: var(--s);
   }
   .list thead {
     display: none;
@@ -476,7 +534,18 @@ dl.body dt {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .paint.painting img {
+  .paint.painting img,
+  .caret {
     animation: none;
   }
+}
+
+.menubar-cta {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.menubar-cta:hover {
+  background: var(--ink);
+  color: var(--paper);
 }

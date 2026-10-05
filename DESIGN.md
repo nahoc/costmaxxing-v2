@@ -1,5 +1,5 @@
 ---
-name: openmaxxing
+name: costmaxxing
 description: The landing page as a 1984 two-color desktop, where a team's Claude bill is a window and the savings question is a system dialog.
 colors:
   screen-ink: "#2e1065"
@@ -47,7 +47,7 @@ components:
     textColor: "{colors.screen-paper}"
 ---
 
-# Design System: openmaxxing
+# Design System: costmaxxing
 
 ## Overview
 
@@ -65,7 +65,7 @@ The first screen opens only what matters most: the savings question with its ins
 - Public-domain photography converted to two colors with Atkinson dithering
 - Three type sizes for the whole page
 
-The landing page and the extension's report share one world. `world/` holds the fonts, the pixel icons, and `world.css` (tokens, windows, dialogs, buttons, menus, meters); each surface adds only its own stylesheet.
+The landing page and the team pages share one world. `world/` holds the fonts, the pixel icons, and `world.css` (tokens, windows, dialogs, buttons, menus, meters); each surface adds only its own stylesheet.
 
 ## Colors
 
@@ -138,27 +138,21 @@ Square everywhere except buttons, which carry gently rounded corners (12px), and
 - **Menu bar:** 44px, paper, sticky. The left side holds the logo menu (About) and File only. The right side holds a GitHub link to the repository, plus an install link on phones. Titles and links invert while open or hovered. Menus are paper boxes with the window shadow, and items invert on hover and focus.
 
 ### Savings dialog (signature component)
-The system dialog carries the page's one question and its one action: the openmaxxing computer icon, the display-size question "How much can your team save by moving from Anthropic to open-weight models?", body copy, and the install button, right-aligned with the default ring. It has no secondary button.
+The system dialog carries the page's one question and its one action: the costmaxxing computer icon, the display-size question "How much can your team save by moving from Anthropic to open-weight models?", body copy, the install command with an editable team name in an ink field, and Copy Command, right-aligned with the default ring. It has no secondary button.
 
 ### App icon
-A compact computer whose screen charts the API price as a zebra-striped bar against two shorter solid bars for the open-weight prices. `world/app-icon.ts` draws it on three grids: 16 for the toolbar and favicon, 24 for the extension page and the site's dialog, and 64 (at 2×, 96px of artwork inside 128) for the store. `site/scripts/app-icon.ts` writes every PNG.
+A compact computer whose screen charts the API price as a zebra-striped bar against two shorter solid bars for the open-weight prices. `world/app-icon.ts` draws it on three grids: 16 for the favicon and menu bar, 24 for the site's dialog, and 64 for large uses. `site/scripts/app-icon.ts` writes every PNG.
+
+### Claude Code window
+An ink terminal window shows an example Claude Code session ending in the real hint line, with the session, 30-day, and team savings on paper chips that step upward every few seconds. Reduced motion holds them still.
 
 ### Get Info
-Any figure in the Team Bill or the report opens an Info window beside it that states the exact amount, its source, and its math. Escape or the close box sends it back into the figure.
-
-### Report memo (extension)
-The report tab is one document window on the checker desktop, titled with the org name and period, with a word-processor ruler under the title bar. It reads as a memo: the yearly savings as a display-size sentence, the seat subsidy as a sentence, three figures in a ruled row, then People, Products and models, Providers, and Forecast and method. Each section opens with a one-sentence finding and sits below a 4px dithered page-break rule. It closes on "What will you do when the subsidies end?" with Download CSV as the default button. The toolbar popup shows the same opening paragraph and figures, with Open Full Report as the default button.
-
-### Sheet
-Report tables: display-face headers over a 2px rule, dotted 2px rules between rows, numbers right-aligned in tabular figures. Bars are meters; a person's usage bar is solid up to their seat price and zebra past it. Bars drop below 860px.
-
-### Progress dialog
-Every non-report state is a system alert. Loading names each real step of the fetch above a dithered progress bar that advances in four steps, and the cursor becomes a wristwatch. Signed out, not an Owner, and failed requests use the caution icon, name the problem, and offer the recovery as the default button.
+Any figure in the team page window opens an Info window beside it that states the exact amount, its source, and its math. Escape or the close box sends it back into the figure.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** compute every number on the page with openmaxxing's own core, and label example data as an example.
+- **Do** compute every number on the page with costmaxxing's own core, and label example data as an example.
 - **Do** draw new grays as dither tiles on the 2px pixel unit.
 - **Do** keep stepped motion settled for reduced motion, which shows the finished desktop with no boot.
 - **Do** convert any new photograph to the two colors with `site/scripts/dither.ts` and embed its origin.

@@ -453,7 +453,7 @@ function savings(t) {
   return Math.abs(n) < 100 ? exactUsd(n) : usd(n);
 }
 function statusParts(session2, month2, team2, gain2 = 0) {
-  const parts = [["costmaxxing", "brand"], ["  Open-weight would save: ", "label"], [savings(session2), "amount"]];
+  const parts = [["costmaxxing", "brand"], ["  Savings if you used open-weight models: ", "label"], [savings(session2), "amount"]];
   if (gain2 > 0) parts.push([` \u25B2 +${exactUsd(gain2)}`, "gain"]);
   parts.push([" this session", "label"], [" \u2502 ", "divider"], [savings(month2), "amount"], [" last 30 days (you)", "label"]);
   if (team2 === "unreachable") parts.push([" \u2502 ", "divider"], ["team server unreachable", "warn"]);

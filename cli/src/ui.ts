@@ -3,6 +3,7 @@ const paint = (code: string) => (text: string) => (color ? `\x1b[${code}m${text}
 
 export const purple = paint("38;2;141;113;214");
 export const green = paint("32");
+export const yellow = paint("33");
 export const bold = paint("1");
 export const dim = paint("2");
 

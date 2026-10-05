@@ -16,7 +16,7 @@ import { loadConfig } from "./config.ts";
 import { connectSettings, serve } from "./gateway.ts";
 import { createInterface } from "node:readline/promises";
 import { ask, dim } from "./ui.ts";
-import { adminTeam, codexHook, currentTeam, describeTeam, joinTeam, leaveTeam, startTeam } from "./join.ts";
+import { adminTeam, codexHook, connections, currentTeam, describeTeam, joinTeam, leaveTeam, startTeam } from "./join.ts";
 import { launch } from "./launch.ts";
 import { personalReport } from "./personal.ts";
 import { prices } from "./prices.ts";
@@ -169,7 +169,7 @@ async function main(argv: string[]): Promise<void> {
       const team = await currentTeam();
       if (team === undefined) return void process.stdout.write("You're not on a team. Run npx costmaxxing to start or join one.\n");
       if (team === "gone") return void process.stdout.write("Your saved team no longer exists. Run npx costmaxxing to start or join one.\n");
-      process.stdout.write(`${describeTeam(team)}\n`);
+      process.stdout.write(`${describeTeam(team, await connections(team.id))}\n`);
       if (interactive()) openBrowser(team.url);
       return;
     }
@@ -209,7 +209,7 @@ async function main(argv: string[]): Promise<void> {
         const rl = createInterface({ input: process.stdin, output: process.stdout });
         const team = await currentTeam();
         if (team && team !== "gone") {
-          process.stdout.write(`${describeTeam(team)}\n\n`);
+          process.stdout.write(`${describeTeam(team, await connections(team.id))}\n\n`);
           const answer = (await rl.question(ask("Open the team page?") + dim("(Enter to open · another team ID to switch · leave to leave) "))).trim();
           rl.close();
           if (answer === "leave") return void process.stdout.write(`${await leaveTeam()}\n`);

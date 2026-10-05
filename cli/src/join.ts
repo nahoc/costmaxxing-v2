@@ -6,7 +6,7 @@ import { join as joinPath } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { addTokens, codexParser, count, exactUsd, ZERO, type RequestRecord, type TeamPricing, type TeamTotals } from "@costmaxxing/core";
 import { loadConfig } from "./config.ts";
-import { box, bold, dim, green, purple, say, step } from "./ui.ts";
+import { box, bold, dim, green, purple, say, step, yellow } from "./ui.ts";
 import { HOME, readLogs } from "./usage.ts";
 
 const CODEX_HOME = () => process.env.CODEX_HOME ?? joinPath(homedir(), ".codex");
@@ -257,6 +257,41 @@ export interface CurrentTeam {
   totals: TeamTotals;
 }
 
+type Link = { app: string; ok: boolean; detail: string };
+
+export async function connections(team: string): Promise<Link[]> {
+  const fix = `run npx costmaxxing ${team}`;
+  const links: Link[] = [];
+  try {
+    const plugins = JSON.parse(claude(["plugin", "list", "--json"])) as { id: string; version?: string; enabled?: boolean }[];
+    const mod = plugins.find((p) => p.id === "costmaxxing@costmaxxing");
+    const options = mod?.enabled ? (JSON.parse(claude(["plugin", "configure", "costmaxxing@costmaxxing", "--json"])) as { inputs?: { team?: string } }) : {};
+    const configured = options.inputs?.team ?? "";
+    links.push(
+      !mod
+        ? { app: "Claude Code", ok: false, detail: `mod not installed · ${fix}` }
+        : !mod.enabled
+          ? { app: "Claude Code", ok: false, detail: "mod is disabled · claude plugin enable costmaxxing@costmaxxing" }
+          : configured !== team
+            ? { app: "Claude Code", ok: false, detail: `mod reports to ${configured || "no team"} · ${fix}` }
+            : { app: "Claude Code", ok: true, detail: `mod ${mod.version ?? ""}`.trim() },
+    );
+  } catch {
+    links.push({ app: "Claude Code", ok: false, detail: "claude isn't on your PATH" });
+  }
+  if (await exists(CODEX_HOME())) {
+    const config = await readJson<{ hooks?: Record<string, HookGroup[]> }>(joinPath(CODEX_HOME(), "hooks.json"), {});
+    links.push(config.hooks?.Stop?.some(isOurHook) ? { app: "Codex", ok: true, detail: "hook" } : { app: "Codex", ok: false, detail: `hook missing · ${fix}` });
+  }
+  return links;
+}
+
+function reconfigure(team: string, user: string | undefined): void {
+  try {
+    claude(["plugin", "configure", "costmaxxing@costmaxxing", "--values-stdin"], JSON.stringify({ team, ...(user && { user }) }));
+  } catch {}
+}
+
 async function follow(team: SavedTeam): Promise<string> {
   const id = team.id ?? "";
   if (!team.user) return id;
@@ -268,6 +303,7 @@ async function follow(team: SavedTeam): Promise<string> {
   if (response?.status !== 410) return id;
   const { moved } = (await response.json()) as { moved: string };
   await saveTeam({ ...team, id: moved });
+  reconfigure(moved, team.user);
   return moved;
 }
 
@@ -297,6 +333,7 @@ export async function adminTeam(action: "rotate" | "delete" | "pricing"): Promis
   const body = (await response.json()) as { id?: string; pricing?: TeamPricing | null };
   if (action === "rotate" && body.id) {
     await saveTeam({ ...saved, id: body.id });
+    reconfigure(body.id, saved.user);
     return [
       `New team ID: ${body.id}. Team page: ${BASE()}/${body.id}`,
       "Everyone who already joined follows automatically. Anyone holding only the old ID is locked out.",
@@ -312,13 +349,15 @@ export async function adminTeam(action: "rotate" | "delete" | "pricing"): Promis
     : "The team now uses the default open-weight plan (your config file has no [[scenario]]).";
 }
 
-export function describeTeam(team: CurrentTeam): string {
+export function describeTeam(team: CurrentTeam, links: Link[]): string {
   const { totals } = team;
   const saved = totals.price - totals.alt;
   return [
     "",
     `  ${purple("costmaxxing")}  ${dim("·")}  ${bold(team.name)}`,
     "",
+    ...links.map(({ app, ok, detail }) => `  ${ok ? green("✓") : yellow("✗")} ${`${app} ${ok ? "connected" : "not connected"}`.padEnd(32)}${dim(detail)}`),
+    ...(links.length > 0 ? [""] : []),
     totals.requests > 0
       ? box(`Team, last 30 days · ${totals.people} ${totals.people === 1 ? "person" : "people"}`, [
           `${bold(exactUsd(totals.price))} at API prices`,

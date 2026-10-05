@@ -51,7 +51,19 @@ async function setup(version: string) {
   const root = await mkdtemp(join(tmpdir(), "costmaxxing-join-"));
   const calls = join(root, "calls.log");
   const fake = join(root, "claude");
-  await writeFile(fake, `#!/bin/sh\necho "$*" >> "${calls}"\nif [ "$1" = "--version" ]; then echo "${version}"; fi\nif [ "$2" = "configure" ]; then cat >> "${calls}"; echo; fi\n`);
+  const options = join(root, "options.json");
+  await writeFile(
+    fake,
+    [
+      "#!/bin/sh",
+      `echo "$*" >> "${calls}"`,
+      `if [ "$1" = "--version" ]; then echo "${version}"; fi`,
+      `if [ "$2 $3" = "list --json" ]; then echo '[{"id":"costmaxxing@costmaxxing","version":"1.13.0","enabled":true}]'; exit; fi`,
+      `if [ "$2 $4" = "configure --json" ]; then printf '{"inputs":%s}' "$(cat "${options}")"; exit; fi`,
+      `if [ "$2" = "configure" ]; then tee "${options}" >> "${calls}"; echo >> "${calls}"; fi`,
+      "",
+    ].join("\n"),
+  );
   await chmod(fake, 0o755);
   const codexHome = join(root, "codex");
   await mkdir(join(codexHome, "sessions"), { recursive: true });
@@ -201,8 +213,13 @@ test("costmaxxing team shows the joined team's page link and totals, and says wh
   assert.match(none.stdout, /You're not on a team/);
   assert.equal((await s.run()).code, 0);
   const shown = await s.run(["team"]);
+  await writeFile(join(s.root, "options.json"), JSON.stringify({ team: "other-22222-33333" }));
+  const elsewhere = await s.run(["team"]);
   s.close();
+  assert.match(elsewhere.stdout, /✗ Claude Code not connected +mod reports to other-22222-33333 · run npx costmaxxing acme-7kq3x-m9pz2/);
   assert.match(shown.stdout, /costmaxxing {2}· {2}Acme/);
+  assert.match(shown.stdout, /✓ Claude Code connected +mod 1\.13\.0/);
+  assert.match(shown.stdout, /✓ Codex connected +hook/);
   assert.match(shown.stdout, /Team page +http:\/\/127\.0\.0\.1:\d+\/acme-7kq3x-m9pz2/);
   assert.match(shown.stdout, /Invite +npx costmaxxing acme-7kq3x-m9pz2/);
 });

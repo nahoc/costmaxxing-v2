@@ -22,6 +22,11 @@ export type TeamResult =
 
 type Fetch = (url: string, init?: RequestInit) => Promise<Response>;
 
+export interface Step {
+  progress: number;
+  text: string;
+}
+
 const CLAUDE = "https://claude.ai/api/organizations";
 
 function localDate(d: Date): string {
@@ -52,9 +57,10 @@ async function catalog(get: Fetch): Promise<ModelPrice[]> {
   return parseModelsDev(snapshot);
 }
 
-export async function teamReport(get: Fetch, now: Date): Promise<TeamResult> {
+export async function teamReport(get: Fetch, now: Date, onStep: (step: Step) => void = () => {}): Promise<TeamResult> {
   const claude = (url: string) => get(url, { credentials: "include" });
   const prices = catalog(get);
+  onStep({ progress: 0.1, text: "Finding your organization…" });
   const list = await claude(CLAUDE).catch(() => undefined);
   if (!list) return { kind: "failed", request: "GET /api/organizations", status: "network error" };
   if (list.status === 401 || list.status === 403) return { kind: "signed-out" };
@@ -63,6 +69,7 @@ export async function teamReport(get: Fetch, now: Date): Promise<TeamResult> {
   let failure: TeamResult | undefined;
   for (const org of orgs(await list.json().catch(() => undefined))) {
     const request = `GET /api/organizations/${org.uuid}/analytics/spend-report-export`;
+    onStep({ progress: 0.35, text: `Fetching the spend report for ${org.name}…` });
     const response = await claude(`${CLAUDE}/${org.uuid}/analytics/spend-report-export?start_date=${from}&end_date=${to}`).catch(
       () => undefined,
     );
@@ -80,11 +87,15 @@ export async function teamReport(get: Fetch, now: Date): Promise<TeamResult> {
       failure ??= { kind: "failed", request, status: "not a spend report" };
       continue;
     }
+    onStep({ progress: 0.6, text: "Checking seats…" });
     const members = await claude(`${CLAUDE}/${org.uuid}/members/export`).catch(() => undefined);
     const seats = members?.ok ? parseMembers(await members.text()) : undefined;
+    onStep({ progress: 0.8, text: "Loading prices from models.dev…" });
+    const book = priceBook(await prices);
+    onStep({ progress: 0.95, text: `Pricing ${rows.reduce((n, row) => n + row.requests, 0).toLocaleString("en-US")} requests…` });
     const report = buildReport({
       dataset: { kind: "spend", rows, from, to, org: org.name, recent: true },
-      book: priceBook(await prices),
+      book,
       seats,
     });
     return { kind: "report", report, csv, filename: `spend-report-${org.uuid}-${from}-to-${to}.csv` };

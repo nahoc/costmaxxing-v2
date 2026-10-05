@@ -103,7 +103,28 @@ function fromGrid(grid: Grid): Bitmap {
 const logo = fromGrid(APP_ICON.small());
 const computer = fromGrid(APP_ICON.medium());
 
-const BITMAPS = { computer, readMe, bill, paint, floppy, logo };
+const caution = new Bitmap(24).art(1, 2, [
+  "..........##..........",
+  ".........#ww#.........",
+  ".........#ww#.........",
+  "........#wwww#........",
+  "........#w##w#........",
+  ".......#ww##ww#.......",
+  ".......#ww##ww#.......",
+  "......#www##www#......",
+  "......#www##www#......",
+  ".....#wwww##wwww#.....",
+  ".....#wwww##wwww#.....",
+  "....#wwwww##wwwww#....",
+  "....#wwwwwwwwwwww#....",
+  "...#wwwwww##wwwwww#...",
+  "...#wwwwww##wwwwww#...",
+  "..#wwwwwwwwwwwwwwww#..",
+  "..####################",
+  "...###################",
+]);
+
+const BITMAPS = { computer, readMe, bill, paint, floppy, logo, caution };
 export type IconName = keyof typeof BITMAPS;
 
 export const SPRITE = `<svg width="0" height="0" style="position:absolute" aria-hidden="true">${Object.entries(BITMAPS)
@@ -140,6 +161,29 @@ const ARROW = [
   ".....#ww#.......",
   "......##........",
 ];
+
+const WATCH = [
+  "....######......",
+  "....#wwww#......",
+  "....######......",
+  "...########.....",
+  "..#wwwwwwww#....",
+  ".#ww#wwwwwww#...",
+  ".#wwww#wwwww#...",
+  ".#wwwww#wwwww#..",
+  ".#wwwww###www#..",
+  ".#wwwwwwwwwww#..",
+  "..#wwwwwwwww#...",
+  "...#########....",
+  "....######......",
+  "....#wwww#......",
+  "....######......",
+  "................",
+];
+
+export function watchCursor(): string {
+  return `url("${dataUri(new Bitmap(16).art(0, 0, WATCH), 32)}") 8 8, progress`;
+}
 
 export function cursor(): string {
   return `url("${dataUri(new Bitmap(16).art(0, 0, ARROW), 32)}") 1 1, default`;

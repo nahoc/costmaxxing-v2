@@ -1,20 +1,11 @@
 import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { crc32, deflateRawSync } from "node:zlib";
-import { REPORT_CSS } from "@costmaxxing/core";
 import { build } from "esbuild";
+import { cursor, watchCursor } from "../world/icons.ts";
 
-const dist = new URL("dist/", import.meta.url).pathname;
-
-const PAGE_CSS = `${REPORT_CSS}
-body { margin: 0; }
-body[data-page="popup"] { width: 760px; }
-.cmx a, .cmx code { color: inherit; }
-.actions { display: flex; gap: 8px; justify-content: flex-end; max-width: 1080px; margin: 0 auto; padding: 12px 16px 0; }
-.button { font: 500 12px/1 ui-sans-serif, system-ui, sans-serif; color: inherit; text-decoration: none; border: 1px solid #c9c9c9; border-radius: 6px; padding: 7px 10px; }
-.button:hover { background: rgba(127, 127, 127, 0.12); }
-.status { color: #6b6b6b; padding: 16px; font: 13px ui-sans-serif, system-ui, sans-serif; }
-`;
+const here = (path: string) => new URL(path, import.meta.url).pathname;
+const dist = here("dist/");
 
 function zip(entries: { name: string; data: Buffer }[]): Buffer {
   const DOS_DATE_1980 = 0x21;
@@ -61,19 +52,21 @@ function zip(entries: { name: string; data: Buffer }[]): Buffer {
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 await build({
-  entryPoints: ["page", "background"].map((name) => new URL(`src/${name}.ts`, import.meta.url).pathname),
+  entryPoints: ["page", "background"].map((name) => here(`src/${name}.ts`)),
   outdir: dist,
   bundle: true,
   format: "iife",
   target: "chrome120",
   minifySyntax: true,
 });
-await cp(new URL("static/", import.meta.url).pathname, dist, { recursive: true });
-await writeFile(`${dist}page.css`, PAGE_CSS);
+await cp(here("static/"), dist, { recursive: true });
+await cp(here("../world/fonts/"), `${dist}fonts/`, { recursive: true });
+const css = [await readFile(here("../world/world.css"), "utf8"), await readFile(here("src/report.css"), "utf8")];
+await writeFile(`${dist}page.css`, `${css.join("\n")}\nbody { --cursor: ${cursor()}; --watch: ${watchCursor()}; }\n`);
 
 const files = (await readdir(dist, { recursive: true, withFileTypes: true }))
   .filter((entry) => entry.isFile())
   .map((entry) => relative(dist, join(entry.parentPath, entry.name)))
   .sort();
 const entries = await Promise.all(files.map(async (name) => ({ name, data: await readFile(join(dist, name)) })));
-await writeFile(new URL("costmaxxing-extension.zip", import.meta.url).pathname, zip(entries));
+await writeFile(here("costmaxxing-extension.zip"), zip(entries));

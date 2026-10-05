@@ -453,13 +453,13 @@ function savings(t) {
   return Math.abs(n) < 100 ? exactUsd(n) : usd(n);
 }
 function statusParts(session2, month2, team2, gain2 = 0) {
-  const parts = [[" costmaxxing ", "brand"], [" Current session: ", "label"], [savings(session2), "amount"]];
+  const parts = [["costmaxxing", "brand"], ["  Open-weight would save: ", "label"], [savings(session2), "amount"]];
   if (gain2 > 0) parts.push([` \u25B2 +${exactUsd(gain2)}`, "gain"]);
-  parts.push([" \u2502 ", "divider"], ["Last 30 days: ", "label"], [savings(month2), "amount"], [" (you)", "label"]);
+  parts.push([" this session", "label"], [" \u2502 ", "divider"], [savings(month2), "amount"], [" last 30 days (you)", "label"]);
   if (team2 === "unreachable") parts.push([" \u2502 ", "divider"], ["team server unreachable", "warn"]);
   else if (team2 === "missing") parts.push([" \u2502 ", "divider"], ["team ID not found", "warn"]);
   else if (team2) {
-    parts.push([" \u2013 ", "label"], [savings(team2), "amount"], [" (team)", "label"]);
+    parts.push([" \xB7 ", "label"], [savings(team2), "amount"], [" (team)", "label"]);
     parts.push([" \u2502 ", "divider"], [`${count(team2.people)} ${team2.people === 1 ? "person" : "people"}`, "label"]);
   }
   return parts;
@@ -489,7 +489,7 @@ var pending = [];
 var queue = Promise.resolve();
 var gain = { amount: 0, until: 0 };
 var TONES = {
-  brand: { bold: true, color: "#ffffff", backgroundColor: "#8d71d6" },
+  brand: { bold: true, color: "#8d71d6" },
   amount: { bold: true, color: "success" },
   label: { dimColor: true },
   divider: { color: "#8d71d6" },

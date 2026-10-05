@@ -74,13 +74,13 @@ export type Segment = [text: string, tone: Tone];
 export type TeamState = TeamTotals | "unreachable" | "missing" | undefined;
 
 export function statusParts(session: Tally, month: Tally, team: TeamState, gain = 0): Segment[] {
-  const parts: Segment[] = [[" costmaxxing ", "brand"], [" Current session: ", "label"], [savings(session), "amount"]];
+  const parts: Segment[] = [["costmaxxing", "brand"], ["  Open-weight would save: ", "label"], [savings(session), "amount"]];
   if (gain > 0) parts.push([` ▲ +${exactUsd(gain)}`, "gain"]);
-  parts.push([" │ ", "divider"], ["Last 30 days: ", "label"], [savings(month), "amount"], [" (you)", "label"]);
+  parts.push([" this session", "label"], [" │ ", "divider"], [savings(month), "amount"], [" last 30 days (you)", "label"]);
   if (team === "unreachable") parts.push([" │ ", "divider"], ["team server unreachable", "warn"]);
   else if (team === "missing") parts.push([" │ ", "divider"], ["team ID not found", "warn"]);
   else if (team) {
-    parts.push([" – ", "label"], [savings(team), "amount"], [" (team)", "label"]);
+    parts.push([" · ", "label"], [savings(team), "amount"], [" (team)", "label"]);
     parts.push([" │ ", "divider"], [`${count(team.people)} ${team.people === 1 ? "person" : "people"}`, "label"]);
   }
   return parts;

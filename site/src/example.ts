@@ -64,13 +64,15 @@ export interface Example {
   rows: SpendRow[];
 }
 
-const SEAT = { Premium: 125, Standard: 25 };
+export const SEAT = { Premium: 125, Standard: 25 };
+
+export const book = priceBook(parseModelsDev(snapshot));
 
 export function example(): Example {
   const rows = parseSpendReport(exampleCsv());
   const report = buildReport({
     dataset: { kind: "spend", rows, from: "2026-09-04", to: "2026-10-03", org: "Acme Robotics", recent: true },
-    book: priceBook(parseModelsDev(snapshot)),
+    book,
   });
   const premium = new Set(rows.filter((row) => /fable/i.test(row.model)).map((row) => row.user));
   const people = (report.byUser ?? []).map((row): Person => {

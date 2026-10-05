@@ -99,7 +99,7 @@ Two values, no exceptions. Tone comes from pattern, not from a third color.
 
 ## Layout
 
-At 1100px and wider, each desktop is a positioned field with windows at fixed offsets as a share of the width. The first desktop opens two things only: the savings dialog, vertically centered on the left (4% from the edge, up to 760px wide), and the Team Bill on the right (from 59%, up to 440px wide). They do not overlap. The Wall Street window starts closed and opens from its icon. The icon column runs down the right edge. The second desktop is 1000px tall and holds How It Works, Providers, and Info. Below 1100px the windows stack in one column with 12px side margins and the icons drop away.
+At 1100px and wider, each desktop is a positioned field with windows at fixed offsets as a share of the width. The first desktop opens two things only: the savings dialog, vertically centered on the left (4% from the edge, up to 760px wide), and the Team Bill on the right (from 59%, up to 440px wide). They do not overlap. The Wall Street window starts closed and opens from its icon. The icon column runs down the right edge. The second desktop is 1780px tall and holds The Subsidy and Benchmarks first, then How It Works, Providers, and Info. Below 1100px the windows stack in one column with 12px side margins and the icons drop away.
 
 The pixel unit is 2px: line weights, dither cells, and drag snapping are all multiples of it. Nothing moves on scroll.
 

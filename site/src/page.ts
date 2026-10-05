@@ -1,5 +1,7 @@
 import { comparisonText, count, escapeHtml as esc, exactUsd, percent, seatText, usd } from "@costmaxxing/core";
 import type { Example } from "./example.ts";
+import { PRICE_LADDER, SWE_BENCH } from "./claims.ts";
+import { SEAT } from "./example.ts";
 import { icon, SPRITE, type IconName } from "./icons.ts";
 
 export interface Install {
@@ -37,19 +39,34 @@ function figure(target: string, html: string): string {
   return `<a class="figure" href="#${target}" data-info="${target}">${html}</a>`;
 }
 
+function rate(perMillion: number): string {
+  return Number.isInteger(perMillion) ? `$${perMillion}` : `$${perMillion.toFixed(2)}`;
+}
+
+function meter(share: number, anthropic: boolean): string {
+  return `<span class="meter"><span class="${anthropic ? "anthropic" : ""}" style="width:${Math.max(1.5, share * 100).toFixed(1)}%"></span></span>`;
+}
+
 export function renderPage({ example, install, css, js, zipSize }: { example: Example; install: Install; css: string; js: string; zipSize: string }): string {
   const { report, people, subsidized } = example;
   const { hero } = report;
   const top = people.slice(0, 5);
   const most = Math.max(...top.map((p) => p.price));
   const zipAttrs = install.zip ? ' download data-zip=""' : "";
+  const [best, glm, fable, flash] = SWE_BENCH.rows;
+  if (!best || !glm || !fable || !flash) throw new Error("SWE_BENCH needs four rows");
+  const benchLine = `Not a downgrade: ${glm.name} scores ${glm.score.toFixed(1)}% on SWE-bench Verified, ahead of ${fable.name} at ${fable.score.toFixed(1)}%.`;
+  const [fable51, opus55] = PRICE_LADDER;
+  if (!fable51 || !opus55) throw new Error("PRICE_LADDER needs Fable and Opus");
+  const topOutput = Math.max(...PRICE_LADDER.map((m) => m.output));
   const cta = `<a class="button default" href="${esc(install.href)}"${zipAttrs}>${esc(install.label)}</a>`;
 
   const dialog = `<section class="alert hero" id="hero" aria-labelledby="hero-title">
 <div class="alert-icon">${icon("computer")}</div>
 <div class="alert-text"><h1 id="hero-title">How much can your team save by moving from Anthropic to open&#8209;weight models?</h1>
 <p>Add costmaxxing to Chrome as a claude.ai Owner, and your team's real bill opens on its own: every person, product, and model at Anthropic's API prices, next to the same usage on open&#8209;weight models.</p>
-<p>It runs in your browser. Nothing is uploaded.</p></div>
+<p>It runs in your browser. Nothing is uploaded.</p>
+<p class="claim">${figure("info-bench", esc(benchLine))}</p></div>
 <div class="buttons">${cta}</div>
 </section>`;
 
@@ -96,6 +113,36 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
   const icons = desktopIcons
     .map(([id, name, label]) => `<li><button class="icon" type="button" data-open="${id}">${icon(name)}<span>${label}</span></button></li>`)
     .join("");
+
+  const subsidy = win({
+    id: "subsidy",
+    title: "The Subsidy",
+    className: "subsidy",
+    body: `<p class="lead">Anthropic's API prices are wild.</p>
+<table class="ladder"><caption class="sr">Output price per million tokens</caption><tbody>${PRICE_LADDER.map(
+      (m) => `<tr><td>${esc(m.name)}</td><td>${meter(m.output / topOutput, m.anthropic)}</td><td class="num">${rate(m.output)}</td></tr>`,
+    ).join("")}</tbody></table>
+<p>${esc(fable51.name)} costs ${rate(fable51.input)} per million input tokens and ${rate(fable51.output)} per million output tokens. ${esc(opus55.name)} costs ${rate(opus55.input)} and ${rate(opus55.output)}. ${esc(glm.name)} costs ${rate(glm.input)} and ${rate(glm.output)}.</p>
+<p>claude.ai seats hide those prices. A Premium seat costs $${SEAT.Premium} a month, and the usage inside it never shows up on the bill. For a busy engineer, that usage can be worth several times the seat at API prices. That gap is the subsidy, and it's why the seats feel like a great deal right now.</p>
+<p>Subsidies like this rarely last. When seat prices move toward API prices, you'll want to know your team's real bill, and what the same work costs on open&#8209;weight models.</p>`,
+    status: ["output price per million tokens", "public rates"],
+  });
+
+  const bench = win({
+    id: "bench",
+    title: "Benchmarks",
+    className: "bench",
+    body: `<p class="lead">Not a downgrade.</p>
+<p>SWE-bench Verified asks a model to fix 500 real GitHub issues. ${esc(glm.name)} lands ${(best.score - glm.score).toFixed(1)} points behind ${esc(best.name)} and ahead of ${esc(fable.name)}, at a fraction of the price.</p>
+<table class="scores"><thead><tr><th scope="col">Model</th><th scope="col" class="num">Score</th><th scope="col"><span class="sr">Score bar</span></th><th scope="col" class="num">Output</th></tr></thead><tbody>${SWE_BENCH.rows
+      .map(
+        (m) =>
+          `<tr><td>${esc(m.name)}</td><td class="num">${m.score.toFixed(1)}%</td><td>${meter(m.score / 100, m.anthropic)}</td><td class="num">${rate(m.output)}</td></tr>`,
+      )
+      .join("")}</tbody></table>
+<p><a href="${SWE_BENCH.url}">${SWE_BENCH.source}</a>, ${SWE_BENCH.harness} harness, updated ${SWE_BENCH.updated}. Output is the price per million output tokens. Claude still leads on the hardest long-horizon agent benchmarks.</p>`,
+    status: ["SWE-bench Verified", `source: ${SWE_BENCH.source}`],
+  });
 
   const how = win({
     id: "how",
@@ -151,6 +198,12 @@ ${figure("info-savings", `<span class="mid">${percent(hero.percent)}</span> savi
       ["Month", `${usd(hero.month)} saved over the last ${report.days} days.`],
       ["Year", `${usd(hero.year)}: the ${report.days}-day savings, times 365 / ${report.days}.`],
       ["Share", `${percent(hero.percent)} of the price at Anthropic's API rates.`],
+    ]),
+    info("info-bench", "Info: SWE-bench Verified", [
+      ["What", "500 real GitHub issues. The model must produce a patch that passes the project's tests."],
+      ["Scores", SWE_BENCH.rows.map((m) => `${esc(m.name)} ${m.score.toFixed(1)}%`).join(", ")],
+      ["Source", `<a href="${SWE_BENCH.url}">${SWE_BENCH.source}</a>, ${SWE_BENCH.harness} harness, updated ${SWE_BENCH.updated}.`],
+      ["Caveat", "Claude still leads on the hardest long-horizon agent benchmarks."],
     ]),
     info("info-seats", "Info: seats", [
       ["Seats", "Premium $125 and Standard $25 a month on monthly billing."],
@@ -209,6 +262,8 @@ ${bill}
 ${paint}
 </div>
 <div class="desktop desktop-2">
+${subsidy}
+${bench}
 ${how}
 ${chooser}
 ${about}

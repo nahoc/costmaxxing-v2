@@ -390,9 +390,53 @@ code {
 .seatline {
   margin-bottom: 14px;
 }
+.claim .figure,
 .seatline .figure {
   text-decoration: underline dotted;
   text-underline-offset: 4px;
+}
+.claim .figure:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+.lead {
+  margin-bottom: 14px;
+  font: var(--m) / 1 var(--display);
+}
+.ladder,
+.scores {
+  width: 100%;
+  margin: 4px 0 16px;
+  border-collapse: collapse;
+}
+.ladder td,
+.scores td {
+  padding: 3px 12px 3px 0;
+  white-space: nowrap;
+}
+.ladder td:nth-child(2),
+.scores td:nth-child(3) {
+  width: 100%;
+}
+.scores th {
+  padding: 4px 12px 4px 0;
+  border-bottom: var(--u) solid var(--ink);
+  font-family: var(--display);
+  text-align: left;
+}
+.meter {
+  display: block;
+  height: 14px;
+  border: var(--u) solid var(--ink);
+  background: var(--paper) var(--light);
+}
+.meter span {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+}
+.meter .anthropic {
+  background: var(--paper) var(--zebra);
 }
 .people {
   width: 100%;
@@ -642,21 +686,31 @@ dl.body dd {
     width: 564px;
   }
   .desktop-2 {
-    height: 1000px;
+    height: 1780px;
   }
-  .how {
+  .subsidy {
     top: 70px;
-    left: 5%;
+    left: 4%;
     width: min(50%, 720px);
   }
+  .bench {
+    top: 150px;
+    left: 57%;
+    width: min(40%, 600px);
+  }
+  .how {
+    top: 760px;
+    left: 8%;
+    width: min(49%, 720px);
+  }
   .chooser {
-    top: 110px;
+    top: 820px;
     left: 57%;
     width: min(40%, 600px);
   }
   .about {
-    top: 660px;
-    left: 24%;
+    top: 1370px;
+    left: 28%;
     width: 440px;
   }
 

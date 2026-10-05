@@ -44,7 +44,8 @@ It reads a claude.ai organization's own spend report through the Owner's browser
 ## Evidence on Hand
 
 - The product itself: the landing page's Team Bill window is computed by costmaxxing's core from a synthetic team (`site/src/example.ts`). Any page demonstration uses synthetic data and is labeled as an example.
-- No customers, testimonials, press, benchmarks, or install counts exist. Do not invent them.
+- Benchmark scores come from Vals AI's SWE-bench Verified leaderboard (https://www.vals.ai/benchmarks/swebench, updated 2026-09-01, archived): Claude Opus 5 97.0%, GLM-5.3 95.4%, Claude Fable 5 95.0%, GLM-5.3 Flash 92.0%. Pages that cite them name the source and date and note that Claude still leads on the hardest long-horizon agent benchmarks. Recorded in `site/src/claims.ts`.
+- No customers, testimonials, press, or install counts exist. Do not invent them.
 
 ## Product Principles
 

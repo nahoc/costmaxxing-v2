@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { copyFile, mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { homedir, hostname, userInfo } from "node:os";
 import { join as joinPath } from "node:path";
 import { createInterface } from "node:readline/promises";
@@ -306,4 +306,36 @@ export function describeTeam(team: CurrentTeam): string {
       : "No usage on the team page yet.",
     `Teammates join with: npx costmaxxing ${team.id}`,
   ].join("\n");
+}
+
+const isOurHook = (group: HookGroup) => group.hooks?.some((h) => h.command?.includes(" codex-hook") && h.command.includes("costmaxxing"));
+
+export async function leaveTeam(): Promise<string> {
+  const saved = await readJson<SavedTeam>(TEAM_FILE(), {});
+  const lines: string[] = [];
+  try {
+    claude(["plugin", "configure", "costmaxxing@costmaxxing", "--values-stdin"], JSON.stringify({ team: "", user: "" }));
+    lines.push("Claude Code: the costmaxxing mod is back to your own numbers only. Restart Claude Code to apply it.");
+  } catch {
+    lines.push("Claude Code: the costmaxxing mod isn't installed, so there was nothing to clear.");
+  }
+  const hooksFile = joinPath(CODEX_HOME(), "hooks.json");
+  const config = await readJson<{ hooks?: Record<string, HookGroup[]> }>(hooksFile, {});
+  if (config.hooks?.Stop?.some(isOurHook)) {
+    const stop = config.hooks.Stop.filter((group) => !isOurHook(group));
+    const hooks = { ...config.hooks };
+    if (stop.length > 0) hooks.Stop = stop;
+    else delete hooks.Stop;
+    await writeFile(hooksFile, `${JSON.stringify({ ...config, hooks }, null, 2)}\n`);
+    lines.push("Codex: removed the costmaxxing hook. Your other hooks are untouched.");
+  }
+  if (saved.admin && saved.id) {
+    const backup = joinPath(HOME, `admin-${saved.id}.json`);
+    await writeFile(backup, `${JSON.stringify({ id: saved.id, admin: saved.admin })}\n`);
+    lines.push(`You started ${saved.id}. Its admin key is kept in ${backup}; copy it back to team.json to rotate or delete the team later.`);
+  }
+  await rm(TEAM_FILE(), { force: true });
+  await rm(SENT_FILE(), { force: true });
+  lines.unshift(saved.id ? `Left ${saved.id}.` : "You weren't on a team; cleared any leftovers.");
+  return lines.join("\n");
 }

@@ -223,3 +223,19 @@ test("costmaxxing team rotate, pricing, and delete use the saved admin key; memb
   assert.deepEqual(JSON.parse(await readFile(join(s.home, "team.json"), "utf8")), {});
   assert.deepEqual(s.admins.map((a) => [a.url?.split("/").at(-1), a.auth]), [["rotate", "Bearer secret-admin"], ["pricing", "Bearer secret-admin"], ["delete", "Bearer secret-admin"]]);
 });
+
+test("costmaxxing team leave clears the mod's team, removes only our Codex hook, and keeps the starter's admin key aside", async () => {
+  const s = await setup("2.1.289 (Claude Code)");
+  assert.equal((await s.run()).code, 0);
+  const saved = JSON.parse(await readFile(join(s.home, "team.json"), "utf8"));
+  await writeFile(join(s.home, "team.json"), JSON.stringify({ ...saved, admin: "secret-admin" }));
+  const left = await s.run(["team", "leave"]);
+  s.close();
+  assert.equal(left.code, 0, left.stderr);
+  assert.match(left.stdout, /Left acme-7kq3x-m9pz2\./);
+  assert.match((await s.calls()).trim(), /plugin configure costmaxxing@costmaxxing --values-stdin\n\{"team":"","user":""\}$/);
+  const stop = JSON.parse(await readFile(join(s.codexHome, "hooks.json"), "utf8")).hooks.Stop;
+  assert.deepEqual(stop.map((g: { hooks: { command: string }[] }) => g.hooks[0]?.command), ["other-tool stop"]);
+  await assert.rejects(readFile(join(s.home, "team.json"), "utf8"));
+  assert.deepEqual(JSON.parse(await readFile(join(s.home, "admin-acme-7kq3x-m9pz2.json"), "utf8")), { id: ID, admin: "secret-admin" });
+});

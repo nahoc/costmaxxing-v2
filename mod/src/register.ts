@@ -101,7 +101,7 @@ async function load($: Mods): Promise<void> {
   }
   session = ours;
   month = all;
-  usePricing(((await $.store.get("pricing")) ?? undefined) as TeamPricing | undefined);
+  usePricing(team.name ? (((await $.store.get("pricing")) ?? undefined) as TeamPricing | undefined) : undefined);
   const moved = (await $.store.get("team-moved")) as { from?: string; to?: string } | undefined;
   if (team.option && moved?.from === team.option && moved.to) team.name = moved.to;
   $.ui.invalidate("ui.render");

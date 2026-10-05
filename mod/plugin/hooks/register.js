@@ -514,7 +514,7 @@ async function load($) {
   }
   session = ours;
   month = all;
-  usePricing(await $.store.get("pricing") ?? void 0);
+  usePricing(team.name ? await $.store.get("pricing") ?? void 0 : void 0);
   const moved = await $.store.get("team-moved");
   if (team.option && moved?.from === team.option && moved.to) team.name = moved.to;
   $.ui.invalidate("ui.render");

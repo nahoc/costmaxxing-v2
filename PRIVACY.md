@@ -30,7 +30,7 @@ Each team's totals are shown at costmaxxing.dev/<team-id>. Team IDs are generate
 
 ## Leaving a team
 
-Run `claude plugin uninstall costmaxxing@costmaxxing`, or clear the team option with `/plugin configure costmaxxing@costmaxxing`, and remove the costmaxxing entry from the Stop hooks in `~/.codex/hooks.json`. Whoever started a team can delete it and all its data with `npx costmaxxing team delete`. Otherwise, to have a team's data deleted, open an issue at https://github.com/nahoc/costmaxxing-v2/issues.
+Run `npx costmaxxing team leave`. It clears the mod's team setting, removes the costmaxxing Codex hook, and deletes your saved team; nothing is sent to the team after that. To remove costmaxxing entirely, also run `claude plugin uninstall costmaxxing@costmaxxing`. Whoever started a team can delete it and all its data with `npx costmaxxing team delete`. Otherwise, to have a team's data deleted, open an issue at https://github.com/nahoc/costmaxxing-v2/issues.
 
 ## Changes and contact
 

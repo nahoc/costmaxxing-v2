@@ -126,6 +126,7 @@ costmaxxing connect <url> --token T [--user NAME]
 | `costmaxxing` | Prints the report for your Claude Code and Codex usage. |
 | `costmaxxing <team-id>` | Adds your Claude Code to that team: installs the mod and uploads your history. With no arguments in a terminal, it asks for the ID or starts a new team. |
 | `costmaxxing team` | Shows your team's page link, its 30-day totals, and the line teammates run, and opens the page. Plain `npx costmaxxing` does the same once you're on a team. |
+| `costmaxxing team leave` | Leaves your team: clears the mod's team setting, removes the costmaxxing Codex hook, and deletes `~/.costmaxxing/team.json`. A team starter's admin key is kept in `~/.costmaxxing/admin-<id>.json`. |
 | `--days N` | Sets the window. The default is 30 days. |
 | `--vs provider/model` | Compares against one models.dev model, such as `--vs togetherai/zai-org/GLM-5.3`. The first `--vs` replaces the open-weight plan in the summary box. Each extra `--vs` adds a row under Scenarios. |
 | `--json` | Prints every number as JSON, including all models, unpriced models, and the rate fallbacks used. |

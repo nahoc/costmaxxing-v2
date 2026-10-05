@@ -15,7 +15,7 @@ import pkg from "../package.json" with { type: "json" };
 import { loadConfig } from "./config.ts";
 import { connectSettings, serve } from "./gateway.ts";
 import { createInterface } from "node:readline/promises";
-import { adminTeam, codexHook, currentTeam, describeTeam, joinTeam, startTeam } from "./join.ts";
+import { adminTeam, codexHook, currentTeam, describeTeam, joinTeam, leaveTeam, startTeam } from "./join.ts";
 import { launch } from "./launch.ts";
 import { personalReport } from "./personal.ts";
 import { prices } from "./prices.ts";
@@ -26,6 +26,7 @@ const HELP = `costmaxxing: what your AI usage costs at API prices, and what it w
   costmaxxing [--days N] [--vs provider/model]... [--json] [--offline] [--config PATH]
   costmaxxing <team-id>          add your Claude Code to a team's savings at costmaxxing.dev/<team-id>
   costmaxxing team               show your team's page link and totals, and open it
+  costmaxxing team leave         leave your team: the mod goes back to your own numbers
   costmaxxing team rotate        (team starter) move the team to a new ID; members follow
   costmaxxing team pricing       (team starter) set the team's comparison from your config file
   costmaxxing team delete        (team starter) delete the team and all its usage
@@ -154,6 +155,7 @@ async function main(argv: string[]): Promise<void> {
       return importCommand(rest);
     case "team": {
       const [sub] = rest;
+      if (sub === "leave") return void process.stdout.write(`${await leaveTeam()}\n`);
       if (sub === "rotate" || sub === "delete" || sub === "pricing") {
         if (sub === "delete" && interactive()) {
           const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -207,8 +209,9 @@ async function main(argv: string[]): Promise<void> {
         const team = await currentTeam();
         if (team && team !== "gone") {
           process.stdout.write(`${describeTeam(team)}\n\n`);
-          const answer = (await rl.question("Press Enter to open the team page, or type another team ID to switch: ")).trim();
+          const answer = (await rl.question("Press Enter to open the team page, type another team ID to switch, or leave to leave the team: ")).trim();
           rl.close();
+          if (answer === "leave") return void process.stdout.write(`${await leaveTeam()}\n`);
           if (answer) return joinTeam(answer, true);
           return openBrowser(team.url);
         }

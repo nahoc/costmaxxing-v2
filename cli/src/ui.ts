@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 
-const color = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR && !process.env.CI;
+const color = Boolean(process.stdout.isTTY || process.env.FORCE_COLOR) && !process.env.NO_COLOR && !process.env.CI;
 const paint = (code: string) => (text: string) => (color ? `\x1b[${code}m${text}\x1b[0m` : text);
 
 export const purple = paint("38;2;141;113;214");

@@ -4,9 +4,7 @@ See what your team's Claude Code and Codex usage would cost on open-weight model
 
 Subscriptions hide what coding agents really cost. costmaxxing prices every request at Anthropic's and OpenAI's API rates, next to what the same usage would cost on open-weight models, so your team knows the real number before the subsidies end.
 
-```
-costmaxxing  Potential savings via open-weight: $3.74 this session │ $612 last 30 days (you) · $9.4k (team) │ 12 people │ team page ↗
-```
+![The costmaxxing line under the Claude Code prompt](https://raw.githubusercontent.com/nahoc/costmaxxing-v2/main/docs/screenshots/prompt-line.png)
 
 ## Start
 
@@ -28,7 +26,11 @@ That one command:
 - adds a background hook to Codex, if Codex is installed;
 - adds up to a year of history from your existing Claude Code and Codex logs.
 
-From then on every session counts, with nothing more to do. The team's savings, forecast and models are at `costmaxxing.dev/<team-id>`.
+![npx costmaxxing joining a team](https://raw.githubusercontent.com/nahoc/costmaxxing-v2/main/docs/screenshots/join.png)
+
+From then on every session counts, with nothing more to do. The team's savings, forecast and models are at `costmaxxing.dev/<team-id>`:
+
+![A costmaxxing team page](https://raw.githubusercontent.com/nahoc/costmaxxing-v2/main/docs/screenshots/team-page.png)
 
 ## Commands
 
@@ -139,6 +141,8 @@ npm run build
 ```
 
 `core/` is pure TypeScript with no Node or browser APIs. It parses usage, prices it, builds the report, and renders it as terminal text or HTML. `cli/` reads files and runs the servers. `mod/` is the Claude Code mod: `mod/src` builds into `mod/plugin/hooks/register.js`, which is committed because plugin installs read it straight from git, and a test fails when it's out of date. All of them bundle `core` with esbuild, so every number is computed in one place. With Claude Code v2.1.287 or later, `claude plugin test` in `mod/plugin` runs the mod against Claude Code's own test harness.
+
+`node site/scripts/screenshots.ts` redraws the README screenshots in `docs/screenshots/` from demo data, with Playwright's headless Chromium (or `CHROME=<path>`).
 
 Every change bumps `cli/package.json`, `mod/plugin/.claude-plugin/plugin.json`, or both: Claude Code only updates an installed mod when its version changes.
 

@@ -43,11 +43,13 @@ test("each request adds its open-weight savings to the hint line, and the day is
   for (let i = 0; i < 5; i++) await clock.settle();
 
   const ui = await $.ui.mount({ ...HINT, surface: "terminal" });
-  const line = await ui.find({ type: "Text", text: /^\? for shortcuts · costmaxxing · open-weight savings: session \$[\d.]+ · 30 days \$[\d.]+$/ });
-  expect(line).toBeDefined();
-  const [sessionSavings, monthSavings] = [...String(line?.children[0]).matchAll(/\$([\d.]+)/g)].map((m) => Number(m[1]));
+  expect(await ui.find({ type: "Text", text: "? for shortcuts" })).toBeDefined();
+  expect(await ui.find({ type: "Text", text: " costmaxxing " })).toBeDefined();
+  const amounts = await ui.findAll({ type: "Text", text: /^\$[\d.]+$/ });
+  const [sessionSavings, monthSavings] = amounts.map((el) => Number(String(el.children[0]).slice(1)));
   expect((sessionSavings ?? 0) > 0).toBe(true);
   expect(((monthSavings ?? 0) - (sessionSavings ?? 0)).toFixed(2)).toBe("9.00");
+  expect(await ui.find({ type: "Text", text: /^ ▲ \+\$[\d.]+$/ })).toBeDefined();
   expect(saved.get("2026-10-05 s1")).toMatchObject({ requests: 1 });
   expect(saved.has("2026-08-01 stale")).toBe(false);
   expect(saved.get("unrelated")).toBe(7);

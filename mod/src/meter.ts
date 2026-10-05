@@ -68,9 +68,21 @@ function savings(t: Tally): string {
   return Math.abs(n) < 100 ? exactUsd(n) : usd(n);
 }
 
-export function statusText(session: Tally, month: Tally, team: TeamTotals | "unreachable" | undefined): string {
-  const parts = [`session ${savings(session)}`, `30 days ${savings(month)}`];
-  if (team === "unreachable") parts.push("team server unreachable");
-  else if (team) parts.push(`team ${savings(team)} (${count(team.people)} ${team.people === 1 ? "person" : "people"})`);
-  return `costmaxxing · open-weight savings: ${parts.join(" · ")}`;
+export type Tone = "brand" | "amount" | "label" | "gain" | "warn";
+export type Segment = [text: string, tone: Tone];
+
+export function statusParts(session: Tally, month: Tally, team: TeamTotals | "unreachable" | undefined, gain = 0): Segment[] {
+  const parts: Segment[] = [[" costmaxxing ", "brand"], [" ", "label"], [savings(session), "amount"]];
+  if (gain > 0) parts.push([` ▲ +${exactUsd(gain)}`, "gain"]);
+  parts.push([" session · ", "label"], [savings(month), "amount"], [" 30 days", "label"]);
+  if (team === "unreachable") parts.push([" · ", "label"], ["team server unreachable", "warn"]);
+  else if (team) parts.push([" · ", "label"], [savings(team), "amount"], [` team · ${count(team.people)} ${team.people === 1 ? "person" : "people"}`, "label"]);
+  return parts;
+}
+
+export function statusText(...args: Parameters<typeof statusParts>): string {
+  return statusParts(...args)
+    .map(([text]) => text)
+    .join("")
+    .trim();
 }

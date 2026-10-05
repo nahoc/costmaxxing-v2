@@ -80,7 +80,7 @@ ${command()}
 <p class="t-out">⎿&nbsp; Updated with 14 additions and 9 removals</p>
 <p>● Done. Rates now come from /v2/rates, cached for five minutes.</p>
 <div class="t-input">&gt;<span class="caret"></span></div>
-<p class="t-hint">? for shortcuts · costmaxxing · open&#8209;weight savings: session <b data-tick="${(mine / 30).toFixed(2)}">${money(mine / 30)}</b> · 30 days <b data-tick="${mine.toFixed(2)}">${money(mine)}</b> · team <b data-tick="${teamSaved.toFixed(2)}">${money(teamSaved)}</b> (${count(report.users ?? 0)} people)</p>`,
+<p class="t-hint"><span>? for shortcuts</span><span><span class="t-chip">costmaxxing</span> <b data-tick="${(mine / 30).toFixed(2)}">${money(mine / 30)}</b> session · <b data-tick="${mine.toFixed(2)}">${money(mine)}</b> 30 days · <b data-tick="${teamSaved.toFixed(2)}">${money(teamSaved)}</b> team · ${count(report.users ?? 0)} people</span></p>`,
     status: ["example session"],
   });
 

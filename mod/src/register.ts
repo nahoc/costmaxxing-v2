@@ -1,6 +1,6 @@
 import { parseModelsDev, priceBook, type RequestRecord, type TeamTotals } from "@costmaxxing/core";
 import snapshot from "@costmaxxing/core/snapshot" with { type: "json" };
-import { add, asTally, asTeam, localDay, NONE, priceRecord, statusText, stepRecord, type StepUsage, type Tally } from "./meter.ts";
+import { add, asTally, asTeam, localDay, NONE, priceRecord, statusParts, stepRecord, type StepUsage, type Tally, type Tone } from "./meter.ts";
 
 interface Mods {
   session: { id: () => Promise<string> };
@@ -14,7 +14,13 @@ interface Mods {
   http: {
     fetch: (url: string, init: { method: string; headers: Record<string, string>; body: string }) => Promise<{ ok: boolean; status: number; text: string }>;
   };
-  ui: { invalidate: (event: "ui.render") => void };
+  ui: { invalidate: (event: "ui.render") => void; resolve: (e: HintEvent) => Elements };
+}
+
+type Element = unknown;
+interface Elements {
+  Box: (props: Record<string, unknown>) => Element;
+  Text: (props: Record<string, unknown>) => Element;
 }
 
 interface StepInput {
@@ -58,6 +64,15 @@ let totals: TeamTotals | "unreachable" | undefined;
 let unsaved = new Map<string, Tally>();
 let pending: RequestRecord[] = [];
 let queue = Promise.resolve();
+let gain = { amount: 0, until: 0 };
+
+const TONES: Record<Tone, Record<string, unknown>> = {
+  brand: { bold: true, color: "inverseText", backgroundColor: "success" },
+  amount: { bold: true, color: "success" },
+  label: { dimColor: true },
+  gain: { color: "success" },
+  warn: { color: "warning" },
+};
 
 async function load($: Mods): Promise<void> {
   sessionId = await $.session.id();
@@ -162,6 +177,8 @@ export function register(on: On, options: Record<string, unknown>): void {
     const tally = priceRecord(record, book);
     session = add(session, tally);
     month = add(month, tally);
+    gain = { amount: (Date.now() < gain.until ? gain.amount : 0) + (tally.price - tally.alt), until: Date.now() + 4000 };
+    $.clock.after(4100, async () => $.ui.invalidate("ui.render"));
     const key = `${localDay(time)} ${sessionId}`;
     unsaved.set(key, add(unsaved.get(key) ?? NONE, tally));
     if (reporting()) pending.push(record);
@@ -171,7 +188,10 @@ export function register(on: On, options: Record<string, unknown>): void {
   });
 
   on("ui.render", { component: "PromptHint" }, async ($, e, next) => {
-    const line = statusText(session, month, totals);
-    return next({ ...e, props: { ...e.props, hint: e.props.hint ? `${e.props.hint} · ${line}` : line } });
+    const { Box, Text } = $.ui.resolve(e);
+    const theirs = await next(e);
+    const parts = statusParts(session, month, totals, Date.now() < gain.until ? gain.amount : 0);
+    const ours = Text({ wrap: "truncate-start", children: parts.map(([text, tone]) => Text({ ...TONES[tone], children: [text] })) });
+    return Box({ flexDirection: "row", justifyContent: "space-between", columnGap: 2, children: [theirs, ours] });
   });
 }

@@ -184,13 +184,21 @@ dl.body dt {
   animation: blink 1.2s steps(1) infinite;
 }
 .term .t-hint {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
   margin-top: 6px;
+}
+.t-chip {
+  padding: 0 4px;
+  background: var(--paper);
+  color: var(--ink);
 }
 .t-hint b {
   font-weight: 400;
-  background: var(--paper);
-  color: var(--ink);
-  padding: 0 3px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 @keyframes blink {
   50% {

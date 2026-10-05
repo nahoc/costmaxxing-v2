@@ -24,9 +24,10 @@ test("a step's cache writes are priced at the 5-minute rate, and a subagent's st
 
 test("the line shows cents under $100, and says when the team server can't be reached", () => {
   const tally = { requests: 2, price: 4.5, alt: 0.25 };
-  assert.equal(statusText(tally, { requests: 9, price: 2500, alt: 300 }, undefined), "costmaxxing · open-weight savings: session $4.25 · 30 days $2.2k");
-  assert.equal(statusText(tally, tally, "unreachable"), "costmaxxing · open-weight savings: session $4.25 · 30 days $4.25 · team server unreachable");
-  assert.equal(statusText(tally, tally, { days: 30, people: 1, requests: 5, price: 900, alt: 100 }), "costmaxxing · open-weight savings: session $4.25 · 30 days $4.25 · team $800 (1 person)");
+  assert.equal(statusText(tally, { requests: 9, price: 2500, alt: 300 }, undefined), "costmaxxing  $4.25 session · $2.2k 30 days");
+  assert.equal(statusText(tally, tally, "unreachable"), "costmaxxing  $4.25 session · $4.25 30 days · team server unreachable");
+  assert.equal(statusText(tally, tally, { days: 30, people: 1, requests: 5, price: 900, alt: 100 }), "costmaxxing  $4.25 session · $4.25 30 days · $800 team · 1 person");
+  assert.equal(statusText(tally, tally, undefined, 0.12), "costmaxxing  $4.25 ▲ +$0.12 session · $4.25 30 days");
 });
 
 type Hook = (...args: never[]) => unknown;
@@ -49,7 +50,10 @@ test("with a team, steps reach costmaxxing.dev at most once a minute, a failed s
         return { ok: true, status: 200, text: JSON.stringify({ counted: 0, days: 30, people: 3, requests: 40, price: 2000, alt: 250 }) };
       },
     },
-    ui: { invalidate: () => {} },
+    ui: {
+      invalidate: () => {},
+      resolve: () => ({ Box: (p: object) => ({ type: "Box", ...p }), Text: (p: object) => ({ type: "Text", ...p }) }),
+    },
   };
   const advance = async (ms: number) => {
     time += ms;
@@ -71,22 +75,24 @@ test("with a team, steps reach costmaxxing.dev at most once a minute, a failed s
     while (r.done !== true) r = await run.next();
     await advance(0);
   };
+  type Node = { children?: (Node | string)[] } | string;
+  const text = (node: Node): string => (typeof node === "string" ? node : (node.children ?? []).map(text).join(""));
   const hint = async () => {
-    const render = hooks.get("ui.render") as unknown as (...a: unknown[]) => Promise<{ props: { hint: string } }>;
-    return (await render($, { props: { hint: "" } }, async (e: unknown) => e)).props.hint;
+    const render = hooks.get("ui.render") as unknown as (...a: unknown[]) => Promise<{ children: Node[] }>;
+    const tree = await render($, { props: { hint: "" } }, async () => "? for shortcuts");
+    return text(tree.children[1] ?? "").trim();
   };
 
   register((event: string, a: unknown, b?: unknown) => void hooks.set(event, (b ?? a) as Hook), { team: " Acme ", user: "u1u1u1u1u1u1" });
   await (hooks.get("session.start") as unknown as (...a: unknown[]) => Promise<unknown>)($, {}, async (e: unknown) => e);
   await advance(0);
   assert.deepEqual(posts, [{ url: "https://costmaxxing.dev/api/teams/acme/usage", user: "u1u1u1u1u1u1", ids: [] }]);
-  assert.match(await hint(), /· team \$1\.8k \(3 people\)$/);
+  assert.match(await hint(), /· \$1\.8k team · 3 people$/);
 
   await step({ turnId: "t1", index: 0 });
   await advance(1000);
   await step({ turnId: "t1", index: 1, agentId: "a7" });
   assert.equal(posts.length, 1);
-  assert.equal(timers.length, 1);
   await advance(60_000);
   assert.deepEqual(posts.at(-1)?.ids, ["s9/t1/main/0", "s9/t1/a7/1"]);
 
@@ -98,7 +104,7 @@ test("with a team, steps reach costmaxxing.dev at most once a minute, a failed s
   await step({ turnId: "t3", index: 0 });
   await advance(60_000);
   assert.deepEqual(posts.at(-1)?.ids, ["s9/t2/main/0", "s9/t3/main/0"]);
-  assert.match(await hint(), /^costmaxxing · open-weight savings: session \$[\d.]+ · 30 days \$[\d.]+ · team \$1\.8k \(3 people\)$/);
+  assert.match(await hint(), /^costmaxxing {2}\$[\d.]+( ▲ \+\$[\d.]+)? session · \$[\d.]+ 30 days · \$1\.8k team · 3 people$/);
 });
 
 test("the committed hooks module is the build of mod/src (run npm run build -w mod)", async () => {

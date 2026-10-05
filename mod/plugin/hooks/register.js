@@ -451,11 +451,13 @@ function savings(t) {
   const n = t.price - t.alt;
   return Math.abs(n) < 100 ? exactUsd(n) : usd(n);
 }
-function statusText(session2, month2, team2) {
-  const parts = [`session ${savings(session2)}`, `30 days ${savings(month2)}`];
-  if (team2 === "unreachable") parts.push("team server unreachable");
-  else if (team2) parts.push(`team ${savings(team2)} (${count(team2.people)} ${team2.people === 1 ? "person" : "people"})`);
-  return `costmaxxing \xB7 open-weight savings: ${parts.join(" \xB7 ")}`;
+function statusParts(session2, month2, team2, gain2 = 0) {
+  const parts = [[" costmaxxing ", "brand"], [" ", "label"], [savings(session2), "amount"]];
+  if (gain2 > 0) parts.push([` \u25B2 +${exactUsd(gain2)}`, "gain"]);
+  parts.push([" session \xB7 ", "label"], [savings(month2), "amount"], [" 30 days", "label"]);
+  if (team2 === "unreachable") parts.push([" \xB7 ", "label"], ["team server unreachable", "warn"]);
+  else if (team2) parts.push([" \xB7 ", "label"], [savings(team2), "amount"], [` team \xB7 ${count(team2.people)} ${team2.people === 1 ? "person" : "people"}`, "label"]);
+  return parts;
 }
 
 // src/register.ts
@@ -474,6 +476,14 @@ var totals2;
 var unsaved = /* @__PURE__ */ new Map();
 var pending = [];
 var queue = Promise.resolve();
+var gain = { amount: 0, until: 0 };
+var TONES = {
+  brand: { bold: true, color: "inverseText", backgroundColor: "success" },
+  amount: { bold: true, color: "success" },
+  label: { dimColor: true },
+  gain: { color: "success" },
+  warn: { color: "warning" }
+};
 async function load($) {
   sessionId = await $.session.id();
   const oldest = localDay(await $.clock.now() - 29 * DAY2);
@@ -568,6 +578,8 @@ function register(on, options) {
     const tally = priceRecord(record, book);
     session = add(session, tally);
     month = add(month, tally);
+    gain = { amount: (Date.now() < gain.until ? gain.amount : 0) + (tally.price - tally.alt), until: Date.now() + 4e3 };
+    $.clock.after(4100, async () => $.ui.invalidate("ui.render"));
     const key = `${localDay(time)} ${sessionId}`;
     unsaved.set(key, add(unsaved.get(key) ?? NONE, tally));
     if (reporting()) pending.push(record);
@@ -576,8 +588,11 @@ function register(on, options) {
     return result;
   });
   on("ui.render", { component: "PromptHint" }, async ($, e, next) => {
-    const line = statusText(session, month, totals2);
-    return next({ ...e, props: { ...e.props, hint: e.props.hint ? `${e.props.hint} \xB7 ${line}` : line } });
+    const { Box, Text } = $.ui.resolve(e);
+    const theirs = await next(e);
+    const parts = statusParts(session, month, totals2, Date.now() < gain.until ? gain.amount : 0);
+    const ours = Text({ wrap: "truncate-start", children: parts.map(([text, tone]) => Text({ ...TONES[tone], children: [text] })) });
+    return Box({ flexDirection: "row", justifyContent: "space-between", columnGap: 2, children: [theirs, ours] });
   });
 }
 export {

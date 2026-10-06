@@ -75,7 +75,7 @@ let queue = Promise.resolve();
 let gain = { amount: 0, until: 0 };
 
 const TONES: Record<Tone, Record<string, unknown>> = {
-  brand: { color: "#8d71d6" },
+  lead: { color: "#b9a7ec" },
   amount: { bold: true, color: "success" },
   label: { dimColor: true },
   divider: { color: "#8d71d6" },
@@ -227,6 +227,7 @@ export function register(on: On, options: Record<string, unknown>): void {
       ? [Text({ ...TONES.divider, children: [" │ "] }), Link({ href: page, children: [Text({ color: "#8d71d6", underline: true, children: ["team page ↗"] })] })]
       : [];
     const ours = Text({ wrap: "truncate-start", children: [...parts.map(([text, tone]) => Text({ ...TONES[tone], children: [text] })), ...link] });
-    return Box({ flexDirection: "row", justifyContent: "space-between", columnGap: 2, children: [theirs, ours] });
+    const tryIt = Link({ href: "https://inference.boundless.network", children: [Text({ backgroundColor: "#8d71d6", color: "#ffffff", bold: true, children: [" Try open-weight ↗ "] })] });
+    return Box({ flexDirection: "row", justifyContent: "space-between", columnGap: 2, children: [theirs, Box({ flexDirection: "row", columnGap: 2, children: [ours, tryIt] })] });
   });
 }

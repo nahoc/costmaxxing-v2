@@ -33,11 +33,11 @@ test("a team's own comparison prices the same request differently, from the team
 
 test("the line shows cents under $100, and says when the team server can't be reached", () => {
   const tally = { requests: 2, price: 4.5, alt: 0.25 };
-  assert.equal(statusText(tally, { requests: 9, price: 2500, alt: 300 }, undefined), "costmaxxing  Potential savings via open-weight: $4.25 this session │ $2.2k last 30 days (you)");
-  assert.equal(statusText(tally, tally, "unreachable"), "costmaxxing  Potential savings via open-weight: $4.25 this session │ $4.25 last 30 days (you) │ team server unreachable");
-  assert.equal(statusText(tally, tally, { days: 30, people: 1, requests: 5, price: 900, alt: 100 }), "costmaxxing  Potential savings via open-weight: $4.25 this session │ $4.25 last 30 days (you) · $800 (team) │ 1 person");
-  assert.equal(statusText(tally, tally, "missing"), "costmaxxing  Potential savings via open-weight: $4.25 this session │ $4.25 last 30 days (you) │ team ID not found");
-  assert.equal(statusText(tally, tally, undefined, 0.12), "costmaxxing  Potential savings via open-weight: $4.25 ▲ +$0.12 this session │ $4.25 last 30 days (you)");
+  assert.equal(statusText(tally, { requests: 9, price: 2500, alt: 300 }, undefined), "Potential savings via open-weight: $4.25 this session │ $2.2k last 30 days (you)");
+  assert.equal(statusText(tally, tally, "unreachable"), "Potential savings via open-weight: $4.25 this session │ $4.25 last 30 days (you) │ team server unreachable");
+  assert.equal(statusText(tally, tally, { days: 30, people: 1, requests: 5, price: 900, alt: 100 }), "Potential savings via open-weight: $4.25 this session │ $4.25 last 30 days (you) │ $800 (team) │ 1 person");
+  assert.equal(statusText(tally, tally, "missing"), "Potential savings via open-weight: $4.25 this session │ $4.25 last 30 days (you) │ team ID not found");
+  assert.equal(statusText(tally, tally, undefined, 0.12), "Potential savings via open-weight: $4.25 ▲ +$0.12 this session │ $4.25 last 30 days (you)");
 });
 
 type Hook = (...args: never[]) => unknown;
@@ -103,7 +103,7 @@ test("with a team, steps reach costmaxxing.dev at most once a minute, a failed s
   await (hooks.get("session.start") as unknown as (...a: unknown[]) => Promise<unknown>)($, {}, async (e: unknown) => e);
   await advance(0);
   assert.deepEqual(posts, [{ url: "https://costmaxxing.dev/api/teams/acme-7kq3x-m9pz2/usage", user: "u1u1u1u1u1u1", ids: [] }]);
-  assert.match(await hint(), /· \$1\.8k \(team\) │ 3 people │ team page ↗$/);
+  assert.match(await hint(), /│ \$1\.8k \(team\) │ 3 people │ team page ↗ Try open-weight ↗$/);
 
   await step({ turnId: "t1", index: 0 });
   await advance(1000);
@@ -115,7 +115,7 @@ test("with a team, steps reach costmaxxing.dev at most once a minute, a failed s
   down = true;
   await step({ turnId: "t2", index: 0 });
   await advance(60_000);
-  assert.match(await hint(), /team server unreachable │ team page ↗$/);
+  assert.match(await hint(), /team server unreachable │ team page ↗ Try open-weight ↗$/);
   down = false;
   await step({ turnId: "t3", index: 0 });
   await advance(60_000);
@@ -124,10 +124,12 @@ test("with a team, steps reach costmaxxing.dev at most once a minute, a failed s
   await step({ turnId: "t4", index: 0 });
   await advance(60_000);
   assert.deepEqual(posts.at(-1), { url: "https://costmaxxing.dev/api/teams/acme-22222-33333/usage", user: "u1u1u1u1u1u1", ids: ["s9/t4/main/0"] });
-  assert.match(await hint(), /^costmaxxing {2}Potential savings via open-weight: \$[\d.]+( ▲ \+\$[\d.]+)? this session │ \$[\d.]+ last 30 days \(you\) · \$1\.8k \(team\) │ 3 people │ team page ↗$/);
-  const render = hooks.get("ui.render") as unknown as (...a: unknown[]) => Promise<{ children: { children: { type: string; href?: string }[] }[] }>;
-  const tree = await render($, { props: { hint: "" } }, async () => "");
-  assert.equal(tree.children[1]?.children.find((c) => c.type === "Link")?.href, "https://costmaxxing.dev/acme-22222-33333");
+  assert.match(await hint(), /^Potential savings via open-weight: \$[\d.]+( ▲ \+\$[\d.]+)? this session │ \$[\d.]+ last 30 days \(you\) │ \$1\.8k \(team\) │ 3 people │ team page ↗ Try open-weight ↗$/);
+  type Tree = { type: string; href?: string; children?: (Tree | string)[] };
+  const render = hooks.get("ui.render") as unknown as (...a: unknown[]) => Promise<Tree>;
+  const links = (node: Tree | string): string[] =>
+    typeof node === "string" ? [] : [...(node.type === "Link" ? [node.href ?? ""] : []), ...(node.children ?? []).flatMap(links)];
+  assert.deepEqual(links(await render($, { props: { hint: "" } }, async () => "")), ["https://costmaxxing.dev/acme-22222-33333", "https://inference.boundless.network"]);
 });
 
 test("the committed hooks module is the build of mod/src (run npm run build -w mod)", async () => {

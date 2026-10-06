@@ -68,19 +68,19 @@ function savings(t: Tally): string {
   return Math.abs(n) < 100 ? exactUsd(n) : usd(n);
 }
 
-export type Tone = "brand" | "amount" | "label" | "divider" | "gain" | "warn";
+export type Tone = "lead" | "amount" | "label" | "divider" | "gain" | "warn";
 export type Segment = [text: string, tone: Tone];
 
 export type TeamState = TeamTotals | "unreachable" | "missing" | undefined;
 
 export function statusParts(session: Tally, month: Tally, team: TeamState, gain = 0): Segment[] {
-  const parts: Segment[] = [["costmaxxing", "brand"], ["  Potential savings via open-weight: ", "label"], [savings(session), "amount"]];
+  const parts: Segment[] = [["Potential savings via open-weight: ", "lead"], [savings(session), "amount"]];
   if (gain > 0) parts.push([` ▲ +${exactUsd(gain)}`, "gain"]);
   parts.push([" this session", "label"], [" │ ", "divider"], [savings(month), "amount"], [" last 30 days (you)", "label"]);
   if (team === "unreachable") parts.push([" │ ", "divider"], ["team server unreachable", "warn"]);
   else if (team === "missing") parts.push([" │ ", "divider"], ["team ID not found", "warn"]);
   else if (team) {
-    parts.push([" · ", "label"], [savings(team), "amount"], [" (team)", "label"]);
+    parts.push([" │ ", "divider"], [savings(team), "amount"], [" (team)", "label"]);
     parts.push([" │ ", "divider"], [`${count(team.people)} ${team.people === 1 ? "person" : "people"}`, "label"]);
   }
   return parts;

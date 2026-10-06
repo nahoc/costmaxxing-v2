@@ -127,7 +127,7 @@ async function shoot(name: string, html: string, width: number, height: number):
 await mkdir(out, { recursive: true });
 
 const TONES: Record<Tone, string> = {
-  brand: "color:#8d71d6",
+  lead: "color:#b9a7ec",
   amount: "font-weight:700;color:#4eba65",
   label: "opacity:.55",
   divider: "color:#8d71d6",
@@ -145,7 +145,7 @@ await shoot(
     "claude",
     `<pre><span style="opacity:.55">⏺</span> Done. The retry now backs off exponentially and the flaky test passes 50/50 runs.
 
-<div class="prompt">&gt; <span style="opacity:.4">Try "write a test for the parser"</span></div><div class="hint"><span style="opacity:.55">? for shortcuts</span><span>${line}<span style="color:#8d71d6"> │ </span><a>team page ↗</a></span></div></pre>`,
+<div class="prompt">&gt; <span style="opacity:.4">Try "write a test for the parser"</span></div><div class="hint"><span style="opacity:.55">? for shortcuts</span><span>${line}<span style="color:#8d71d6"> │ </span><a>team page ↗</a>&nbsp;&nbsp;<b style="background:#8d71d6;color:#fff"> Try open-weight ↗ </b></span></div></pre>`,
     1500,
   ),
   1548,

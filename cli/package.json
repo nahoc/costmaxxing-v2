@@ -1,6 +1,6 @@
 {
   "name": "costmaxxing",
-  "version": "1.8.6",
+  "version": "1.8.7",
   "description": "What your AI coding usage costs at API prices, and what it would cost on open-weight models",
   "keywords": [
     "claude-code",

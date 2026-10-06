@@ -454,13 +454,13 @@ function savings(t) {
   return Math.abs(n) < 100 ? exactUsd(n) : usd(n);
 }
 function statusParts(session2, month2, team2, gain2 = 0) {
-  const parts = [["costmaxxing", "brand"], ["  Potential savings via open-weight: ", "label"], [savings(session2), "amount"]];
+  const parts = [["Potential savings via open-weight: ", "lead"], [savings(session2), "amount"]];
   if (gain2 > 0) parts.push([` \u25B2 +${exactUsd(gain2)}`, "gain"]);
   parts.push([" this session", "label"], [" \u2502 ", "divider"], [savings(month2), "amount"], [" last 30 days (you)", "label"]);
   if (team2 === "unreachable") parts.push([" \u2502 ", "divider"], ["team server unreachable", "warn"]);
   else if (team2 === "missing") parts.push([" \u2502 ", "divider"], ["team ID not found", "warn"]);
   else if (team2) {
-    parts.push([" \xB7 ", "label"], [savings(team2), "amount"], [" (team)", "label"]);
+    parts.push([" \u2502 ", "divider"], [savings(team2), "amount"], [" (team)", "label"]);
     parts.push([" \u2502 ", "divider"], [`${count(team2.people)} ${team2.people === 1 ? "person" : "people"}`, "label"]);
   }
   return parts;
@@ -490,7 +490,7 @@ var pending = [];
 var queue = Promise.resolve();
 var gain = { amount: 0, until: 0 };
 var TONES = {
-  brand: { color: "#8d71d6" },
+  lead: { color: "#b9a7ec" },
   amount: { bold: true, color: "success" },
   label: { dimColor: true },
   divider: { color: "#8d71d6" },
@@ -629,7 +629,8 @@ function register(on, options) {
     const page = team.name ? `${team.server || HOSTED}/${team.name}` : team.server && team.token ? `${team.server}/` : "";
     const link = page ? [Text({ ...TONES.divider, children: [" \u2502 "] }), Link({ href: page, children: [Text({ color: "#8d71d6", underline: true, children: ["team page \u2197"] })] })] : [];
     const ours = Text({ wrap: "truncate-start", children: [...parts.map(([text, tone]) => Text({ ...TONES[tone], children: [text] })), ...link] });
-    return Box({ flexDirection: "row", justifyContent: "space-between", columnGap: 2, children: [theirs, ours] });
+    const tryIt = Link({ href: "https://inference.boundless.network", children: [Text({ backgroundColor: "#8d71d6", color: "#ffffff", bold: true, children: [" Try open-weight \u2197 "] })] });
+    return Box({ flexDirection: "row", justifyContent: "space-between", columnGap: 2, children: [theirs, Box({ flexDirection: "row", columnGap: 2, children: [ours, tryIt] })] });
   });
 }
 export {

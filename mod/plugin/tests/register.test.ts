@@ -44,8 +44,8 @@ test("each request adds its open-weight savings to the hint line, and the day is
 
   const ui = await $.ui.mount({ ...HINT, surface: "terminal" });
   expect(await ui.find({ type: "Text", text: "? for shortcuts" })).toBeDefined();
-  expect(await ui.find({ type: "Text", text: "costmaxxing" })).toBeDefined();
-  expect(await ui.find({ type: "Text", text: "  Potential savings via open-weight: " })).toBeDefined();
+  expect(await ui.find({ type: "Text", text: "Potential savings via open-weight: " })).toBeDefined();
+  expect(await ui.find({ type: "Text", text: " Try open-weight ↗ " })).toBeDefined();
   const amounts = await ui.findAll({ type: "Text", text: /^\$[\d.]+$/ });
   const [sessionSavings, monthSavings] = amounts.map((el) => Number(String(el.children[0]).slice(1)));
   expect((sessionSavings ?? 0) > 0).toBe(true);

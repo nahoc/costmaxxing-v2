@@ -30,7 +30,11 @@
 }
 html {
   background: var(--ink);
-  scrollbar-color: var(--ink) var(--paper);
+}
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-color: var(--ink) var(--paper);
+  }
 }
 body {
   margin: 0;

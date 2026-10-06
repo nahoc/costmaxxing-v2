@@ -102,8 +102,24 @@ html {
 .cmd code {
   padding: 0;
 }
-.fine {
-  margin-top: 36px;
+div.cmd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 8px;
+}
+.copy {
+  flex: none;
+  padding: 6px 14px;
+  border: var(--u) solid var(--paper);
+  background: var(--ink);
+  color: var(--paper);
+  font: var(--s) / 1 var(--display);
+}
+.copy:hover {
+  background: var(--paper);
+  color: var(--ink);
 }
 @media (max-width: 760px) {
   .team .body {

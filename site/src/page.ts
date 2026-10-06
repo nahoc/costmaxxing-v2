@@ -1,4 +1,4 @@
-import { byFamily, comparisonText, count, escapeHtml as esc, exactUsd, percent, usd } from "@costmaxxing/core";
+import { byFamily, comparisonText, count, dollars, escapeHtml as esc, percent, usd } from "@costmaxxing/core";
 import type { Example } from "./example.ts";
 import { PRICE_LADDER, SWE_BENCH } from "./claims.ts";
 import { SEAT } from "./example.ts";
@@ -156,13 +156,13 @@ ${figure("info-savings", `<span class="mid">Up to ${percent(hero.percent)}</span
 
   const infos = [
     info("info-price", "Info: Anthropic price", [
-      ["What", `The example team's last ${report.days} days at Anthropic's API rates: ${exactUsd(hero.price)}.`],
+      ["What", `The example team's last ${report.days} days at Anthropic's API rates: ${dollars(hero.price)}.`],
       ["From", `Synthetic usage: ${count(report.users ?? 0)} people, ${count(report.requests)} requests, ${count(report.tokens)} tokens.`],
       ["Rates", "models.dev, per million tokens, for each model the team used."],
       ["Math", "Uncached input, output, cache reads, and cache writes, each times its rate."],
     ]),
     info("info-alt", "Info: open-weight price", [
-      ["What", `The same tokens on open-weight models: ${exactUsd(hero.alt)}.`],
+      ["What", `The same tokens on open-weight models: ${dollars(hero.alt)}.`],
       ["Plan", esc(hero.detail ?? "")],
       ["Assumes", "The same token counts on every model."],
     ]),

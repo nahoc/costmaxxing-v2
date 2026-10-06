@@ -18,6 +18,12 @@ export function exactUsd(n: number): string {
   return cents.format(n);
 }
 
+const whole = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+export function dollars(n: number): string {
+  return whole.format(n);
+}
+
 export function percent(fraction: number): string {
   return `${Math.round(fraction * 100)}%`;
 }

@@ -14,6 +14,7 @@ var cents = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" 
 function exactUsd(n) {
   return cents.format(n);
 }
+var whole = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
 // ../core/src/json.ts
 function obj(value) {

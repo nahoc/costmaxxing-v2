@@ -1,4 +1,4 @@
-import { byFamily, count, escapeHtml as esc, exactUsd, percent, plural, usd, type Report } from "@costmaxxing/core";
+import { byFamily, count, dollars, escapeHtml as esc, percent, plural, usd, type Report } from "@costmaxxing/core";
 import { icon, SPRITE } from "../../world/icons.ts";
 import {
   addBackfill,
@@ -70,6 +70,7 @@ function tools(report: Report): string {
 
 function models(report: Report): string {
   const rows = byFamily(report.models)
+    .sort((a, b) => b.price / Math.max(1, b.requests) - a.price / Math.max(1, a.requests))
     .map((row) => `<tr><td>${esc(row.label)}</td><td class="num">${count(row.requests)}</td><td class="num">${usd(row.price)}</td><td>${esc(row.replacement ?? "")}</td><td class="num"><strong>${usd(row.price - row.alt)}</strong></td></tr>`)
     .join("");
   return `<table class="sheet"><thead><tr><th>Model</th><th class="num">Requests</th><th class="num">At API price</th><th>If replaced by</th><th class="num">Would save you</th></tr></thead><tbody>${rows}</tbody></table>`;
@@ -92,13 +93,13 @@ export function missingPage(css: string): string {
 }
 
 export function teamPage(id: string, team: string, month: Report, all: Report, css: string): string {
-  const join = `<pre class="cmd"><code>npx costmaxxing ${esc(id)}</code></pre>`;
+  const join = `<div class="cmd"><code>npx costmaxxing ${esc(id)}</code><button class="copy" type="button" onclick="navigator.clipboard.writeText(this.previousSibling.textContent).then(()=>{this.textContent='Copied';setTimeout(()=>this.textContent='Copy',1600)})">Copy</button></div>`;
   const body =
     all.requests === 0
       ? `<h1>No usage for ${esc(team)} yet.</h1>
 <p>Everyone on the team runs this once. Their Claude Code then reports token counts here, and the savings show under their prompt.</p>${join}`
       : `<h1>${esc(team)} could save ${usd(month.hero.year)} a&nbsp;year on open&#8209;weight models.</h1>
-<p>Compared with ${esc(month.hero.detail ?? month.hero.name)}. Everything recorded so far, over ${plural(all.days, "day")}: ${exactUsd(all.hero.price)} at API prices, ${exactUsd(all.hero.alt)} on open&#8209;weight models.</p>
+<p>Compared with ${esc(month.hero.detail ?? month.hero.name)}. Everything recorded so far, over ${plural(all.days, "day")}: ${dollars(all.hero.price)} at API prices, ${dollars(all.hero.alt)} on open&#8209;weight models.</p>
 ${figures(month)}
 ${stats(month)}
 <h2>Forecast</h2>
@@ -106,8 +107,7 @@ ${forecast(month)}
 ${tools(month)}
 <h2>Models, last 30 days</h2>
 ${models(month)}
-<h2>Join this team</h2>${join}
-<p class="fine">Only model names and token counts reach this page. Anyone with this link can see it, so share it only with your team.</p>`;
+<h2>Join this team</h2>${join}`;
   return frame(team, body, css);
 }
 
